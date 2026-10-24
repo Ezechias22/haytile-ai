@@ -1,5 +1,7 @@
 # HAYTILE AI
 
+[Open the free test app](https://haytile-ai.onrender.com) — temporary accounts/media; AI generation is disabled in this free-beta deployment.
+
 A working development foundation for the Haytile creative platform: Next.js web,
 Expo Android/iOS source, FastAPI, PostgreSQL, a durable background worker, optional
 Redis wakeups and private media storage.

@@ -88,3 +88,7 @@ Enstriksyon kontinye: gade DEPLOYMENT.md. Pa deklare tout pwodwi a fini ak lis s
 ## Chwa aktyèl: Render gratis
 
 Itilizatè a refize plan Render peye pou kounye a. `render.yaml` ranplase pwopozisyon peye a avèk yon sèl sèvis gratis, san disk oswa bazdone peye. Free beta gen avètisman sou done tanporè nan 9 lang. Jenerasyon AI ak grant kredi peye bloke sou SQLite. Demann bazdone Render free la retounen HTTP 403; pa gen fallback peye.
+
+## Lyen piblik verifye
+
+https://haytile-ai.onrender.com sou plan Render Free, estati live. Paj/8 JS-CSS assets ak API reponn HTTP 200 sou HTTPS verifye. Tès piblik kont/bouyon/download/rename/pwojè/logout pase; kont tès la efase. Otomasyon navigatè piblik bloke pa trust/proxy lokal, pa deklare li pase. Kontenè gratis lokal la pase 3 workflow navigatè yo. Done sou sèvis la tanporè; AI dezaktive.

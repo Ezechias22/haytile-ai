@@ -63,3 +63,19 @@ for subsequent free-tier/cold-start checks.
 `scripts/deploy_render_free.py` enforces the free plan, no persistent disk, no AI
 or Render control key in service variables, source-push verification and guarded
 creation without automatic mutation retries.
+
+## Public free deployment verified
+
+Actual Render service: https://haytile-ai.onrender.com
+
+Render reports plan `free` and deploy status `live` for the initial application
+commit `0473bed520db7340c2af666b434d3b1191b99077`. Public HTTPS checks passed for
+HTML, all 8 referenced JavaScript/CSS assets, health and runtime flags. A temporary
+smoke-test account exercised secure-cookie login, exact draft storage, private
+download, rename, storyboard persistence, delete and logout; it was then removed.
+
+Remote browser automation was blocked by this cloud browser's proxy/CA setup;
+TLS verification was not disabled. The same browser workflows passed against the
+local free-mode container, and the public HTTP functional smoke passed using the
+system's verified HTTPS trust configuration. Do not describe remote browser tests
+as passed. The public deployment is explicitly temporary and AI generation is disabled.
