@@ -7,6 +7,29 @@ import pytest
 from haytile import providers
 
 
+def test_current_tts_interactions_preserves_transcript_and_wav(monkeypatch):
+    def request(method, path, payload=None, **kwargs):
+        assert method == "POST" and path == "/interactions"
+        assert payload["input"][0]["content"][0]["text"] == "Bonjou!"
+        assert payload["generation_config"] == {"speech_config": [{"voice": "Kore"}]}
+        assert payload["response_format"] == {"type": "audio"}
+        return {
+            "status": "completed",
+            "steps": [
+                {
+                    "type": "model_output",
+                    "content": [{"type": "audio", "mime_type": "audio/wav", "data": "d2F2"}],
+                }
+            ],
+        }
+
+    monkeypatch.setattr(providers, "request", request)
+    assert providers.generate("voice", "gemini-3.8-flash-lite-tts", "Bonjou!", {}) == (
+        b"wav",
+        "audio/wav",
+    )
+
+
 def test_video_transmits_all_character_references(monkeypatch):
     def request(method, path, payload=None, **kwargs):
         assert method == "POST" and path == "/interactions"

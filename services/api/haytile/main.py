@@ -596,7 +596,7 @@ def retry(job_id: str, user=Depends(current)):
         if job.error == "WORKER_INTERRUPTED_RECONCILE":
             operation = job.params.get("remote_operation")
             can_resume = operation and (
-                job.studio == "music"
+                job.studio in ("music", "voice")
                 or (
                     job.studio == "video"
                     and job.params.get("input_params", {}).get("duration", 8) <= 10

@@ -186,7 +186,8 @@ def wait_interaction(result, params):
 def generate(studio, model, prompt, params):
     if not re.fullmatch(r"[A-Za-z0-9._-]{1,120}", model):
         raise ProviderError("MODEL_INVALID")
-    if studio in ("video", "music"):
+    interaction_voice = studio == "voice" and model.startswith("gemini-3.8-")
+    if studio in ("video", "music") or interaction_voice:
         resume = params.get("_resume_operation_id")
         if resume:
             if not re.fullmatch(r"[A-Za-z0-9._-]{1,300}", resume):
@@ -199,6 +200,12 @@ def generate(studio, model, prompt, params):
                 "store": True,
                 "background": False,
             }
+            if interaction_voice:
+                payload["input"] = [
+                    {"type": "user_input", "content": [{"type": "text", "text": prompt}]}
+                ]
+                payload["response_format"] = {"type": "audio"}
+                payload["generation_config"] = {"speech_config": [{"voice": "Kore"}]}
             if studio == "video":
                 payload["response_format"] = {
                     "type": "video",
@@ -228,7 +235,12 @@ def generate(studio, model, prompt, params):
                 part.get("data") or part.get("uri")
             ):
                 return media_bytes(part), part.get(
-                    "mime_type", "video/mp4" if studio == "video" else "audio/mpeg"
+                    "mime_type",
+                    "video/mp4"
+                    if studio == "video"
+                    else "audio/wav"
+                    if interaction_voice
+                    else "audio/mpeg",
                 )
         raise ProviderError("PROVIDER_NO_VIDEO" if studio == "video" else "PROVIDER_NO_AUDIO")
     config = {"maxOutputTokens": min(int(params.get("_max_output_tokens", 2048)), 8192)}
