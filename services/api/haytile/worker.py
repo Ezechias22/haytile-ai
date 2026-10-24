@@ -13,6 +13,7 @@ from sqlalchemy import select
 from . import providers, storage
 from .db import Asset, Job, Ledger, Project, Session, User, now
 from .media import inspect_media
+from .trials import lock_sqlite_write
 
 log = logging.getLogger("haytile.worker")
 
@@ -63,6 +64,7 @@ def run_once():
     for job_id in expired:
         finalize_failure(job_id, "WORKER_INTERRUPTED_RECONCILE")
     with Session.begin() as db:
+        lock_sqlite_write(db)
         job = db.scalar(
             select(Job)
             .where(Job.status == "queued")
@@ -78,6 +80,23 @@ def run_once():
         job_id = job.id
         params = dict(job.params.get("input_params", {}))
         model = job.params.get("model_id", "")
+
+    def record_operation(identifier):
+        with Session.begin() as state:
+            row = state.get(Job, job_id)
+            if row and row.status == "processing":
+                row.params = {
+                    **row.params,
+                    "remote_operation": {
+                        "id": identifier,
+                        "studio": job.studio,
+                        "model_id": model,
+                    },
+                }
+
+    params["_operation_callback"] = record_operation
+    if job.params.get("resume_operation_id"):
+        params["_resume_operation_id"] = job.params["resume_operation_id"]
     key = None
     try:
         ref_id = params.get("reference_asset_id")
@@ -101,7 +120,11 @@ def run_once():
             prompt = "Output language: " + language + "\n" + prompt
         if job.studio == "music":
             prompt = "Requested song language: " + language + "\n" + prompt
-        if job.studio == "assembly":
+        if job.studio == "minidrama" and params.get("mode") == "episode":
+            from .drama import render_episode
+
+            data, mime = render_episode(job, params, job.params["render_config"])
+        elif job.studio == "assembly":
             from .video import assemble
 
             clips = []
@@ -148,7 +171,7 @@ def run_once():
             row.progress = 80
         expected = {
             "text": "text/",
-            "minidrama": "text/",
+            "minidrama": "video/" if params.get("mode") == "episode" else "text/",
             "image": "image/",
             "voice": "audio/",
             "music": "audio/",
@@ -194,6 +217,18 @@ def run_once():
                             scene["asset_id"] = output_asset.id
                     project.document = document
                     project.version += 1
+            if (
+                job.studio == "minidrama"
+                and params.get("mode") == "episode"
+                and params.get("project_id")
+            ):
+                project = db.get(Project, params["project_id"])
+                if project:
+                    project.document = {
+                        **project.document,
+                        "final_asset_id": output_asset.id,
+                    }
+                    project.version += 1
             if row.credits:
                 owner.reserved -= row.credits
                 owner.balance -= row.credits
@@ -220,6 +255,8 @@ def run_once():
         if code in (
             "PROVIDER_NETWORK_OR_RESPONSE",
             "MEDIA_OR_STORAGE_FAILED",
+            "PROVIDER_OPERATION_PENDING",
+            "PROVIDER_MEDIA_DOWNLOAD_FAILED",
         ) or code.startswith("PROVIDER_HTTP_5"):
             code = "WORKER_INTERRUPTED_RECONCILE"
         log.warning("job_failed id=%s code=%s", job_id, code)

@@ -92,3 +92,18 @@ Itilizatè a refize plan Render peye pou kounye a. `render.yaml` ranplase pwopoz
 ## Lyen piblik verifye
 
 https://haytile-ai.onrender.com sou plan Render Free, estati live. Paj/8 JS-CSS assets ak API reponn HTTP 200 sou HTTPS verifye. Tès piblik kont/bouyon/download/rename/pwojè/logout pase; kont tès la efase. Otomasyon navigatè piblik bloke pa trust/proxy lokal, pa deklare li pase. Kontenè gratis lokal la pase 3 workflow navigatè yo. Done sou sèvis la tanporè; AI dezaktive.
+
+## Preparasyon esè AI reyèl sou hosting gratis
+
+Kòd nouvo a ajoute esè zewo kredi ki mande aktivasyon operatè, limit dire/kantite,
+admisyon SQLite atomik, bootstrap modèl kont la, polling/recovery Interactions,
+download URI sekirize ak referans plizyè pèsonaj. MiniDrama kapab planifye,
+sove pwojè/referans/sèn epi rasanble yon epizòd MP4. Tès pipeline sa a itilize
+founisè simulation klèman idantifye ak montaj FFmpeg reyèl; pa gen jenerasyon
+Google reyèl valide. 40 tès backend, build web, TypeScript web/mobil ak 4 tès
+lang/discovery pase. Live Render poko resevwa nouvo aktivasyon sa a.
+
+Kle Google cloud la otorize Google sèlman; li pa ka kopye kòm yon placeholder nan
+Render. Kle runtime Render ak konfimasyon sou billing/kota Google rete nesesè.
+Gade [AI_TRIAL_ACTIVATION.md](AI_TRIAL_ACTIVATION.md). Pa gen resous Render peye
+kreye; depans Google pou imaj/chante/videyo rete apa.

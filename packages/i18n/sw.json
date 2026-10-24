@@ -168,5 +168,13 @@
   "moveDown": "Sogeza chini",
   "voiceProfile": "Sauti na uwasilishaji",
   "freeBetaTitle": "Toleo la majaribio bila malipo — data ya muda",
-  "freeBetaNotice": "Huduma hii inaweza kusimama au kuanza upya na kufuta akaunti, rasimu na faili. Pakua au hamisha kazi muhimu. Uzalishaji wa AI na ununuzi wa salio vimezimwa."
+  "freeBetaNotice": "Huduma hii inaweza kusimama au kuanza upya na kufuta akaunti, rasimu na faili. Pakua au hamisha kazi muhimu. Uzalishaji wa AI na ununuzi wa salio vimezimwa.",
+  "freeBetaNoticeActive": "Majaribio halisi ya AI yenye mipaka — hifadhi ya muda. Mtoa huduma anaweza kumtoza mwendeshaji. Pakua matokeo muhimu; hosting ya bure inaweza kufuta data.",
+  "providerBillingNotice": "Maelezo hutumwa kwa mtoa huduma. Maombi ya sauti/video yanaweza kuhifadhiwa kurejesha kazi; soma masharti. Salio sifuri si kwamba API ni bure.",
+  "providerQuota": "Kiwango cha matumizi cha mtoa huduma kimeisha. Hakiki mradi au jaribu baadaye.",
+  "providerAccess": "Modeli hii haipatikani kwa akaunti au eneo lililowekwa.",
+  "outputFormat": "Matokeo",
+  "completeEpisode": "Kipindi kamili",
+  "scriptOutput": "Hati pekee",
+  "episodeReviewNote": "Kipindi hutumia picha za wahusika na klipu zilizozalishwa kisha kuunganisha video. Hakiki mazungumzo, midomo na mwendelezo; hakuna dhamana ya ubora wa picha kiotomatiki."
 }

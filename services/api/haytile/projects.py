@@ -27,7 +27,7 @@ class SceneInput(BaseModel):
     title: str = Field(min_length=1, max_length=120)
     description: str = Field(default="", max_length=2000)
     dialogue: str = Field(default="", max_length=4000)
-    duration: int = Field(default=8, ge=8, le=10)
+    duration: int = Field(default=8, ge=1, le=10)
     character_ids: list[str] = Field(default_factory=list, max_length=10)
     asset_id: str | None = None
 
@@ -37,6 +37,7 @@ class Document(BaseModel):
     continuity: str = Field(default="", max_length=4000)
     aspect: Literal["16:9", "9:16"] = "16:9"
     characters: list[CharacterInput] = Field(default_factory=list, max_length=20)
+    final_asset_id: str | None = None
     scenes: list[SceneInput] = Field(default_factory=list, max_length=22)
 
 
@@ -66,9 +67,11 @@ def validate_document(db, document, user_id):
     for scene in document.scenes:
         if set(scene.character_ids) - set(ids):
             fail("CHARACTER_REFERENCE_INVALID")
-    for aid, mime in [(c.reference_asset_id, "image/") for c in document.characters] + [
-        (s.asset_id, "video/") for s in document.scenes
-    ]:
+    for aid, mime in (
+        [(document.final_asset_id, "video/")]
+        + [(c.reference_asset_id, "image/") for c in document.characters]
+        + [(s.asset_id, "video/") for s in document.scenes]
+    ):
         if aid:
             asset = db.get(Asset, aid)
             if not asset or asset.user_id != user_id or not asset.mime.startswith(mime):
@@ -166,7 +169,7 @@ def render_scene(
         )
         params = {
             "aspect": doc.aspect,
-            "duration": scene.duration,
+            "duration": max(8, scene.duration),
             "project_id": project.id,
             "scene_id": scene.id,
         }

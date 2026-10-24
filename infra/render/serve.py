@@ -80,6 +80,17 @@ def main():
             check=True,
             timeout=120,
         )
+        subprocess.run(
+            [
+                "python",
+                "-c",
+                "from haytile.bootstrap import configure_models; configure_models()",
+            ],
+            cwd=APP / "services/api",
+            env=env,
+            check=True,
+            timeout=60,
+        )
         api = subprocess.Popen(
             [
                 "python",

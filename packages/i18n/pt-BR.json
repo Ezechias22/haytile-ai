@@ -168,5 +168,13 @@
   "moveDown": "Mover para baixo",
   "voiceProfile": "Voz e interpretação",
   "freeBetaTitle": "Versão de teste grátis — dados temporários",
-  "freeBetaNotice": "A hospedagem grátis pode hibernar ou reiniciar. Contas, rascunhos e arquivos podem ser apagados. Baixe ou exporte trabalhos importantes. A geração de IA e a compra de créditos estão desativadas."
+  "freeBetaNotice": "A hospedagem grátis pode hibernar ou reiniciar. Contas, rascunhos e arquivos podem ser apagados. Baixe ou exporte trabalhos importantes. A geração de IA e a compra de créditos estão desativadas.",
+  "freeBetaNoticeActive": "Testes reais de IA limitados — armazenamento temporário. O provedor pode cobrar do operador. Baixe resultados importantes; a hospedagem grátis pode apagar dados.",
+  "providerBillingNotice": "A descrição é enviada ao provedor. Pedidos de áudio/vídeo podem ser armazenados para recuperação; consulte os termos. Zero créditos do usuário não significa API grátis.",
+  "providerQuota": "A cota do provedor acabou. Confira a cota do projeto ou tente depois.",
+  "providerAccess": "A conta ou região configurada não tem acesso a este modelo.",
+  "outputFormat": "Resultado",
+  "completeEpisode": "Episódio completo",
+  "scriptOutput": "Somente roteiro",
+  "episodeReviewNote": "O episódio usa referências de personagens e clipes gerados, depois monta o vídeo final. Revise diálogo, sincronização labial e continuidade; não há garantia visual automática."
 }

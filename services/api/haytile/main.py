@@ -38,6 +38,7 @@ from .security import (
     valid_signature,
     verify_password,
 )
+from .trials import lock_sqlite_write, trial_enabled, trial_limit_code
 
 STUDIOS = ("image", "text", "voice", "music", "video", "minidrama")
 LOCALES = ("ht", "en", "fr", "pt-BR", "es", "ar", "zh-Hans", "id", "sw")
@@ -59,6 +60,7 @@ def limit(key, maximum, seconds):
     from sqlalchemy.dialects.sqlite import insert as sq_insert
 
     with Session.begin() as db:
+        lock_sqlite_write(db)
         insert = pg_insert if engine.dialect.name == "postgresql" else sq_insert
         db.execute(
             insert(RateLimit)
@@ -186,12 +188,27 @@ async def security_headers(request, call_next):
 
 @app.get("/v1/runtime")
 def runtime_settings():
+    with Session() as db:
+        configured = bool(os.environ.get("HAYTILE_GEMINI_API_KEY")) and bool(
+            db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
+        )
     return {
         "free_beta": FREE_BETA,
         "temporary_storage": FREE_BETA and not bool(storage.BUCKET),
         "temporary_database": engine.dialect.name == "sqlite",
-        "provider_generation_disabled": FREE_BETA
-        and engine.dialect.name != "postgresql",
+        "provider_generation_disabled": not configured
+        or (FREE_BETA and engine.dialect.name != "postgresql" and not trial_enabled()),
+        "trial_ai": trial_enabled(),
+        "trial_max_episode_seconds": int(
+            os.environ.get("HAYTILE_TRIAL_MAX_EPISODE_SECONDS", "16")
+        )
+        if trial_enabled() and engine.dialect.name == "sqlite"
+        else 180,
+        "trial_max_video_seconds": int(
+            os.environ.get("HAYTILE_TRIAL_MAX_VIDEO_SECONDS", "8")
+        )
+        if trial_enabled() and engine.dialect.name == "sqlite"
+        else 180,
     }
 
 
@@ -346,12 +363,24 @@ def models():
     with Session() as db:
         rows = {m.studio: m for m in db.scalars(select(Model))}
     present = bool(os.environ.get("HAYTILE_GEMINI_API_KEY")) and not (
-        FREE_BETA and engine.dialect.name != "postgresql"
+        FREE_BETA and engine.dialect.name != "postgresql" and not trial_enabled()
     )
     return [
         {
             "studio": s,
             "available": bool(present and rows.get(s) and rows[s].enabled),
+            "episode_available": bool(
+                present
+                and rows.get(s)
+                and rows[s].enabled
+                and all(
+                    rows.get(kind) and rows[kind].enabled and rows[kind].credits == 0
+                    for kind in ("image", "video")
+                )
+                and rows[s].credits == 0
+            )
+            if s == "minidrama"
+            else False,
             "model_id": rows[s].model_id if s in rows else None,
             "credits": 0 if s == "image" else (rows[s].credits if s in rows else 0),
             "terms_url": rows[s].terms_url if s in rows else None,
@@ -374,16 +403,25 @@ class Generate(BaseModel):
 
 @app.post("/v1/jobs", status_code=202)
 def generate(body: Generate, user=Depends(current)):
-    if FREE_BETA and engine.dialect.name != "postgresql":
+    if FREE_BETA and engine.dialect.name != "postgresql" and not trial_enabled():
         fail("FREE_BETA_AI_DISABLED", 503)
     if not body.prompt.strip() or not body.title.strip():
         fail("CONTENT_REQUIRED")
+    if any(str(key).startswith("_") for key in body.params):
+        fail("PARAMS_INVALID")
     if len(json.dumps(body.params)) > 20000:
         fail("PARAMS_TOO_LARGE")
     if body.params.get("aspect", "1:1") not in ("1:1", "16:9", "9:16", "4:3", "3:4"):
         fail("ASPECT_INVALID")
     if body.studio == "video":
         duration = body.params.get("duration", 8)
+        if type(duration) is not int or not 8 <= duration <= 180:
+            fail("VIDEO_DURATION_INVALID")
+        if body.params.get("aspect", "16:9") not in ("16:9", "9:16"):
+            fail("VIDEO_ASPECT_INVALID")
+    episode = body.studio == "minidrama" and body.params.get("mode") == "episode"
+    if episode:
+        duration = body.params.get("duration", 16)
         if type(duration) is not int or not 8 <= duration <= 180:
             fail("VIDEO_DURATION_INVALID")
         if body.params.get("aspect", "16:9") not in ("16:9", "9:16"):
@@ -397,6 +435,7 @@ def generate(body: Generate, user=Depends(current)):
     )
     limit("generation:" + user.id, 30, 3600)
     with Session.begin() as db:
+        lock_sqlite_write(db)
         owner = db.scalar(select(User).where(User.id == user.id).with_for_update())
         old = db.scalar(
             select(Job).where(
@@ -418,6 +457,24 @@ def generate(body: Generate, user=Depends(current)):
             or not os.environ.get("HAYTILE_GEMINI_API_KEY")
         ):
             fail("PROVIDER_SETUP_REQUIRED", 503)
+        render_config = None
+        if episode:
+            image_model = db.get(Model, "image")
+            video_model = db.get(Model, "video")
+            if (
+                not image_model
+                or not video_model
+                or not image_model.enabled
+                or not video_model.enabled
+            ):
+                fail("PROVIDER_SETUP_REQUIRED", 503)
+            if model.credits or image_model.credits or video_model.credits:
+                fail("MINIDRAMA_CREDIT_QUOTE_PENDING", 409)
+            render_config = {
+                "text": model.model_id,
+                "image": image_model.model_id,
+                "video": video_model.model_id,
+            }
         credits = (
             0
             if body.studio == "image"
@@ -428,6 +485,12 @@ def generate(body: Generate, user=Depends(current)):
                 else 1
             )
         )
+        trial_error = trial_limit_code(db, user.id, body.studio, body.params, credits)
+        if trial_error:
+            fail(
+                trial_error,
+                409 if trial_error == "PERSISTENT_POSTGRES_REQUIRED" else 429,
+            )
         if credits != body.confirmed_credits:
             fail("PRICE_CHANGED", 409)
         if owner.balance - owner.reserved < credits:
@@ -470,6 +533,7 @@ def generate(body: Generate, user=Depends(current)):
                 "input_params": body.params,
                 "model_id": model.model_id,
                 "provider": model.provider,
+                "render_config": render_config,
             },
         )
         db.add(job)
@@ -518,6 +582,7 @@ def jobs(user=Depends(current)):
 @app.post("/v1/jobs/{job_id}/retry")
 def retry(job_id: str, user=Depends(current)):
     with Session.begin() as db:
+        lock_sqlite_write(db)
         owner = db.scalar(select(User).where(User.id == user.id).with_for_update())
         job = db.scalar(
             select(Job)
@@ -529,7 +594,22 @@ def retry(job_id: str, user=Depends(current)):
         if job.status != "failed":
             fail("JOB_NOT_FAILED", 409)
         if job.error == "WORKER_INTERRUPTED_RECONCILE":
-            fail("MANUAL_RECONCILIATION_REQUIRED", 409)
+            operation = job.params.get("remote_operation")
+            can_resume = operation and (
+                job.studio == "music"
+                or (
+                    job.studio == "video"
+                    and job.params.get("input_params", {}).get("duration", 8) <= 10
+                )
+            )
+            if not can_resume:
+                fail("MANUAL_RECONCILIATION_REQUIRED", 409)
+            job.params = {**job.params, "resume_operation_id": operation["id"]}
+        trial_error = trial_limit_code(
+            db, user.id, job.studio, job.params.get("input_params", {}), job.credits
+        )
+        if trial_error:
+            fail(trial_error, 429)
         if job.attempt >= 3:
             fail("RETRY_LIMIT", 409)
         if owner.balance - owner.reserved < job.credits:
@@ -759,8 +839,15 @@ class ModelSettings(BaseModel):
 
 @app.put("/v1/admin/models")
 def model_settings(body: ModelSettings, user=Depends(admin)):
-    if body.enabled and FREE_BETA and engine.dialect.name != "postgresql":
+    if (
+        body.enabled
+        and FREE_BETA
+        and engine.dialect.name != "postgresql"
+        and not trial_enabled()
+    ):
         fail("FREE_BETA_AI_DISABLED", 409)
+    if body.credits and engine.dialect.name != "postgresql":
+        fail("PERSISTENT_POSTGRES_REQUIRED", 409)
     if body.studio == "image" and body.credits != 0:
         fail("BASIC_IMAGES_MUST_BE_FREE")
     if body.enabled and not body.operator_billing_ack:

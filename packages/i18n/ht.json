@@ -168,5 +168,13 @@
   "moveDown": "Desann",
   "voiceProfile": "Vwa ak fason pale",
   "freeBetaTitle": "Vèsyon tès gratis — done tanporè",
-  "freeBetaNotice": "Sèvis gratis sa a ka dòmi oswa rekòmanse. Kont, bouyon ak fichye yo ka efase lè sa rive. Telechaje oswa ekspòte travay enpòtan ou. Jenerasyon AI ak acha kredi dezaktive nan vèsyon tanporè sa a."
+  "freeBetaNotice": "Sèvis gratis sa a ka dòmi oswa rekòmanse. Kont, bouyon ak fichye yo ka efase lè sa rive. Telechaje oswa ekspòte travay enpòtan ou. Jenerasyon AI ak acha kredi dezaktive nan vèsyon tanporè sa a.",
+  "freeBetaNoticeActive": "Tès AI reyèl limite — depo tanporè. Founisè a ka chaje operatè a. Telechaje rezilta enpòtan ou; hosting gratis la ka efase done lokal yo.",
+  "providerBillingNotice": "Prompt ou ale nan founisè a. Demann odyo/videyo ka konsève la pou rekipere travay; revize kondisyon li yo. Zewo kredi itilizatè pa vle di API founisè a gratis.",
+  "providerQuota": "Kota founisè a fini. Verifye kota pwojè a oswa reeseye pita.",
+  "providerAccess": "Kont oswa rejyon ki konfigire a pa gen aksè ak modèl sa a.",
+  "outputFormat": "Rezilta",
+  "completeEpisode": "Epizòd konplè",
+  "scriptOutput": "Senaryo sèlman",
+  "episodeReviewNote": "Yon epizòd reyèl itilize imaj referans pèsonaj ak klip sèn jenere, epi li rasanble videyo final la. Revize dyalòg, bouch ak kontinwite; pa gen garanti otomatik sou kalite vizyèl."
 }

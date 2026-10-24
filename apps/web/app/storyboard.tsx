@@ -391,7 +391,7 @@ export default function Storyboard({
                   {t('duration')}
                   <input
                     type="number"
-                    min={8}
+                    min={1}
                     max={10}
                     value={scene.duration}
                     onChange={(e) => updateScene(scene.id, { duration: Number(e.target.value) })}

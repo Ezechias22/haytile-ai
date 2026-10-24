@@ -82,6 +82,7 @@ type Job = {
 type Model = {
   studio: Studio;
   available: boolean;
+  episode_available?: boolean;
   model_id: string | null;
   credits: number;
   reason: string | null;
@@ -198,9 +199,24 @@ function Artwork({ kind }: { kind: Studio }) {
 }
 export default function App() {
   const [freeBeta, setFreeBeta] = useState(false);
+  const [trialAI, setTrialAI] = useState(false);
+  const [videoMaximum, setVideoMaximum] = useState(180);
+  const [episodeMaximum, setEpisodeMaximum] = useState(180);
+  const [miniMode, setMiniMode] = useState('episode');
   useEffect(() => {
-    api<{ free_beta: boolean }>('/runtime')
-      .then((config) => setFreeBeta(config.free_beta))
+    api<{
+      free_beta: boolean;
+      trial_ai: boolean;
+      trial_max_video_seconds: number;
+      trial_max_episode_seconds: number;
+      provider_generation_disabled: boolean;
+    }>('/runtime')
+      .then((config) => {
+        setFreeBeta(config.free_beta);
+        setTrialAI(config.trial_ai && !config.provider_generation_disabled);
+        setVideoMaximum(config.trial_max_video_seconds || 180);
+        setEpisodeMaximum(config.trial_max_episode_seconds || 180);
+      })
       .catch(() => {});
   }, []);
   const [page, setPage] = useState<Page>('home'),
@@ -256,6 +272,8 @@ export default function App() {
       return t('accountNeeded');
     }
     if (/LOGIN_INVALID/.test(code)) return t('authError');
+    if (/PROVIDER_QUOTA_EXCEEDED/.test(code)) return t('providerQuota');
+    if (/PROVIDER_ACCESS_DENIED|PROVIDER_MODEL_UNAVAILABLE/.test(code)) return t('providerAccess');
     if (/PROVIDER|ADAPTER|MODEL/.test(code)) return t('providerError');
     if (/LIMIT|TOO_MANY/.test(code)) return t('limitError');
     if (/INSUFFICIENT/.test(code)) return t('creditsError');
@@ -362,6 +380,9 @@ export default function App() {
   };
   const studio = studios.includes(page as Studio) ? (page as Studio) : null,
     activeModel = models.find((m) => m.studio === studio);
+  const canGenerate =
+    !!activeModel?.available &&
+    (studio !== 'minidrama' || miniMode !== 'episode' || !!activeModel?.episode_available);
   const quoteCredits =
     (activeModel?.credits || 0) * (studio === 'video' ? Math.ceil(duration / 10) : 1);
   const requireUser = () => {
@@ -395,9 +416,17 @@ export default function App() {
           prompt,
           idempotency_key: pendingKey.current,
           params: {
-            aspect: studio === 'video' ? (aspect === '9:16' ? '9:16' : '16:9') : aspect,
+            aspect:
+              studio === 'video' || (studio === 'minidrama' && miniMode === 'episode')
+                ? aspect === '9:16'
+                  ? '9:16'
+                  : '16:9'
+                : aspect,
             language: outputLanguage,
-            ...(studio === 'video' ? { duration } : {}),
+            ...(studio === 'video' || (studio === 'minidrama' && miniMode === 'episode')
+              ? { duration }
+              : {}),
+            ...(studio === 'minidrama' ? { mode: miniMode } : {}),
             ...(reference ? { reference_asset_id: reference } : {}),
           },
           confirmed_credits: quoteCredits,
@@ -678,7 +707,7 @@ export default function App() {
               <AlertCircle size={20} />
               <div>
                 <strong>{t('freeBetaTitle')}</strong>
-                <p>{t('freeBetaNotice')}</p>
+                <p>{t(trialAI ? 'freeBetaNoticeActive' : 'freeBetaNotice')}</p>
               </div>
             </section>
           )}
@@ -903,17 +932,44 @@ export default function App() {
                           ))}
                         </select>
                       </label>
-                      {(studio === 'image' || studio === 'video') && (
+                      {(studio === 'image' ||
+                        studio === 'video' ||
+                        (studio === 'minidrama' && miniMode === 'episode')) && (
                         <label>
                           {t('aspect')}
-                          <select value={aspect} onChange={(e) => setAspect(e.target.value)}>
-                            {['1:1', '16:9', '9:16', '4:3', '3:4'].map((v) => (
+                          <select
+                            value={
+                              studio === 'image' ? aspect : aspect === '9:16' ? '9:16' : '16:9'
+                            }
+                            onChange={(e) => setAspect(e.target.value)}
+                          >
+                            {(studio === 'image'
+                              ? ['1:1', '16:9', '9:16', '4:3', '3:4']
+                              : ['16:9', '9:16']
+                            ).map((v) => (
                               <option key={v}>{v}</option>
                             ))}
                           </select>
                         </label>
                       )}
                     </div>
+                    {studio === 'minidrama' && (
+                      <label>
+                        {t('outputFormat')}
+                        <select
+                          value={miniMode}
+                          onChange={(e) => {
+                            setMiniMode(e.target.value);
+                            setDuration(
+                              e.target.value === 'episode' ? Math.min(16, episodeMaximum) : 8,
+                            );
+                          }}
+                        >
+                          <option value="episode">{t('completeEpisode')}</option>
+                          <option value="script">{t('scriptOutput')}</option>
+                        </select>
+                      </label>
+                    )}
                     {studio === 'image' && (
                       <label>
                         {t('reference')}
@@ -929,25 +985,29 @@ export default function App() {
                         </select>
                       </label>
                     )}
-                    {studio === 'video' && (
+                    {(studio === 'video' || (studio === 'minidrama' && miniMode === 'episode')) && (
                       <label>
                         {t('duration')}
                         <input
                           type="number"
                           min={8}
-                          max={180}
+                          max={studio === 'minidrama' ? episodeMaximum : videoMaximum}
                           value={duration}
                           onChange={(e) => setDuration(Number(e.target.value))}
                         />
                       </label>
                     )}
-                    {!activeModel?.available && (
+                    {!canGenerate && (
                       <div className="alert info">
                         <AlertCircle size={18} />
                         <span>{t('unavailable')}</span>
                       </div>
                     )}
-                    {studio === 'minidrama' && <p className="fine-print">{t('scriptOnly')}</p>}
+                    {studio === 'minidrama' && (
+                      <p className="fine-print">
+                        {t(miniMode === 'episode' ? 'episodeReviewNote' : 'scriptOnly')}
+                      </p>
+                    )}
                     {studio === 'music' && <p className="fine-print">{t('musicNote')}</p>}
                     {studio === 'voice' && <p className="fine-print">{t('voiceNote')}</p>}
                     <div className="composer-actions">
@@ -963,7 +1023,7 @@ export default function App() {
                       <button
                         type="submit"
                         className="button primary"
-                        disabled={busy || !activeModel?.available || !prompt.trim()}
+                        disabled={busy || !canGenerate || !prompt.trim()}
                       >
                         <Sparkles size={16} />
                         {t('generate')}
@@ -1726,6 +1786,7 @@ export default function App() {
             </div>
             <p className="muted">{activeModel?.model_id}</p>
             <p className="fine-print">{t('privacy')}</p>
+            <p className="fine-print">{t('providerBillingNotice')}</p>
             <div className="modal-actions">
               <button className="button" onClick={() => setCostConfirm(false)}>
                 {t('cancel')}
@@ -1812,7 +1873,15 @@ function JobList({
               <i style={{ width: j.progress + '%' }} />
             </div>
           )}
-          {j.error && <p className="job-error">{j.error}</p>}
+          {j.error && (
+            <p className="job-error">
+              {j.error === 'PROVIDER_QUOTA_EXCEEDED'
+                ? t('providerQuota')
+                : j.error === 'PROVIDER_ACCESS_DENIED' || j.error === 'PROVIDER_MODEL_UNAVAILABLE'
+                  ? t('providerAccess')
+                  : j.error}
+            </p>
+          )}
           {j.status === 'failed' && (
             <button className="text-button" onClick={() => retry(j)}>
               {t('retry')}

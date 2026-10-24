@@ -168,5 +168,13 @@
   "moveDown": "Move down",
   "voiceProfile": "Voice & delivery",
   "freeBetaTitle": "Free test version — temporary data",
-  "freeBetaNotice": "This free hosting service can sleep or restart. Accounts, drafts and files can then be erased. Download or export important work. AI generation and credit purchases are disabled in this temporary version."
+  "freeBetaNotice": "This free hosting service can sleep or restart. Accounts, drafts and files can then be erased. Download or export important work. AI generation and credit purchases are disabled in this temporary version.",
+  "freeBetaNoticeActive": "Limited real AI trials — temporary storage. Provider charges may apply to the operator. Download important results; free hosting can erase local data.",
+  "providerBillingNotice": "Your prompt is sent to the provider. Audio/video requests can be stored there for operation recovery; review its terms. Free user credits do not mean a free provider API.",
+  "providerQuota": "The provider quota is exhausted. Check the project quota or try later.",
+  "providerAccess": "This model is not accessible with the configured account or region.",
+  "outputFormat": "Output",
+  "completeEpisode": "Complete episode",
+  "scriptOutput": "Script only",
+  "episodeReviewNote": "A real episode uses character reference images and generated scene clips, then assembles the final video. Review dialogue, lip-sync and continuity; automated visual guarantees are not provided."
 }
