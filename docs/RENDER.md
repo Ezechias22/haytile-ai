@@ -9,12 +9,14 @@ upgrade. Do not create paid resources or switch a plan without new authorization
 The same web/API/worker container runs in explicit free-beta mode with temporary
 SQLite and temporary private media. A visible notice in all nine languages explains
 that accounts, drafts and files can be erased when Render sleeps, restarts or redeploys.
-Provider generation and nonzero credit grants are blocked without PostgreSQL.
+Nonzero credit grants are blocked without PostgreSQL. Explicitly enabled trials
+allow real provider generation at zero user credits, with short duration and daily
+attempt limits. Google billing is separate from the free hosting plan.
 This is a test deployment, not production storage or the complete AI service.
 
 The original application supports PostgreSQL and private S3 storage when separately
-configured. The free runtime deliberately does not receive the cloud Gemini or Render
-control key. Render's control key must never become a public service environment variable.
+configured. The operator configured a Gemini key directly in the Render service
+environment. Render's control key must never become a service environment variable.
 
 ## Verified free-tier limits
 
@@ -78,4 +80,6 @@ Remote browser automation was blocked by this cloud browser's proxy/CA setup;
 TLS verification was not disabled. The same browser workflows passed against the
 local free-mode container, and the public HTTP functional smoke passed using the
 system's verified HTTPS trust configuration. Do not describe remote browser tests
-as passed. The public deployment is explicitly temporary and AI generation is disabled.
+as passed. The public deployment is explicitly temporary. Real AI trials were
+enabled after the operator configured the provider key and confirmed active billing;
+see [AI acceptance receipts](AI_TRIAL_ACTIVATION.md). The hosting plan remains free.

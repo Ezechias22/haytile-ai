@@ -1,7 +1,7 @@
 # HAYTILE AI — estati livrezon
 
 Aplikasyon devlopman an konstwi dirèkteman nan depo sa a. Li pa yon senp mockup.
-Pa gen piblikasyon piblik, AAB/IPA oswa peman reyèl ki deklare fèt.
+Yon beta web piblik sou Render gratis disponib; AAB/IPA ak peman pa fini.
 
 ## Fonksyon ki aplike ak konekte
 
@@ -28,7 +28,7 @@ Pa gen piblikasyon piblik, AAB/IPA oswa peman reyèl ki deklare fèt.
 
 ## Prèv validasyon
 
-- 24 tès backend nan suite konplè a pase sou PostgreSQL: kont, izolasyon itilizatè, CSRF, downloads,
+- 42 tès backend nan suite konplè a pase: kont, izolasyon itilizatè, CSRF, downloads,
   upload, efasman, reset yon sèl fwa, pri/idempotency, depans an paralèl, refund,
   limit imaj, wòl/admin ak pwojè/revizyon.
 - Tès montaj itilize videyo reyèl FFmpeg, verifye dire/rezolisyon/odyo **ak koulè
@@ -41,14 +41,16 @@ Pa gen piblikasyon piblik, AAB/IPA oswa peman reyèl ki deklare fèt.
 - Tès navigatè itilize backend reyèl. Rezilta final yo nan artifacts/VALIDATION.md.
 - Alembic check: schema aktyèl la pa bezwen lòt migrasyon.
 
-Tès AI backend yo itilize fixtures pou repons founisè a: yo verifye mekanis la,
-pa kalite oswa aksè jenerasyon Google. Pa gen jenerasyon AI reyèl ki pase san kle.
+Tès otomatik backend yo itilize fixtures pou repons founisè a. Esè piblik separe
+verifye jenerasyon Google reyèl, sovgad ak download; resi yo nan AI_TRIAL_ACTIVATION.md.
 Tès reset valide token/revokasyon; pa gen email SMTP reyèl ki voye.
 Tradiksyon yo se yon premye vèsyon; revizyon imen ak tès aksesibilite aparèy rete itil.
 
 ## Sa ki rete pou fini pwodwi a
 
-1. **Kle ak modèl kont:** kle Gemini a disponib kounye a. Yon discovery read-only reyisi: 60 modèl vizib. Jenerasyon reyèl, kota/pri kont ak kalite rete pou valide avèk yon plafon depans. Render bezwen kle sa a nan pwòp paramèt runtime li tou.
+1. **Modèl ak kota:** kle Gemini sou Render, billing konfime, esè reyèl aktive.
+   Imaj, tèks, vwa, chante, videyo 8s ak epizòd anviwon 16s pase. Tèks/TTS aktyèl yo ranplase ansyen IDs ki echwe
+   malgre yo vizib nan katalòg la. Kalite ak limit kont toujou bezwen siveyans.
 2. **Kalite medya:** lyrics egzak odyo, vwa senk lang, lip-sync otomatik, vizyon pou
    detekte defòmasyon/kontinwite, melanj mizik/narasyon ak soutit pa fini.
    Referans ak prompts ede; yo pa garanti figi, rad, dyalòg oswa bouch egzak.
@@ -59,9 +61,9 @@ Tradiksyon yo se yon premye vèsyon; revizyon imen ak tès aksesibilite aparèy 
 5. **Mobil/OTA:** sous ak bundles pare pou etap build la; pa gen aparèy oswa native
    build teste, AAB/IPA, rollout/rollback reyèl, store submission oswa EAS publication.
    Bezwen kont Expo, project ID ak signing/developer accounts.
-6. **Pwodiksyon:** bezwen hosting/DNS/TLS, bucket prive konfigire, moderation,
+6. **Pwodiksyon:** beta gen hosting/TLS; bezwen depo dirab, bucket prive, moderation,
    backup/restore drill, metrik/alert, rapò erè, audit sekirite ak revizyon LGPD/store.
-   Dockerfiles/CI se konfigirasyon ki ekri; yo poko deplwaye oswa egzekite sou GitHub.
+   Kontenè Render deplwaye; CI GitHub ak pwodiksyon final rete pou valide.
 
 ## Faz yo
 
@@ -70,11 +72,11 @@ Tradiksyon yo se yon premye vèsyon; revizyon imen ak tès aksesibilite aparèy 
 | 1 | Dokiman Google aktyèl verifye; chwa kont/pri final ak benchmark GPU rete |
 | 2 | UI/UX web + mobil, mak ak 9 fichye lang; QA imen/aparèy rete |
 | 3 | Backend/kont/bibliyotèk/migrasyon travay; federasyon/MFA/SMTP pwodiksyon rete |
-| 4 | Imaj zewo kredi aplike; adapter Google ekri, jenerasyon reyèl pa teste |
-| 5 | Tèks/TTS konekte; verifikasyon sou kont ak kalite lang rete |
-| 6 | Lyria adapter ekri; vokal/lyrics/lisans reyèl pa valide |
-| 7 | Queue ak montaj 8–180s teste; jenerasyon videyo Google/kalite pa valide |
-| 8 | Editè pwojè/sèn/pèsonaj ak montaj teste; lip-sync ak QC vizyèl rete |
+| 4 | Imaj reyèl jenere/sove/download; zewo kredi itilizatè, operatè peye Google |
+| 5 | Tèks kreyòl ak WAV 6.04s reyèl sove/download; benchmark plizyè lang rete |
+| 6 | Chante MP3 reyèl 66.85s valide; vokal/lyrics/lisans final mande revizyon |
+| 7 | Videyo Google 8s/720p ak son valide; montaj 8–180s teste lokalman |
+| 8 | Epizòd reyèl 2 sèn/16.10s jenere/sove/download; lip-sync ak QC vizyèl rete |
 | 9 | Ledger/retry/refund teste; peman ak abònman pa aplike |
 | 10 | Admin debaz, CI ak konfig EAS ekri; native builds/OTA reyèl rete |
 | 11 | Pa lanse: bezwen sèvis ekstèn, revizyon pwodiksyon ak tès final |
@@ -83,15 +85,24 @@ Enstriksyon kontinye: gade DEPLOYMENT.md. Pa deklare tout pwodwi a fini ak lis s
 
 ## Preparasyon Render
 
-`render.yaml` ak imaj Docker Render la prepare. Imaj la bati epi 3 tès navigatè sou kontenè a pase. Worker reyèl la fè montaj; disk/DB/sesyon rete apre restart. Kle Render disponib, listing sèvis yo mache; listing owners/PostgreSQL retounen HTTP 403 HTML. Pa gen sèvis Render kreye ankò. Konfigirasyon pwopoze a se anviwon $31.25/mwa anvan AI/taks/depase kota, li bezwen konfimasyon operatè a.
+Imaj Docker bati epi deplwaye sou sèvis Render gratis la. Twa workflow navigatè
+lokal pase. Validasyon PG ak disk dirab te fèt nan yon kontenè separe; beta gratis
+la sèvi ak SQLite ak fichye tanporè. Endpoints Render owners/PostgreSQL retounen
+HTTP 403; pa gen fallback oswa resous peye kreye.
 
 ## Chwa aktyèl: Render gratis
 
-Itilizatè a refize plan Render peye pou kounye a. `render.yaml` ranplase pwopozisyon peye a avèk yon sèl sèvis gratis, san disk oswa bazdone peye. Free beta gen avètisman sou done tanporè nan 9 lang. Jenerasyon AI ak grant kredi peye bloke sou SQLite. Demann bazdone Render free la retounen HTTP 403; pa gen fallback peye.
+Itilizatè a refize plan Render peye pou kounye a. `render.yaml` gen yon sèl sèvis
+gratis, san disk oswa bazdone peye. Avètisman done tanporè nan 9 lang. Esè AI zewo
+kredi aktive avèk limit apre itilizatè a mete kle sou Render epi konfime billing
+Google. Grant kredi peye rete bloke sou SQLite.
 
 ## Lyen piblik verifye
 
-https://haytile-ai.onrender.com sou plan Render Free, estati live. Paj/8 JS-CSS assets ak API reponn HTTP 200 sou HTTPS verifye. Tès piblik kont/bouyon/download/rename/pwojè/logout pase; kont tès la efase. Otomasyon navigatè piblik bloke pa trust/proxy lokal, pa deklare li pase. Kontenè gratis lokal la pase 3 workflow navigatè yo. Done sou sèvis la tanporè; AI dezaktive.
+https://haytile-ai.onrender.com sou plan Render Free, estati live. Paj/8 JS-CSS assets
+ak API reponn HTTP 200 sou HTTPS verifye. Tès piblik kont/bouyon/download/rename/
+pwojè/logout pase. Otomasyon navigatè piblik bloke pa trust/proxy lokal, pa deklare
+li pase. Kontenè gratis lokal la pase 3 workflow navigatè yo. Done tanporè; esè AI aktive.
 
 ## Preparasyon esè AI reyèl sou hosting gratis
 
@@ -99,11 +110,15 @@ Kòd nouvo a ajoute esè zewo kredi ki mande aktivasyon operatè, limit dire/kan
 admisyon SQLite atomik, bootstrap modèl kont la, polling/recovery Interactions,
 download URI sekirize ak referans plizyè pèsonaj. MiniDrama kapab planifye,
 sove pwojè/referans/sèn epi rasanble yon epizòd MP4. Tès pipeline sa a itilize
-founisè simulation klèman idantifye ak montaj FFmpeg reyèl; pa gen jenerasyon
-Google reyèl valide. 40 tès backend, build web, TypeScript web/mobil ak 4 tès
-lang/discovery pase. Live Render poko resevwa nouvo aktivasyon sa a.
+founisè simulation klèman idantifye ak montaj FFmpeg reyèl. Esè piblik Google reyèl
+fèt separeman. 42 tès backend, build web, TypeScript web/mobil ak 4 tès lang/discovery
+pase; 7 tès montaj/pwojè pase apre optimizasyon kopi klip natif la.
 
-Kle Google cloud la otorize Google sèlman; li pa ka kopye kòm yon placeholder nan
-Render. Kle runtime Render ak konfimasyon sou billing/kota Google rete nesesè.
-Gade [AI_TRIAL_ACTIVATION.md](AI_TRIAL_ACTIVATION.md). Pa gen resous Render peye
-kreye; depans Google pou imaj/chante/videyo rete apa.
+Kle Google cloud la otorize Google sèlman; itilizatè a mete kle runtime Render la
+dirèkteman epi konfime billing. Gade [AI_TRIAL_ACTIVATION.md](AI_TRIAL_ACTIVATION.md).
+Pa gen resous Render peye kreye; depans Google rete apa. Videyo limite 8s, epizòd
+limite 16s, 2 esè pa estidyo/itilizatè/jou ak 10 demann global/jou pandan beta a.
+
+Dènye deploy 6444483 live. Sis estidyo gen resi jenerasyon reyèl. Epizòd la gen
+yon pèsonaj ak referans, de klip AI, dyalòg planifye ki rete egzak, pwojè editable
+ak MP4 final prive. Sa pa pwouve dyalòg odyo/lip-sync oswa kontinwite vizyèl pafè.

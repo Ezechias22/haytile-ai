@@ -1,8 +1,9 @@
 # Google AI — sous ofisyèl ki li nan sesyon sa a
 
-Mizajou 23 oktòb 2026 (lè kliyan an). Aksè Google ki te bloke nan premye Faz 1 an
-mache kounye a. Sa korije estati rezo nan ansyen rapò Faz 1 an. Pa gen kle kont
-ki enjekte toujou; pa gen apèl jenerasyon Google ki fèt.
+Mizajou 24 oktòb 2026 (lè kliyan an). Aksè Google mache, kle backend Render
+konfigire epi billing konfime. Sis estidyo pase jenerasyon reyèl, sovgad ak download;
+gade [resi egzak yo](AI_TRIAL_ACTIVATION.md). Modèl ki vizib nan katalòg la pa
+nesesèman disponib pou nouvo itilizatè: esè reyèl jwenn yon 404 sou ansyen tèks la.
 
 ## Modèl ak tarif piblik obsève
 
@@ -12,15 +13,15 @@ epi taks, storage, egress, retry ak lòt token kapab ajoute depans.
 
 | Itilizasyon | ID piblik obsève | Tarif estanda obsève | Nivo gratis |
 |---|---|---|---|
-| Tèks | `gemini-3.8-flash` | $0.75 / milyon token antre; $3.75 / milyon token sòti, jiska 31 desanm 2026; paj la anonse $1.50 / $7.50 depi 1 janvye 2027 | paj la montre antre/sòti gratis sou Free tier, ak kota |
+| Tèks / planifikasyon | `gemini-3.5-flash-lite` | $0.30 / milyon token antre; $2.50 / milyon token sòti | paj la montre antre/sòti gratis sou Free tier, ak kota |
 | Imaj ekonomik Google | `gemini-3.1-flash-lite-image` | $0.25 / milyon token antre; $30 / milyon token imaj sòti; ekivalan $0.0336 pou yon imaj 1K, plis antre/tèks | pa disponib gratis nan tab la |
 | Imaj Google | `gemini-3.1-flash-image` | ekivalan $0.067 pou imaj 1K; lòt dimansyon gen lòt tarif | pa disponib gratis nan tab la |
 | Chante | `lyria-3.5` | $0.08 / chante | pa disponib gratis nan tab la |
 | Klip mizik | `lyria-3-clip-preview` | $0.04 / chante 30 segonn | pa disponib gratis nan tab la |
-| Vwa | `gemini-2.5-flash-preview-tts` | $0.50 / milyon token tèks antre, $10 / milyon token odyo sòti | paj la montre gratis sou Free tier, ak kota |
+| Vwa | `gemini-3.8-flash-lite-tts` | $0.50 / milyon token tèks antre, $6 / milyon token odyo sòti jiska 31 desanm 2026; $1 / $12 depi 1 janvye 2027 | paj la montre gratis sou Free tier, ak kota |
 | Videyo | `gemini-omni-1.1-flash` | $1.50 / milyon token antre, $17.50 / milyon token videyo sòti; ekivalan apeprè $0.10 / segonn 720p nan nòt Google la; tèks sòti separe | paid tier sèlman |
 
-Sa yo se kandida administratè a dwe konfime nan kont lan, pa default aktive.
+Kandida ekonomik yo aktive sèlman sou beta a apre konfimasyon operatè ak esè reyèl.
 Google montre lòt modèl tou; li pa nesesè peye pou modèl ki pi chè a pou chak travay.
 Yon videyo 180s ka koute apeprè $18 pou videyo sòti sèlman nan ekivalan tarif sa a,
 anvan antre, planifikasyon, klip depase ak retry. Pa vann yon quote sou estimasyon sa a.

@@ -1,6 +1,6 @@
 # HAYTILE AI
 
-[Open the free test app](https://haytile-ai.onrender.com) — temporary accounts/media; AI generation is disabled in this free-beta deployment.
+[Open the test app](https://haytile-ai.onrender.com) — free Render hosting, temporary accounts/media, bounded real AI trials. Google provider charges apply to the operator.
 
 A working development foundation for the Haytile creative platform: Next.js web,
 Expo Android/iOS source, FastAPI, PostgreSQL, a durable background worker, optional
@@ -14,9 +14,11 @@ atomically, debit only after validated output and release reservations on failur
 Basic image generation always uses zero user credits.
 
 Google adapters exist for text, image/reference, TTS, Lyria music and Omni video.
-They are **not enabled or live-validated** without a server-side key and verified
-account model configuration. Video clips can be assembled into an 8–180 second
-MP4 with FFmpeg; actual AI continuity and voice/lyrics quality remain unverified.
+Real image, song and 8-second video generation/save/download passed on the public
+service. Current text and TTS models replace account-visible legacy IDs that failed
+real calls; see [activation and acceptance receipts](docs/AI_TRIAL_ACTIVATION.md).
+Video assembly supports 8–180 seconds; the current trial caps video at 8 seconds
+and episodes at 16 seconds. AI continuity and voice/lyrics quality require review.
 MiniDrama includes editable character/scene storyboards and assembly of uploaded or generated clips; automatic lip-sync and continuity scoring are not implemented.
 
 ```sh
@@ -32,6 +34,6 @@ bash scripts/test.sh
 - [Architecture](docs/PHASE_1.md)
 - [Data/security design](docs/DATA_SECURITY.md)
 
-No payment integration, mobile store release or public deployment is claimed.
+Payments and mobile store releases are not implemented. The public web deployment is a test service.
 
-Render free testing is configured in `render.yaml`; see [the free-mode limitations](docs/RENDER.md). Accounts and media on that deployment are temporary, and AI generation is disabled until persistent prerequisites are supplied.
+Render free testing is configured in `render.yaml`; see [the free-mode limitations](docs/RENDER.md). Download creations promptly because accounts and media on that deployment are temporary.

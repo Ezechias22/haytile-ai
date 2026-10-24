@@ -1,8 +1,9 @@
 # Real-provider trial activation
 
-Public beta: https://haytile-ai.onrender.com (Render Free). The live service still
-has no Google provider key. The changes described here are prepared in source;
-they do not constitute a live generation receipt.
+Public beta: https://haytile-ai.onrender.com (Render Free). On 2026-10-24 the
+operator configured the Render provider key and confirmed active Google billing.
+Zero-credit, bounded provider trials were enabled without changing the hosting
+plan. See acceptance receipts below; catalog visibility alone is insufficient.
 
 ## Required operator configuration
 
@@ -23,8 +24,8 @@ or proof of billing access:
 
 | Studio | Candidate | Published free tier |
 |---|---|---|
-| Text / drama planning | gemini-2.5-flash-lite | Eligible, account quotas apply |
-| Voice | gemini-2.5-flash-preview-tts | Eligible, account quotas apply |
+| Text / drama planning | gemini-3.5-flash-lite | Eligible, account quotas apply |
+| Voice | gemini-3.8-flash-lite-tts | Eligible, account quotas apply |
 | Images | gemini-3.1-flash-lite-image | No |
 | Songs / vocals | lyria-3.5 | No |
 | Video | gemini-omni-1.1-flash | No |
@@ -77,9 +78,46 @@ Automatic subtitles, dedicated lip sync and visual quality review remain open.
 
 ## Validation receipt
 
-Local backend suite: 40 tests passed before the additional character-reference
-transport regression. Tests include real FFmpeg assembly/download with explicit
+Local backend suite: 42 tests passed after current TTS support. Seven targeted
+video/project/drama tests also passed after the native clip copy optimization.
+Tests include real FFmpeg assembly/download with explicit
 provider fixtures, SQLite concurrency, bounded trials, bootstrap discovery,
 operation recovery, PCM-to-WAV and safe URI delivery. Web production build,
-web/mobile TypeScript and four locale/discovery tests passed. No Google generation
-was executed in this activation preparation. No paid Render resource was created.
+web/mobile TypeScript and four locale/discovery tests passed previously.
+
+The first public, real-provider acceptance run produced and privately downloaded:
+
+| Studio | Job | Validated artifact |
+|---|---|---|
+| Image | af41c0e6-3fa7-414c-9e05-ada1e0bb9366 | JPEG, 1,028,443 bytes; image opened and inspected |
+| Music | 5babaf91-468f-405d-a66e-001dbaab4e3b | MP3, 66.847292 seconds, 44.1 kHz |
+| Video | b0fee168-45e2-4910-93d9-aeea4d77123b | MP4, exactly 8 seconds, H.264 1280×720 + AAC 48 kHz |
+| Text | 7a09397d-283a-457d-ae64-d6009b14edfe | UTF-8 text, 311 bytes, four Haitian Creole sentences |
+| Voice | 9a5593d9-c9e0-46ba-b7eb-af104dbe19e4 | WAV, 6.04 seconds, PCM 24 kHz |
+| MiniDrama | 3cac0322-fbaa-42b0-b59f-e232c00fec83 | Final MP4, 16.104329 seconds, H.264 1280×720 + AAC 48 kHz |
+
+The old text ID returned NOT_FOUND with an explicit new-user availability notice,
+despite appearing in the catalog. The old TTS ID returned finishReason OTHER with
+no content. A direct real call confirmed usable output from gemini-3.5-flash-lite
+and a 3.68-second WAV from gemini-3.8-flash-lite-tts using the current speech
+Interactions API. Release 76be6ff implements that speech protocol; 6444483 avoids
+redundant video encoding. Deployment dep-dbe297jrjlhs738pofo0 of 6444483 is live
+on the existing free service. End-to-end text, voice and episode acceptance passed
+on that deployment. The episode saved one stable character with a generated
+reference, two generated scene assets, unchanged planned dialogue and a final
+asset ID. Scene cuts total 16 seconds; the MP4 container is 16.104329 seconds,
+within the existing 150 ms muxing tolerance. Anonymous access to its private
+download-link endpoint returned HTTP 401. Direct local processing of the real
+native video also passed assembly and full decode after the copy optimization.
+
+All three downloaded audio/video samples (song, voice and standalone video) passed
+local full decode and contained non-silent audio. This is not a listening or
+pronunciation assessment. The current service exposes the configured models and
+reports provider_generation_disabled=false, trial_ai=true, 8-second video and
+16-second episode limits. Operator-requested real trials incurred Google usage;
+no exact billing total is claimed without the Google billing statement.
+
+These receipts prove real generation, file validation, private saving and download;
+they do not certify pronunciation, exact lyrics, dialogue or visual continuity.
+Private outputs and account tokens stay in ignored artifacts/.local directories.
+No paid Render resource was created.
