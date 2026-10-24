@@ -1,0 +1,14 @@
+**/node_modules
+**/.next
+**/dist
+**/.expo
+**/__pycache__
+**/.pytest_cache
+**/test-results
+.git
+.local
+.env
+.env.*
+artifacts
+**/.ruff_cache
+**/*.tsbuildinfo

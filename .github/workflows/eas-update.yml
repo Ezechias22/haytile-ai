@@ -1,0 +1,33 @@
+name: Publish compatible mobile update
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Target channel (must match an installed native runtime)
+        required: true
+        type: choice
+        options: [staging, production]
+permissions:
+  contents: read
+concurrency:
+  group: eas-update-${{ inputs.channel }}
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    # Protect the production GitHub environment with required reviewers.
+    environment: ${{ inputs.channel }}
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      HAYTILE_EAS_PROJECT_ID: ${{ vars.HAYTILE_EAS_PROJECT_ID }}
+      EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+      EXPO_NO_TELEMETRY: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24' }
+      - run: test -n "$EXPO_TOKEN" && test -n "$HAYTILE_EAS_PROJECT_ID" && test -n "$EXPO_PUBLIC_API_URL"
+      - run: npm ci && npm run typecheck && npm run export
+        working-directory: apps/mobile
+      - run: npx --yes eas-cli@25.3.0 update --channel "${{ inputs.channel }}" --message "GitHub ${GITHUB_SHA}" --non-interactive
+        working-directory: apps/mobile

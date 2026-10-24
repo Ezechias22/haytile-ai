@@ -1,0 +1,11 @@
+{
+  "plugins": [
+    "expo-router",
+    "expo-secure-store",
+    "expo-sharing",
+    "expo-localization",
+    "expo-audio",
+    "expo-video",
+    "expo-status-bar"
+  ]
+}

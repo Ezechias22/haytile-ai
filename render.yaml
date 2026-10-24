@@ -1,0 +1,27 @@
+# Free, temporary test deployment only. Never automatically upgrade this service.
+services:
+  - type: web
+    name: haytile-ai
+    runtime: docker
+    repo: https://github.com/Ezechias22/haytile-ai
+    branch: main
+    region: ohio
+    plan: free
+    dockerfilePath: ./infra/render/Dockerfile
+    dockerContext: .
+    numInstances: 1
+    autoDeployTrigger: 'off'
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:////tmp/haytile/haytile.db
+      - key: HAYTILE_ENV
+        value: production
+      - key: HAYTILE_DATA_DIR
+        value: /tmp/haytile
+      - key: HAYTILE_FREE_BETA
+        value: '1'
+      - key: HAYTILE_SIGNING_KEY
+        generateValue: true
+      - key: HAYTILE_DAILY_JOB_LIMIT
+        value: '10'

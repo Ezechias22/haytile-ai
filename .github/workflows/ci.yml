@@ -1,0 +1,103 @@
+name: Validate Haytile
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: haytile
+          POSTGRES_DB: haytile_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: [5432:5432]
+        options: --health-cmd "pg_isready -U haytile" --health-interval 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql+psycopg://haytile@127.0.0.1:5432/haytile_test
+      HAYTILE_DATA_DIR: /tmp/haytile-ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: pip install -r services/api/requirements.lock
+      - run: alembic upgrade head
+        working-directory: services/api
+      - run: python -m pytest tests -q
+        working-directory: services/api
+      - run: python -m unittest discover -s tests -v
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24', cache: npm, cache-dependency-path: apps/web/package-lock.json }
+      - run: npm ci
+        working-directory: apps/web
+      - run: npm run build
+        working-directory: apps/web
+  mobile:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_NO_TELEMETRY: '1'
+      EXPO_OFFLINE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          { node-version: '24', cache: npm, cache-dependency-path: apps/mobile/package-lock.json }
+      - run: npm ci
+        working-directory: apps/mobile
+      - run: npm run typecheck
+        working-directory: apps/mobile
+      - run: npm run export
+        working-directory: apps/mobile
+  browser:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: haytile
+          POSTGRES_DB: haytile
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: [5432:5432]
+        options: --health-cmd "pg_isready -U haytile" --health-interval 3s --health-retries 20
+    env:
+      DATABASE_URL: postgresql+psycopg://haytile@127.0.0.1:5432/haytile
+      HAYTILE_DATA_DIR: /tmp/haytile-browser-ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '24' }
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: pip install -r services/api/requirements.lock
+      - run: npm ci && npm run build
+        working-directory: apps/web
+      - run: |
+          alembic upgrade head
+          python -m uvicorn haytile.main:app --host 127.0.0.1 --port 8000 > /tmp/haytile-api.log 2>&1 &
+        working-directory: services/api
+      - run: npm run start > /tmp/haytile-web.log 2>&1 &
+        working-directory: apps/web
+      - run: |
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/api/v1/health; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - run: npx playwright test
+        working-directory: apps/web
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-test-results
+          path: apps/web/test-results

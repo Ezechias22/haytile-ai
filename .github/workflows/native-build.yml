@@ -1,0 +1,32 @@
+name: Build mobile binaries
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        required: true
+        type: choice
+        options: [development, staging, production]
+      platform:
+        required: true
+        type: choice
+        options: [android, ios, all]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.profile }}
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      HAYTILE_EAS_PROJECT_ID: ${{ vars.HAYTILE_EAS_PROJECT_ID }}
+      EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+      EXPO_NO_TELEMETRY: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '24' }
+      - run: test -n "$EXPO_TOKEN" && test -n "$HAYTILE_EAS_PROJECT_ID" && test -n "$EXPO_PUBLIC_API_URL"
+      - run: npm ci && npm run typecheck
+        working-directory: apps/mobile
+      - run: npx --yes eas-cli@25.3.0 build --profile "${{ inputs.profile }}" --platform "${{ inputs.platform }}" --non-interactive --no-wait
+        working-directory: apps/mobile
