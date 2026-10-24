@@ -52,12 +52,49 @@ def assemble(clips, duration, aspect="16:9", audio_required=True, clip_durations
             has_audio = any(s["codec_type"] == "audio" for s in info["streams"])
             if audio_required and not has_audio:
                 raise ProviderError("VIDEO_AUDIO_MISSING")
-            if (
-                not any(s["codec_type"] == "video" for s in info["streams"])
-                or seconds <= 0
-            ):
+            if not any(s["codec_type"] == "video" for s in info["streams"]) or seconds <= 0:
                 raise ProviderError("VIDEO_STREAM_INVALID")
             target = root / f"clip-{i}.mp4"
+            video = next(s for s in info["streams"] if s["codec_type"] == "video")
+            audio = next((s for s in info["streams"] if s["codec_type"] == "audio"), {})
+            compatible = (
+                video.get("codec_name") == "h264"
+                and (video.get("width"), video.get("height")) == (width, height)
+                and video.get("pix_fmt") == "yuv420p"
+                and video.get("r_frame_rate") == "24/1"
+                and audio.get("codec_name") == "aac"
+                and audio.get("sample_rate") == "48000"
+                and audio.get("channels") == 2
+            )
+            if compatible:
+                # Native provider clips already match our delivery format. Copying
+                # avoids two unnecessary encodes on the free instance's small CPU.
+                proc = subprocess.run(
+                    [
+                        "ffmpeg",
+                        "-v",
+                        "error",
+                        "-y",
+                        "-i",
+                        str(source),
+                        "-map",
+                        "0:v:0",
+                        "-map",
+                        "0:a:0",
+                        "-c",
+                        "copy",
+                        "-t",
+                        str(seconds),
+                        str(target),
+                    ],
+                    capture_output=True,
+                    timeout=60,
+                )
+                if proc.returncode:
+                    raise ProviderError("VIDEO_NORMALIZATION_FAILED")
+                normalized.append(target)
+                total += seconds
+                continue
             cmd = ["ffmpeg", "-v", "error", "-y", "-i", str(source)]
             if not has_audio:
                 cmd += ["-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo"]
@@ -71,7 +108,7 @@ def assemble(clips, duration, aspect="16:9", audio_required=True, clip_durations
                 "-c:v",
                 "libx264",
                 "-preset",
-                "fast",
+                "veryfast",
                 "-crf",
                 "22",
                 "-pix_fmt",
@@ -88,7 +125,7 @@ def assemble(clips, duration, aspect="16:9", audio_required=True, clip_durations
                 str(seconds),
                 str(target),
             ]
-            proc = subprocess.run(cmd, capture_output=True, timeout=120)
+            proc = subprocess.run(cmd, capture_output=True, timeout=600)
             if proc.returncode:
                 raise ProviderError("VIDEO_NORMALIZATION_FAILED")
             normalized.append(target)
@@ -112,16 +149,8 @@ def assemble(clips, duration, aspect="16:9", audio_required=True, clip_durations
                 str(manifest),
                 "-t",
                 str(duration),
-                "-c:v",
-                "libx264",
-                "-preset",
-                "fast",
-                "-crf",
-                "22",
-                "-threads",
-                "2",
-                "-c:a",
-                "aac",
+                "-c",
+                "copy",
                 "-movflags",
                 "+faststart",
                 str(output),
