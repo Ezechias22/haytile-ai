@@ -24,6 +24,9 @@ def test_firebase_private_library_range_delete_without_local_media(client, monke
         def reload(self, timeout):
             assert self.key in objects
 
+        def generate_signed_url(self, **kwargs):
+            return "https://storage.googleapis.com/private-fixture/signed-fixture"
+
         def open(self, mode, chunk_size, timeout):
             opened.append((mode, chunk_size))
             return io.BytesIO(objects[self.key])

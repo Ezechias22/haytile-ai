@@ -13,6 +13,7 @@ from pathlib import Path
 from sqlalchemy import select
 
 from . import providers, storage
+from .availability import generation_enabled, worker_enabled
 from .db import Asset, Job, Ledger, Project, Session, User, now
 from .downloads import chunks
 from .media import inspect_media
@@ -55,6 +56,8 @@ def finalize_failure(job_id, code):
 
 
 def run_once():
+    if not worker_enabled():
+        return False
     with Session() as db:
         expired = list(
             db.scalars(
@@ -71,6 +74,7 @@ def run_once():
         job = db.scalar(
             select(Job)
             .where(Job.status == "queued")
+            .where(True if generation_enabled() else Job.studio == "assembly")
             .order_by(Job.created_at)
             .with_for_update(skip_locked=True)
             .limit(1)
@@ -281,6 +285,8 @@ def run_once():
 
 def main():
     logging.basicConfig(level=logging.INFO)
+    if not worker_enabled():
+        return
     while True:
         try:
             if run_once():

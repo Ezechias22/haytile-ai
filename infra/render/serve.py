@@ -107,10 +107,11 @@ def main():
         )
         processes.append(api)
         ready("http://127.0.0.1:8000/v1/health", api)
-        worker = subprocess.Popen(
-            ["python", "-m", "haytile.worker"], cwd=APP / "services/api", env=env
-        )
-        processes.append(worker)
+        if env.get("HAYTILE_WORKER_ENABLED", "1") == "1":
+            worker = subprocess.Popen(
+                ["python", "-m", "haytile.worker"], cwd=APP / "services/api", env=env
+            )
+            processes.append(worker)
         port = str(int(env.get("PORT", "10000")))
         web = subprocess.Popen(
             [
@@ -127,7 +128,7 @@ def main():
         )
         processes.append(web)
         ready(f"http://127.0.0.1:{port}/api/v1/health", web)
-        print("Haytile web, API and worker are ready.", flush=True)
+        print("Haytile configured services are ready.", flush=True)
         while not shutting_down:
             if any(p.poll() is not None for p in processes):
                 raise RuntimeError("A required child service stopped.")

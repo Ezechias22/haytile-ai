@@ -1,6 +1,6 @@
 # HAYTILE AI
 
-[Open the test app](https://haytile-ai.onrender.com) — free Render hosting, private Firebase media, temporary account metadata, bounded AI trials. Google provider charges apply to the operator.
+[Open HAYTILE AI](https://haytile-ai.onrender.com) — free Render hosting and private Firebase media. Provider generation is paused while API funds are unavailable.
 
 Current deployment uses private Firebase media storage. Account/job/credit metadata
 is still temporary SQLite. Latest image/text generation probes returned Google
@@ -35,6 +35,7 @@ bash scripts/test.sh
 - [Run and deployment instructions](docs/DEPLOYMENT.md)
 - [Current implementation and limitations](docs/PROGRESS.md)
 - [Selected Firebase media storage and migration](docs/FIREBASE.md)
+- [Direct media delivery, Firestore counters and compute limits](docs/FIREBASE_OFFLOAD.md)
 - [Verified public Google documentation and prices](docs/PROVIDER_RESEARCH.md)
 - [Architecture](docs/PHASE_1.md)
 - [Data/security design](docs/DATA_SECURITY.md)

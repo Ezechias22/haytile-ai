@@ -198,8 +198,9 @@ function Artwork({ kind }: { kind: Studio }) {
   );
 }
 export default function App() {
-  const [freeBeta, setFreeBeta] = useState(false);
-  const [trialAI, setTrialAI] = useState(false);
+  const [generationPaused, setGenerationPaused] = useState(false);
+  const [temporaryDatabase, setTemporaryDatabase] = useState(false);
+  const [backgroundProcessing, setBackgroundProcessing] = useState(true);
   const [videoMaximum, setVideoMaximum] = useState(180);
   const [episodeMaximum, setEpisodeMaximum] = useState(180);
   const [miniMode, setMiniMode] = useState('episode');
@@ -210,10 +211,14 @@ export default function App() {
       trial_max_video_seconds: number;
       trial_max_episode_seconds: number;
       provider_generation_disabled: boolean;
+      generation_paused: boolean;
+      temporary_database: boolean;
+      background_processing_enabled: boolean;
     }>('/runtime')
       .then((config) => {
-        setFreeBeta(config.free_beta);
-        setTrialAI(config.trial_ai && !config.provider_generation_disabled);
+        setGenerationPaused(config.generation_paused);
+        setTemporaryDatabase(config.temporary_database);
+        setBackgroundProcessing(config.background_processing_enabled !== false);
         setVideoMaximum(config.trial_max_video_seconds || 180);
         setEpisodeMaximum(config.trial_max_episode_seconds || 180);
       })
@@ -272,6 +277,7 @@ export default function App() {
       return t('accountNeeded');
     }
     if (/LOGIN_INVALID/.test(code)) return t('authError');
+    if (/AI_SERVICE_PAUSED|BACKGROUND_PROCESSING_PAUSED/.test(code)) return t('servicePausedBody');
     if (/PROVIDER_QUOTA_EXCEEDED/.test(code)) return t('providerQuota');
     if (/PROVIDER_ACCESS_DENIED|PROVIDER_MODEL_UNAVAILABLE/.test(code)) return t('providerAccess');
     if (/PROVIDER|ADAPTER|MODEL/.test(code)) return t('providerError');
@@ -337,9 +343,17 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
     refresh().catch(() => {});
-    const id = setInterval(() => refresh().catch(() => {}), 5000);
-    return () => clearInterval(id);
+    const focused = () => refresh().catch(() => {});
+    window.addEventListener('focus', focused);
+    return () => window.removeEventListener('focus', focused);
   }, [user, refresh]);
+  useEffect(() => {
+    if (!user || !backgroundProcessing || !jobs.some((j) => ['queued', 'processing', 'quality_check'].includes(j.status))) return;
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') refresh().catch(() => {});
+    }, 10000);
+    return () => clearInterval(id);
+  }, [user, jobs, backgroundProcessing, refresh]);
   useEffect(() => {
     if (!toast) return;
     const id = setTimeout(() => setToast(''), 4500);
@@ -351,8 +365,8 @@ export default function App() {
       return;
     }
     if (!preview.text)
-      api<{ path: string }>('/assets/' + preview.id + '/link')
-        .then((x) => setPreviewUrl('/api' + x.path))
+      api<{ path: string; media_url?: string }>('/assets/' + preview.id + '/link')
+        .then((x) => setPreviewUrl(x.media_url || '/api' + x.path))
         .catch(() => setError(t('error')));
   }, [preview, t]);
   useEffect(() => {
@@ -449,7 +463,16 @@ export default function App() {
   };
   const download = async (a: Asset) =>
     run(async () => {
-      const { path } = await api<{ path: string }>('/assets/' + a.id + '/link');
+      const { path, download_url } = await api<{ path: string; download_url?: string }>('/assets/' + a.id + '/link');
+      if (download_url) {
+        const link = document.createElement('a');
+        link.href = download_url;
+        link.rel = 'noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        return;
+      }
       const r = await fetch('/api' + path);
       if (!r.ok) throw new Error('DOWNLOAD_FAILED');
       const blob = await r.blob(),
@@ -702,12 +725,12 @@ export default function App() {
           </div>
         </header>
         <main>
-          {freeBeta && (
-            <section className="alert info free-beta-notice" role="note">
+          {generationPaused && (
+            <section className="alert info" role="note">
               <AlertCircle size={20} />
               <div>
-                <strong>{t('freeBetaTitle')}</strong>
-                <p>{t(trialAI ? 'freeBetaNoticeActive' : 'freeBetaNotice')}</p>
+                <strong>{t('servicePausedTitle')}</strong>
+                <p>{t('servicePausedBody')}</p>
               </div>
             </section>
           )}
@@ -1000,7 +1023,7 @@ export default function App() {
                     {!canGenerate && (
                       <div className="alert info">
                         <AlertCircle size={18} />
-                        <span>{t('unavailable')}</span>
+                        <span>{t(generationPaused ? 'servicePausedBody' : 'unavailable')}</span>
                       </div>
                     )}
                     {studio === 'minidrama' && (
@@ -1070,6 +1093,7 @@ export default function App() {
               assets={assets}
               videoCredits={models.find((m) => m.studio === 'video')?.credits || 0}
               videoAvailable={models.find((m) => m.studio === 'video')?.available || false}
+              backgroundProcessing={backgroundProcessing}
             />
           )}
           {page === 'library' && (
@@ -1215,6 +1239,7 @@ export default function App() {
           )}
           {page === 'settings' && (
             <>
+              {temporaryDatabase && <p className="alert info" role="note">{t('accountRetentionNotice')}</p>}
               <div className="page-heading">
                 <h1>{t('settings')}</h1>
                 <p>{t('privacy')}</p>

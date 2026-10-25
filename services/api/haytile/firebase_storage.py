@@ -2,6 +2,7 @@
 
 import json
 import os
+from datetime import timedelta
 from functools import lru_cache
 from urllib.parse import quote
 from uuid import uuid4
@@ -39,7 +40,30 @@ def blob(key):
 
 
 def put(key, data, mime):
-    blob(key).upload_from_string(data, content_type=mime, timeout=120)
+    remote = blob(key)
+    remote.cache_control = "private, max-age=0, no-store"
+    remote.upload_from_string(data, content_type=mime, timeout=120)
+
+
+def signed_urls(key, mime, filename):
+    """Short-lived owner-authorized media delivery directly from Firebase/GCS."""
+    remote = blob(key)
+    options = {
+        "version": "v4",
+        "expiration": timedelta(minutes=5),
+        "method": "GET",
+        "response_type": mime,
+    }
+    return {
+        "media_url": remote.generate_signed_url(
+            **options, response_disposition="inline"
+        ),
+        "download_url": remote.generate_signed_url(
+            **options,
+            response_disposition="attachment; filename*=UTF-8''"
+            + quote(filename, safe=""),
+        ),
+    }
 
 
 def get(key):

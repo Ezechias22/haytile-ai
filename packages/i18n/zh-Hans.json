@@ -167,14 +167,14 @@
   "moveUp": "上移",
   "moveDown": "下移",
   "voiceProfile": "声音与表达",
-  "freeBetaTitle": "免费测试版——数据为临时存储",
-  "freeBetaNotice": "免费服务可能休眠或重启，账户、草稿和文件可能因此被清除。请下载或导出重要作品。此临时版本已停用 AI 生成和积分购买。",
-  "freeBetaNoticeActive": "有限的真实 AI 试用——临时存储。服务商可能向运营方收费。请下载重要结果；免费托管可能清除本地数据。",
   "providerBillingNotice": "描述会发送给服务商。音视频请求可能被保存以恢复任务；请查看其条款。零用户积分不代表服务商 API 免费。",
   "providerQuota": "服务商配额已用尽。请检查项目配额或稍后重试。",
   "providerAccess": "当前账户或地区无法访问此模型。",
   "outputFormat": "输出",
   "completeEpisode": "完整剧集",
   "scriptOutput": "仅剧本",
-  "episodeReviewNote": "剧集使用角色参考图和生成片段合成最终视频。请审核对白、口型和连续性；不提供自动视觉质量保证。"
+  "episodeReviewNote": "剧集使用角色参考图和生成片段合成最终视频。请审核对白、口型和连续性；不提供自动视觉质量保证。",
+  "servicePausedTitle": "AI 生成已暂停",
+  "servicePausedBody": "AI 创作暂时不可用。您仍可整理项目、上传文件、预览、收听和下载。",
+  "accountRetentionNotice": "请保留账户数据和项目信息的副本。服务重启时这些信息可能丢失。"
 }

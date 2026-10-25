@@ -1,5 +1,18 @@
 # HAYTILE AI — estati livrezon
 
+## Dènye chanjman: entèfas ak chaj Render
+
+Etikèt vèsyon tès retire nan entèfas 9 lang yo. Disponibilite AI vin yon mesaj sèvis
+nòmal, avèk backend ki refize demann AI pandan pa gen kredi API. Preview/download
+prive sèvi lyen Firebase dirèk ki ekspire apre 5 minit, san gwo medya pase nan
+Render. Kontè limit yo deplase sou Firestore (database ID `default`) avèk preconditions
+atomik; kont/travay/kredi/pwojè yo poko migre. Polling inaktif retire.
+
+Worker Render la ka pa demare ditou avèk switch operatè a; montaj lou an poz, pa
+deklare li deplwaye sou Cloud Run. Kont sèvis aktyèl la manke otorizasyon deplwaman
+compute yo. 62 tès backend, 3 workflow navigatè, build/TypeScript ak tès dirèk sou
+Firebase/Firestore pase. Gade [detay offload la](FIREBASE_OFFLOAD.md).
+
 ## Chwa Firebase, 25 oktòb 2026
 
 Itilizatè a konfime Firebase pou medya; li kounye a kreye pwojè/app web la epi aktive

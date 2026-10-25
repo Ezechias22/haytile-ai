@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 
+from .availability import worker_enabled
 from .db import Asset, Job, Project, Session, User
 from .main import Generate, current, fail, generate, job_json, limit, wake_worker
 
@@ -194,6 +195,8 @@ class Assembly(BaseModel):
 
 @router.post("/v1/projects/{project_id}/assemble", status_code=202)
 def assemble_project(project_id: str, body: Assembly, user=Depends(current)):
+    if not worker_enabled():
+        fail("BACKGROUND_PROCESSING_PAUSED", 503)
     limit("assemble:" + user.id, 10, 3600)
     with Session.begin() as db:
         db.scalar(select(User).where(User.id == user.id).with_for_update())

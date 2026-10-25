@@ -5,12 +5,15 @@ import logging
 import os
 
 from . import providers
+from .availability import generation_enabled
 from .db import Audit, Model, Session, now
 
 log = logging.getLogger("haytile.bootstrap")
 
 
 def configure_models():
+    if not generation_enabled():
+        return
     raw = os.environ.get("HAYTILE_MODEL_CONFIG")
     if not raw:
         return

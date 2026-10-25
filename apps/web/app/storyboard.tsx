@@ -55,6 +55,7 @@ export default function Storyboard({
   assets,
   videoCredits,
   videoAvailable,
+  backgroundProcessing = true,
 }: {
   t: (s: string) => string;
   authenticated: boolean;
@@ -62,6 +63,7 @@ export default function Storyboard({
   assets: Asset[];
   videoCredits: number;
   videoAvailable: boolean;
+  backgroundProcessing?: boolean;
 }) {
   const [projects, setProjects] = useState<Project[]>([]),
     [current, setCurrent] = useState<Project | null>(null),
@@ -491,6 +493,7 @@ export default function Storyboard({
               className="button"
               disabled={
                 busy ||
+                !backgroundProcessing ||
                 dirty ||
                 !current.document.scenes.length ||
                 current.document.scenes.some((s) => !s.asset_id)

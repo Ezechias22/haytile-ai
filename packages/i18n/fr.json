@@ -167,14 +167,14 @@
   "moveUp": "Monter",
   "moveDown": "Descendre",
   "voiceProfile": "Voix et interprétation",
-  "freeBetaTitle": "Version de test gratuite — données temporaires",
-  "freeBetaNotice": "Cet hébergement gratuit peut se mettre en veille ou redémarrer. Comptes, brouillons et fichiers peuvent alors être effacés. Téléchargez ou exportez vos travaux importants. La génération IA et les achats de crédits sont désactivés.",
-  "freeBetaNoticeActive": "Essais IA réels limités — stockage temporaire. Le fournisseur peut facturer l’opérateur. Téléchargez les résultats importants ; l’hébergement gratuit peut effacer les données.",
   "providerBillingNotice": "Votre description est envoyée au fournisseur. Les demandes audio/vidéo peuvent y être conservées pour reprise ; consultez ses conditions. Zéro crédit utilisateur ne signifie pas une API gratuite.",
   "providerQuota": "Le quota du fournisseur est épuisé. Vérifiez celui du projet ou réessayez plus tard.",
   "providerAccess": "Ce modèle n’est pas accessible au compte ou à la région configurée.",
   "outputFormat": "Résultat",
   "completeEpisode": "Épisode complet",
   "scriptOutput": "Scénario uniquement",
-  "episodeReviewNote": "L’épisode utilise des références de personnages et des clips générés, puis assemble la vidéo finale. Vérifiez dialogues, lèvres et continuité ; aucune garantie visuelle automatique."
+  "episodeReviewNote": "L’épisode utilise des références de personnages et des clips générés, puis assemble la vidéo finale. Vérifiez dialogues, lèvres et continuité ; aucune garantie visuelle automatique.",
+  "servicePausedTitle": "La génération IA est suspendue",
+  "servicePausedBody": "La création IA est momentanément indisponible. Vous pouvez organiser vos projets, importer des fichiers, les consulter, les écouter et les télécharger.",
+  "accountRetentionNotice": "Conservez une copie des données de votre compte et de vos projets. Elles peuvent être perdues au redémarrage du service."
 }

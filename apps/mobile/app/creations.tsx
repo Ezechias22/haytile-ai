@@ -60,9 +60,9 @@ export default function Creations() {
       setBusy(false);
     }
   }
-  async function link(a: Asset) {
-    const result = await api<{ path: string }>('/assets/' + a.id + '/link');
-    return base + result.path;
+  async function link(a: Asset, download = false) {
+    const result = await api<{ path: string; media_url?: string; download_url?: string }>('/assets/' + a.id + '/link');
+    return (download ? result.download_url : result.media_url) || base + result.path;
   }
   async function open(a: Asset) {
     setPreview(a);
@@ -102,7 +102,7 @@ export default function Creations() {
   }
   async function share(a: Asset) {
     await act(async () => {
-      const signed = await link(a),
+      const signed = await link(a, true),
         file = await File.downloadFileAsync(
           signed,
           new File(

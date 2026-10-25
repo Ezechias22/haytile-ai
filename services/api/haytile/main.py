@@ -17,6 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from starlette.background import BackgroundTask
 
 from . import providers, storage
+from .availability import generation_enabled, worker_enabled
 from .db import (
     Asset,
     Audit,
@@ -60,6 +61,16 @@ def fail(code, status=400):
 
 
 def limit(key, maximum, seconds):
+    if os.environ.get("HAYTILE_RATE_LIMIT_PROVIDER") == "firestore":
+        from . import firestore_limits
+
+        try:
+            firestore_limits.consume(key, maximum, seconds)
+        except firestore_limits.LimitExceeded:
+            fail("RATE_LIMIT", 429)
+        except firestore_limits.LimitUnavailable:
+            fail("RATE_LIMIT_UNAVAILABLE", 503)
+        return
     from sqlalchemy.dialects.postgresql import insert as pg_insert
     from sqlalchemy.dialects.sqlite import insert as sq_insert
 
@@ -202,7 +213,15 @@ def runtime_settings():
         "free_beta": FREE_BETA,
         "temporary_storage": FREE_BETA and not storage.is_remote(),
         "temporary_database": engine.dialect.name == "sqlite",
-        "provider_generation_disabled": not configured
+        "media_delivery": "firebase_direct"
+        if storage.backend() == "firebase"
+        else "api_stream",
+        "rate_limit_store": os.environ.get("HAYTILE_RATE_LIMIT_PROVIDER", "local"),
+        "generation_paused": not generation_enabled(),
+        "background_processing_enabled": worker_enabled(),
+        "provider_generation_disabled": not generation_enabled()
+        or not worker_enabled()
+        or not configured
         or (FREE_BETA and engine.dialect.name != "postgresql" and not trial_enabled()),
         "trial_ai": trial_enabled(),
         "trial_max_episode_seconds": int(
@@ -368,8 +387,13 @@ def export_account(user=Depends(current)):
 def models():
     with Session() as db:
         rows = {m.studio: m for m in db.scalars(select(Model))}
-    present = bool(os.environ.get("HAYTILE_GEMINI_API_KEY")) and not (
-        FREE_BETA and engine.dialect.name != "postgresql" and not trial_enabled()
+    present = (
+        generation_enabled()
+        and worker_enabled()
+        and bool(os.environ.get("HAYTILE_GEMINI_API_KEY"))
+        and not (
+            FREE_BETA and engine.dialect.name != "postgresql" and not trial_enabled()
+        )
     )
     return [
         {
@@ -390,7 +414,9 @@ def models():
             "model_id": rows[s].model_id if s in rows else None,
             "credits": 0 if s == "image" else (rows[s].credits if s in rows else 0),
             "terms_url": rows[s].terms_url if s in rows else None,
-            "reason": None
+            "reason": "AI_SERVICE_PAUSED"
+            if not generation_enabled() or not worker_enabled()
+            else None
             if present and rows.get(s) and rows[s].enabled
             else "PROVIDER_SETUP_REQUIRED",
         }
@@ -409,6 +435,8 @@ class Generate(BaseModel):
 
 @app.post("/v1/jobs", status_code=202)
 def generate(body: Generate, user=Depends(current)):
+    if not generation_enabled() or not worker_enabled():
+        fail("AI_SERVICE_PAUSED", 503)
     if FREE_BETA and engine.dialect.name != "postgresql" and not trial_enabled():
         fail("FREE_BETA_AI_DISABLED", 503)
     if not body.prompt.strip() or not body.title.strip():
@@ -587,6 +615,8 @@ def jobs(user=Depends(current)):
 
 @app.post("/v1/jobs/{job_id}/retry")
 def retry(job_id: str, user=Depends(current)):
+    if not worker_enabled():
+        fail("BACKGROUND_PROCESSING_PAUSED", 503)
     with Session.begin() as db:
         lock_sqlite_write(db)
         owner = db.scalar(select(User).where(User.id == user.id).with_for_update())
@@ -597,6 +627,8 @@ def retry(job_id: str, user=Depends(current)):
         )
         if not job:
             fail("NOT_FOUND", 404)
+        if job.studio != "assembly" and not generation_enabled():
+            fail("AI_SERVICE_PAUSED", 503)
         if job.status != "failed":
             fail("JOB_NOT_FAILED", 409)
         if job.error == "WORKER_INTERRUPTED_RECONCILE":
@@ -737,10 +769,18 @@ def download_link(asset_id: str, user=Depends(current)):
         if not asset:
             fail("NOT_FOUND", 404)
     expires = int(time.time()) + 300
-    return {
+    result = {
         "path": f"/v1/files/{asset_id}?expires={expires}&signature={sign_asset(asset_id, expires)}",
         "expires": expires,
     }
+    if storage.backend() == "firebase":
+        from .firebase_storage import signed_urls
+
+        ext = {"text/plain": "txt", "audio/mpeg": "mp3"}.get(
+            asset.mime, asset.mime.split("/")[-1]
+        )
+        result.update(signed_urls(asset.key, asset.mime, asset.title + "." + ext))
+    return result
 
 
 @app.get("/v1/files/{asset_id}")
