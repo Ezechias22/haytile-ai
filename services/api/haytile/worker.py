@@ -5,13 +5,16 @@ import base64
 import logging
 import math
 import os
+import tempfile
 import time
 from datetime import timedelta
+from pathlib import Path
 
 from sqlalchemy import select
 
 from . import providers, storage
 from .db import Asset, Job, Ledger, Project, Session, User, now
+from .downloads import chunks
 from .media import inspect_media
 from .trials import lock_sqlite_write
 
@@ -98,6 +101,8 @@ def run_once():
     if job.params.get("resume_operation_id"):
         params["_resume_operation_id"] = job.params["resume_operation_id"]
     key = None
+    scratch = tempfile.TemporaryDirectory(prefix="haytile-job-")
+    params["_scratch_dir"] = scratch.name
     try:
         ref_id = params.get("reference_asset_id")
         if ref_id:
@@ -133,7 +138,12 @@ def run_once():
                     asset = db.get(Asset, aid)
                     if not asset or asset.user_id != job.user_id:
                         raise providers.ProviderError("SCENE_MEDIA_NOT_READY")
-                    clips.append(storage.get(asset.key))
+                    path = Path(scratch.name) / f"uploaded-{len(clips)}.mp4"
+                    reader = storage.open_range(asset.key, 0, asset.size - 1)
+                    with path.open("wb") as target:
+                        for chunk in chunks(reader, asset.size):
+                            target.write(chunk)
+                    clips.append(path)
             data = assemble(
                 clips,
                 params["duration"],
@@ -153,7 +163,10 @@ def run_once():
                         return True
                 scene = f"{prompt}\nScene {index + 1} of {count}. Generate 10 seconds. Maintain the same characters, clothes, environment, lighting and camera continuity. Include natural synchronized audio. Single continuous shot."
                 clip, _ = providers.generate("video", model, scene, params)
-                clips.append(clip)
+                path = Path(scratch.name) / f"generated-{index}.mp4"
+                path.write_bytes(clip)
+                del clip
+                clips.append(path)
                 with Session.begin() as db:
                     row = db.get(Job, job_id)
                     if not row or row.status != "processing":
@@ -261,6 +274,8 @@ def run_once():
             code = "WORKER_INTERRUPTED_RECONCILE"
         log.warning("job_failed id=%s code=%s", job_id, code)
         finalize_failure(job_id, code)
+    finally:
+        scratch.cleanup()
     return True
 
 

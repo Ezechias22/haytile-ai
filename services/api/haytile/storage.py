@@ -13,6 +13,26 @@ DIRECTORY.mkdir(exist_ok=True)
 BUCKET = os.environ.get("STORAGE_BUCKET")
 
 
+def backend():
+    value = os.environ.get("STORAGE_PROVIDER") or ("s3" if BUCKET else "local")
+    if value not in ("firebase", "s3", "local"):
+        raise RuntimeError("STORAGE_PROVIDER_INVALID")
+    return value
+
+
+def is_remote():
+    return backend() != "local"
+
+
+def validate_configuration():
+    if backend() == "firebase":
+        from . import firebase_storage
+
+        firebase_storage.bucket()
+    elif backend() == "s3" and not BUCKET:
+        raise RuntimeError("STORAGE_BUCKET_MISSING")
+
+
 def client():
     return boto3.client(
         "s3",
@@ -31,7 +51,11 @@ def client():
 
 def put(data, mime):
     key = uid()
-    if BUCKET:
+    if backend() == "firebase":
+        from . import firebase_storage
+
+        firebase_storage.put(key, data, mime)
+    elif backend() == "s3":
         encryption = os.environ.get("STORAGE_SERVER_SIDE_ENCRYPTION", "AES256")
         if encryption not in ("AES256", "provider-managed"):
             raise ValueError("STORAGE_ENCRYPTION_MODE_INVALID")
@@ -51,22 +75,36 @@ def put(data, mime):
 
 
 def get(key):
-    if BUCKET:
+    if backend() == "firebase":
+        from . import firebase_storage
+
+        return firebase_storage.get(key)
+    if backend() == "s3":
         return client().get_object(Bucket=BUCKET, Key=key)["Body"].read()
     return (DIRECTORY / Path(key).name).read_bytes()
 
 
 def open_range(key, start, end):
     """Open a bounded reader without allocating an entire media file."""
-    if BUCKET:
-        return client().get_object(Bucket=BUCKET, Key=key, Range=f"bytes={start}-{end}")["Body"]
+    if backend() == "firebase":
+        from . import firebase_storage
+
+        return firebase_storage.open_range(key, start, end)
+    if backend() == "s3":
+        return client().get_object(
+            Bucket=BUCKET, Key=key, Range=f"bytes={start}-{end}"
+        )["Body"]
     reader = (DIRECTORY / Path(key).name).open("rb")
     reader.seek(start)
     return reader
 
 
 def delete(key):
-    if BUCKET:
+    if backend() == "firebase":
+        from . import firebase_storage
+
+        firebase_storage.delete(key)
+    elif backend() == "s3":
         client().delete_object(Bucket=BUCKET, Key=key)
     else:
         (DIRECTORY / Path(key).name).unlink(missing_ok=True)

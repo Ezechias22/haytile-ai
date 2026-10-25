@@ -41,8 +41,11 @@ def assemble(clips, duration, aspect="16:9", audio_required=True, clip_durations
         normalized = []
         total = 0.0
         for i, data in enumerate(clips):
-            source = root / f"source-{i}.mp4"
-            source.write_bytes(data)
+            if isinstance(data, Path):
+                source = data
+            else:
+                source = root / f"source-{i}.mp4"
+                source.write_bytes(data)
             info = probe(source)
             seconds = float(info.get("format", {}).get("duration", 0))
             if clip_durations is not None:
@@ -52,7 +55,10 @@ def assemble(clips, duration, aspect="16:9", audio_required=True, clip_durations
             has_audio = any(s["codec_type"] == "audio" for s in info["streams"])
             if audio_required and not has_audio:
                 raise ProviderError("VIDEO_AUDIO_MISSING")
-            if not any(s["codec_type"] == "video" for s in info["streams"]) or seconds <= 0:
+            if (
+                not any(s["codec_type"] == "video" for s in info["streams"])
+                or seconds <= 0
+            ):
                 raise ProviderError("VIDEO_STREAM_INVALID")
             target = root / f"clip-{i}.mp4"
             video = next(s for s in info["streams"] if s["codec_type"] == "video")

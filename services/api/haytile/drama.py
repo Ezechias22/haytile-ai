@@ -7,6 +7,7 @@ visual consistency guarantee is inferred from successful file decoding.
 import base64
 import json
 import math
+from pathlib import Path
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -189,7 +190,10 @@ Maintain clothing, faces, objects and setting. No captions or titles. This is sc
         scene["asset_id"] = save_intermediate(
             job.id, job.user_id, "[Scene] " + scene["title"], clip, mime
         )
-        clips.append(clip)
+        path = Path(params["_scratch_dir"]) / f"drama-{index}.mp4"
+        path.write_bytes(clip)
+        del clip
+        clips.append(path)
         checkpoint(35 + int(40 * (index + 1) / count))
     return assemble(
         clips, duration, aspect, clip_durations=[s["duration"] for s in scenes]

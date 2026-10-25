@@ -30,6 +30,7 @@ bash scripts/test.sh
 
 - [Run and deployment instructions](docs/DEPLOYMENT.md)
 - [Current implementation and limitations](docs/PROGRESS.md)
+- [Selected Firebase media storage and migration](docs/FIREBASE.md)
 - [Verified public Google documentation and prices](docs/PROVIDER_RESEARCH.md)
 - [Architecture](docs/PHASE_1.md)
 - [Data/security design](docs/DATA_SECURITY.md)

@@ -161,6 +161,7 @@ def session_response(user, response):
 @asynccontextmanager
 async def lifespan(app):
     require_durable_runtime(engine.dialect.name)
+    storage.validate_configuration()
     with engine.connect() as connection:
         connection.execute(select(1))
     yield
@@ -199,7 +200,7 @@ def runtime_settings():
         )
     return {
         "free_beta": FREE_BETA,
-        "temporary_storage": FREE_BETA and not bool(storage.BUCKET),
+        "temporary_storage": FREE_BETA and not storage.is_remote(),
         "temporary_database": engine.dialect.name == "sqlite",
         "provider_generation_disabled": not configured
         or (FREE_BETA and engine.dialect.name != "postgresql" and not trial_enabled()),
@@ -224,7 +225,7 @@ def health():
     return {
         "status": "ok",
         "database": engine.dialect.name,
-        "storage": "s3" if storage.BUCKET else "private-local",
+        "storage": storage.backend() if storage.is_remote() else "private-local",
     }
 
 
@@ -846,7 +847,7 @@ def operations(user=Depends(admin)):
                 os.environ, engine.dialect.name
             ),
             "temporary_database": engine.dialect.name == "sqlite",
-            "temporary_media": FREE_BETA and not bool(storage.BUCKET),
+            "temporary_media": FREE_BETA and not storage.is_remote(),
             "jobs_by_status": counts,
             "oldest_queued_seconds": max(
                 0, int((now() - aware(oldest)).total_seconds())

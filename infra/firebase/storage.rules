@@ -1,0 +1,9 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Backend service account IAM controls access; app users use our private API.
+    match /haytile/{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

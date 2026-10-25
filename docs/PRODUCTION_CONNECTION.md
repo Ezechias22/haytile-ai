@@ -1,11 +1,15 @@
 # Connecting durable hosting and mobile builds
 
+**Current operator choice:** Firebase for media, not the Supabase storage proposal
+below. See [Firebase setup, limits and migration](FIREBASE.md). Durable PostgreSQL
+is still required for accounts/jobs/credits; a media bucket does not replace it.
+
 Status, 2026-10-25: the web app has real AI generation. The operator has Expo and
 Google Play accounts, no Apple Developer account, and no durable database/storage
 project yet. Paid Render resources remain unauthorized. This document does not
 claim the full product is ready for production.
 
-## Durable data without a paid Render plan
+## Earlier alternative: Supabase (not the selected media service)
 
 Create a project in [Supabase](https://supabase.com/dashboard). Use its current
 pricing/region terms to choose a suitable plan. Its published free allowance is

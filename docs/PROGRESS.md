@@ -1,5 +1,20 @@
 # HAYTILE AI — estati livrezon
 
+## Chwa Firebase, 25 oktòb 2026
+
+Itilizatè a konfime Firebase pou medya; pwojè a poko kreye. Adapter prive Firebase
+Storage ajoute avèk credentials backend eksplisit, namespace haytile/, lekti pa
+moso ak sipò download Range ki deja egziste. Worker la mete klip sèn yo nan dosye
+travay tanporè epi netwaye yo, olye kenbe tout lis klip yo nan RAM. Firebase pa
+ogmante RAM Render ni ranplase bazdone kont/kredi otomatikman. Gade [FIREBASE.md](FIREBASE.md).
+Entegrasyon an poko konekte/deplwaye sou kont Firebase reyèl; pa gen kle oswa bucket
+envante epi pa gen resous peye kreye. Plan Blaze mande verifikasyon nan Firebase.
+
+50 tès backend pase apre adapter ak spool klip yo. Tès Firebase yo itilize yon
+bucket fixture pou write/read/range/delete ak refi credentials machin; yo pa prèv
+upload sou Firebase reyèl. Nouvo depandans yo pinnen san chanje vèsyon ki te la yo;
+pip check pa jwenn konfli.
+
 ## Dènye travay pwodiksyon, 25 oktòb 2026
 
 Download prive kounye a sèvi fichye yo pa moso 64 KiB, sipòte Range/HEAD pou
