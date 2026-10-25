@@ -1,8 +1,9 @@
 # Firebase storage for HAYTILE AI
 
 Firebase is the operator's selected media-storage service (2026-10-25), replacing
-the previously proposed Supabase storage option. The operator has not created the
-Firebase project yet. Integration code is prepared; no live bucket upload, migration
+the previously proposed Supabase storage option. The operator has now created the
+Firebase project and web app and activated Storage and Firestore. Backend credentials
+and bucket configuration are still absent from Render. Integration code is prepared; no live bucket upload, migration
 or Firebase production deployment has been claimed.
 
 ## What moves off Render
@@ -59,6 +60,13 @@ other applications. A permissive overlapping rule can still grant access, so tes
 anonymous and cross-user access against the actual deployed rules/bucket.
 
 ## Migration and acceptance
+
+After setting the backend credentials in a trusted operator environment, run from
+`services/api`: `python -m haytile.firebase_storage --probe`. It writes and reads
+one disposable `haytile/probes/` object, verifies range reads and anonymous denial,
+then deletes it. It prints no credentials or signed URLs. This is an explicit test
+with provider usage, not an automatic startup action. Do not run against an unrelated
+project. A passing probe does not migrate existing records or validate Firestore.
 
 Preserve existing SQLite records, local media and the signing key before any
 redeploy. Switching an environment variable alone does not migrate old objects:

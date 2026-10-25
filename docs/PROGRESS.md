@@ -2,7 +2,8 @@
 
 ## Chwa Firebase, 25 oktòb 2026
 
-Itilizatè a konfime Firebase pou medya; pwojè a poko kreye. Adapter prive Firebase
+Itilizatè a konfime Firebase pou medya; li kounye a kreye pwojè/app web la epi aktive
+Storage ak Firestore. Credentials backend ak non bucket la poko sou Render. Adapter prive Firebase
 Storage ajoute avèk credentials backend eksplisit, namespace haytile/, lekti pa
 moso ak sipò download Range ki deja egziste. Worker la mete klip sèn yo nan dosye
 travay tanporè epi netwaye yo, olye kenbe tout lis klip yo nan RAM. Firebase pa
