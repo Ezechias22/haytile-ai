@@ -86,6 +86,21 @@ def anonymous_status(key):
             return response.status_code
 
 
+def anonymous_firebase_status(key):
+    # Firebase client Security Rules are separate from the GCS IAM interface.
+    name = os.environ["FIREBASE_STORAGE_BUCKET"]
+    url = (
+        "https://firebasestorage.googleapis.com/v0/b/"
+        + quote(name, safe="")
+        + "/o/"
+        + quote("haytile/" + key, safe="")
+        + "?alt=media"
+    )
+    with httpx.Client(timeout=30, follow_redirects=False) as client:
+        with client.stream("GET", url, headers={"Range": "bytes=0-0"}) as response:
+            return response.status_code
+
+
 def probe():
     """Explicit operator test: create/read/delete only our disposable object."""
     key = "probes/" + str(uuid4())
@@ -100,9 +115,9 @@ def probe():
                 raise RuntimeError("FIREBASE_PROBE_RANGE_MISMATCH")
         finally:
             reader.close()
-        status = anonymous_status(key)
-        if status not in (403, 404):
-            raise RuntimeError("FIREBASE_PROBE_PRIVATE_ACCESS_NOT_CONFIRMED")
+        for status in (anonymous_status(key), anonymous_firebase_status(key)):
+            if status not in (401, 403, 404):
+                raise RuntimeError("FIREBASE_PROBE_PRIVATE_ACCESS_NOT_CONFIRMED")
     finally:
         delete(key)
     return {
@@ -110,6 +125,7 @@ def probe():
         "read": True,
         "range": True,
         "anonymous_denied": True,
+        "firebase_rules_anonymous_denied": True,
         "delete": True,
     }
 

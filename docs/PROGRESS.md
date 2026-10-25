@@ -3,13 +3,19 @@
 ## Chwa Firebase, 25 oktòb 2026
 
 Itilizatè a konfime Firebase pou medya; li kounye a kreye pwojè/app web la epi aktive
-Storage ak Firestore. Credentials backend ak non bucket la poko sou Render. Adapter prive Firebase
+Storage ak Firestore. Credentials backend ak bucket la verifye; Firebase Storage
+deplwaye sou Render Free avèk source a187b45. Adapter prive Firebase
 Storage ajoute avèk credentials backend eksplisit, namespace haytile/, lekti pa
 moso ak sipò download Range ki deja egziste. Worker la mete klip sèn yo nan dosye
 travay tanporè epi netwaye yo, olye kenbe tout lis klip yo nan RAM. Firebase pa
 ogmante RAM Render ni ranplase bazdone kont/kredi otomatikman. Gade [FIREBASE.md](FIREBASE.md).
-Entegrasyon an poko konekte/deplwaye sou kont Firebase reyèl; pa gen kle oswa bucket
-envante epi pa gen resous peye kreye. Plan Blaze mande verifikasyon nan Firebase.
+Tès reyèl ekriti/lekti/range/delete ak aksè anonim 403 sou GCS ak Firebase REST
+pase. API piblik la pase upload/download tèks ak PNG, HEAD/range, izolasyon ant
+kont ak cleanup. Pa gen resous Render peye kreye.
+
+Nouvo esè Google imaj ak tèks echwe ak PROVIDER_QUOTA_EXCEEDED; pa deklare nouvo
+jenerasyon sa yo pase. Firebase mache. Firestore poko ranplase bazdone SQLite
+tanporè kont/travay/kredi/pwojè yo. Sa toujou anpeche yon deklarasyon pwodiksyon konplè.
 
 50 tès backend pase apre adapter ak spool klip yo. Tès Firebase yo itilize yon
 bucket fixture pou write/read/range/delete ak refi credentials machin; yo pa prèv
@@ -26,8 +32,8 @@ pwodiksyon nòmal rejte SQLite/depo manke/origin HTTP/kle siyati enplisit. Beta 
 deklare rete disponib. Adapter S3 prepare pou Supabase san header SSE ki pa sipòte;
 limit esè yo rete aplike lè bazdone a vin PostgreSQL.
 
-Sa yo se chanjman sous; yo poko deplwaye sou sèvis piblik la. Itilizatè a poko gen
-pwojè bazdone/depo dirab; li gen Expo/Google Play men aksè teknik yo poko enjekte,
+Chanjman sa yo kounye a enkli nan deploy Firebase a187b45. Itilizatè a gen depo
+medya Firebase men bazdone app la poko dirab; li gen Expo/Google Play men aksè teknik yo poko enjekte,
 epi kont Apple manke. Gade [koneksyon pwodiksyon](PRODUCTION_CONNECTION.md).
 
 Validasyon nouvo travay la: build Next.js ak TypeScript pase, 2 tès Node sou limit

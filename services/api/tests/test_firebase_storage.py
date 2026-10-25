@@ -66,8 +66,9 @@ def test_firebase_private_library_range_delete_without_local_media(client, monke
 
 
 @pytest.mark.parametrize("anonymous_status", [200, 206, 302, 500])
+@pytest.mark.parametrize("interface", ["gcs", "firebase"])
 def test_probe_rejects_public_or_inconclusive_access_and_cleans_up(
-    monkeypatch, anonymous_status
+    monkeypatch, anonymous_status, interface
 ):
     objects = {}
     monkeypatch.setattr(
@@ -80,7 +81,14 @@ def test_probe_rejects_public_or_inconclusive_access_and_cleans_up(
         lambda key, start, end: io.BytesIO(objects[key][start:]),
     )
     monkeypatch.setattr(
-        firebase_storage, "anonymous_status", lambda key: anonymous_status
+        firebase_storage,
+        "anonymous_status",
+        lambda key: anonymous_status if interface == "gcs" else 403,
+    )
+    monkeypatch.setattr(
+        firebase_storage,
+        "anonymous_firebase_status",
+        lambda key: anonymous_status if interface == "firebase" else 403,
     )
     monkeypatch.setattr(firebase_storage, "delete", lambda key: objects.pop(key, None))
     with pytest.raises(RuntimeError, match="PRIVATE_ACCESS_NOT_CONFIRMED"):

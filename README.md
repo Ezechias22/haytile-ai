@@ -1,6 +1,10 @@
 # HAYTILE AI
 
-[Open the test app](https://haytile-ai.onrender.com) — free Render hosting, temporary accounts/media, bounded real AI trials. Google provider charges apply to the operator.
+[Open the test app](https://haytile-ai.onrender.com) — free Render hosting, private Firebase media, temporary account metadata, bounded AI trials. Google provider charges apply to the operator.
+
+Current deployment uses private Firebase media storage. Account/job/credit metadata
+is still temporary SQLite. Latest image/text generation probes returned Google
+quota errors; see [live Firebase acceptance and remaining limits](docs/FIREBASE.md).
 
 A working development foundation for the Haytile creative platform: Next.js web,
 Expo Android/iOS source, FastAPI, PostgreSQL, a durable background worker, optional

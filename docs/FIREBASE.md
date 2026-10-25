@@ -3,8 +3,40 @@
 Firebase is the operator's selected media-storage service (2026-10-25), replacing
 the previously proposed Supabase storage option. The operator has now created the
 Firebase project and web app and activated Storage and Firestore. Backend credentials
-and bucket configuration are still absent from Render. Integration code is prepared; no live bucket upload, migration
-or Firebase production deployment has been claimed.
+and bucket configuration are now verified on Render. Firebase Storage is deployed
+and live; Firestore has not replaced the application's SQLite/PostgreSQL data layer.
+
+## Live acceptance, 2026-10-25
+
+Render Free deploy `dep-dbf1vdom7kps73ffnisg`, source `a187b45`, reports
+`storage: firebase`. The operator confirmed that the previous ephemeral deployment
+contained test data only before authorizing this cutover. No paid Render resource
+was created or enabled.
+
+Real bucket verification passed create/read/range/delete. Anonymous reads returned
+HTTP 403 on **both** storage.googleapis.com (GCS IAM) and the Firebase Storage REST
+download interface (client Security Rules). The operator probe now checks both;
+GCS denial alone does not establish Firebase client-rule privacy.
+
+An isolated API with the real Firebase bucket passed registration, private text
+save/download, byte ranges, HEAD, anonymous and cross-account denial, process
+restart with unchanged test DB and fixture cleanup. The public Render API passed
+text and PNG upload/download, byte ranges/Content-Range, HEAD semantics, two-user
+isolation and account/object cleanup. The public proxy path omits Accept-Ranges and
+Content-Length; the local Next proxy retains them. Public 206/Content-Range and
+empty-body HEAD behavior were verified directly rather than declaring these
+missing headers an application success or failure without diagnosis.
+
+Fresh real image and text generation requests failed with Google
+`PROVIDER_QUOTA_EXCEEDED`, jobs `20a6e165-d822-4410-a91a-a892d99747ad` and
+`e40520e9-5bcd-432b-b3fa-853b1cfaa094`. These are provider failures; they do not
+invalidate successful Firebase file storage tests. No successful AI-to-Firebase
+generation is claimed from this run. Private fixtures/accounts were removed.
+
+Current runtime: temporary_storage=false, temporary_database=true. Firebase objects
+are durable, but account/job/project/credit metadata remains in ephemeral SQLite;
+an app restart/deploy can still lose those references. This is not full production
+durability. Firestore migration and Google quota availability remain open.
 
 ## What moves off Render
 
@@ -86,8 +118,8 @@ that label alone does not prove IAM or successful network writes.
 Dependency resolution uses pinned google-cloud-storage 3.17.1 and its dependencies;
 existing pins were preserved. Protocol tests cover the library write/read/range/
 delete lifecycle through the real API with a fixture bucket, no local media write,
-and refusal to fall back to unrelated Google credentials. These are **not live
-Firebase tests**. Live validation awaits the operator's project and secret.
+and refusal to fall back to unrelated Google credentials. Fixture tests are distinct
+from the real acceptance checks recorded above.
 
 Official sources read with HTTPS 200:
 
