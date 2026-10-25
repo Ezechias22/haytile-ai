@@ -42,6 +42,7 @@ jobs:
         working-directory: apps/web
       - run: npm run build
         working-directory: apps/web
+      - run: node --test tests/proxy-body.test.mjs
   mobile:
     runs-on: ubuntu-latest
     env:

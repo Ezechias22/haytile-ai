@@ -1,5 +1,25 @@
 # HAYTILE AI — estati livrezon
 
+## Dènye travay pwodiksyon, 25 oktòb 2026
+
+Download prive kounye a sèvi fichye yo pa moso 64 KiB, sipòte Range/HEAD pou
+playback, verifye siyati avan aksè epi rejte move ranges. Proxy web la koupe uploads
+twò gwo pandan lekti, san li pa chaje tout demann lan anvan limit la. Endpoint
+admin operations bay siyal queue, espas medya ak konfigirasyon san sekrè. Demaraj
+pwodiksyon nòmal rejte SQLite/depo manke/origin HTTP/kle siyati enplisit. Beta ki
+deklare rete disponib. Adapter S3 prepare pou Supabase san header SSE ki pa sipòte;
+limit esè yo rete aplike lè bazdone a vin PostgreSQL.
+
+Sa yo se chanjman sous; yo poko deplwaye sou sèvis piblik la. Itilizatè a poko gen
+pwojè bazdone/depo dirab; li gen Expo/Google Play men aksè teknik yo poko enjekte,
+epi kont Apple manke. Gade [koneksyon pwodiksyon](PRODUCTION_CONNECTION.md).
+
+Validasyon nouvo travay la: build Next.js ak TypeScript pase, 2 tès Node sou limit
+upload pase, 48 tès backend pase (enkli limit esè sou PG), epi 3 workflow navigatè
+pase. Premye esè navigatè a depase 30s pandan demaraj; rerun avèk bidjè 120s ki deja
+disponib la fini 3/3 nan 32.2s san chanje assertions. Adapter S3 la teste ak Stubber,
+pa yon kont Supabase reyèl. Pa gen nouvo resous Render oswa jenerasyon Google peye.
+
 Aplikasyon devlopman an konstwi dirèkteman nan depo sa a. Li pa yon senp mockup.
 Yon beta web piblik sou Render gratis disponib; AAB/IPA ak peman pa fini.
 

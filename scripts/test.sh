@@ -7,6 +7,7 @@ if ! docker exec haytile-postgres psql -U haytile -tAc "SELECT 1 FROM pg_databas
 fi
 (cd services/api && DATABASE_URL=postgresql+psycopg://haytile@127.0.0.1:5432/haytile_test /workspace/.venvs/haytile-api/bin/python -m pytest tests -q)
 python -m unittest discover -s tests -v
+node --test tests/proxy-body.test.mjs
 npm --prefix apps/web run typecheck
 npm --prefix apps/mobile run typecheck
 (cd apps/web && npx playwright test)

@@ -10,9 +10,11 @@ from typing import Literal
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, Response, UploadFile
 from fastapi.responses import Response as RawResponse
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
+from starlette.background import BackgroundTask
 
 from . import providers, storage
 from .db import (
@@ -30,7 +32,9 @@ from .db import (
     engine,
     now,
 )
+from .downloads import byte_range, chunks
 from .media import MAX_BYTES, inspect_media
+from .runtime_checks import configuration_checks, require_durable_runtime
 from .security import (
     hash_token,
     password_hash,
@@ -156,6 +160,7 @@ def session_response(user, response):
 
 @asynccontextmanager
 async def lifespan(app):
+    require_durable_runtime(engine.dialect.name)
     with engine.connect() as connection:
         connection.execute(select(1))
     yield
@@ -202,12 +207,12 @@ def runtime_settings():
         "trial_max_episode_seconds": int(
             os.environ.get("HAYTILE_TRIAL_MAX_EPISODE_SECONDS", "16")
         )
-        if trial_enabled() and engine.dialect.name == "sqlite"
+        if trial_enabled()
         else 180,
         "trial_max_video_seconds": int(
             os.environ.get("HAYTILE_TRIAL_MAX_VIDEO_SECONDS", "8")
         )
-        if trial_enabled() and engine.dialect.name == "sqlite"
+        if trial_enabled()
         else 180,
     }
 
@@ -738,7 +743,8 @@ def download_link(asset_id: str, user=Depends(current)):
 
 
 @app.get("/v1/files/{asset_id}")
-def download(asset_id: str, expires: int, signature: str):
+@app.head("/v1/files/{asset_id}")
+def download(asset_id: str, expires: int, signature: str, request: Request):
     if not valid_signature(asset_id, expires, signature):
         fail("LINK_EXPIRED", 403)
     with Session() as db:
@@ -755,13 +761,40 @@ def download(asset_id: str, expires: int, signature: str):
         "audio/ogg": "ogg",
         "video/mp4": "mp4",
     }.get(asset.mime, "bin")
-    return RawResponse(
-        storage.get(asset.key),
+    # Without validators an If-Range request must receive the full representation.
+    requested_range = (
+        None if request.headers.get("if-range") else request.headers.get("range")
+    )
+    try:
+        start, end = byte_range(requested_range, asset.size)
+    except ValueError:
+        return RawResponse(
+            status_code=416, headers={"Content-Range": f"bytes */{asset.size}"}
+        )
+    length = end - start + 1
+    response_headers = {
+        "Content-Disposition": f'inline; filename="haytile-{asset.id}.{ext}"',
+        "Content-Security-Policy": "default-src 'none'; sandbox",
+        "Accept-Ranges": "bytes",
+        "Content-Length": str(length),
+    }
+    status = 206 if requested_range else 200
+    if requested_range:
+        response_headers["Content-Range"] = f"bytes {start}-{end}/{asset.size}"
+    if request.method == "HEAD" or not length:
+        return RawResponse(
+            status_code=status, media_type=asset.mime, headers=response_headers
+        )
+    try:
+        reader = storage.open_range(asset.key, start, end)
+    except FileNotFoundError:
+        fail("NOT_FOUND", 404)
+    return StreamingResponse(
+        chunks(reader, length),
+        status_code=status,
         media_type=asset.mime,
-        headers={
-            "Content-Disposition": f'inline; filename="haytile-{asset.id}.{ext}"',
-            "Content-Security-Policy": "default-src 'none'; sandbox",
-        },
+        headers=response_headers,
+        background=BackgroundTask(reader.close),
     )
 
 
@@ -789,6 +822,42 @@ def wallet(user=Depends(current)):
                 }
                 for x in ledger
             ],
+        }
+
+
+@app.get("/v1/admin/operations")
+def operations(user=Depends(admin)):
+    with Session() as db:
+        counts = dict(
+            db.execute(select(Job.status, func.count()).group_by(Job.status)).all()
+        )
+        oldest = db.scalar(
+            select(func.min(Job.created_at)).where(Job.status == "queued")
+        )
+        expired = db.scalar(
+            select(func.count())
+            .select_from(Job)
+            .where(
+                Job.status.in_(["processing", "quality_check"]), Job.lease_until < now()
+            )
+        )
+        return {
+            "configuration_checks": configuration_checks(
+                os.environ, engine.dialect.name
+            ),
+            "temporary_database": engine.dialect.name == "sqlite",
+            "temporary_media": FREE_BETA and not bool(storage.BUCKET),
+            "jobs_by_status": counts,
+            "oldest_queued_seconds": max(
+                0, int((now() - aware(oldest)).total_seconds())
+            )
+            if oldest
+            else 0,
+            "expired_job_leases": expired,
+            "stored_media_bytes": db.scalar(
+                select(func.coalesce(func.sum(Asset.size), 0))
+            ),
+            "note": "Configuration checks do not verify backups, bucket policies, billing, stores or product completeness.",
         }
 
 

@@ -23,12 +23,11 @@ def lock_sqlite_write(db):
 
 
 def trial_limit_code(db, user_id, studio, params, credits):
-    if db.get_bind().dialect.name != "sqlite":
-        return None
+    temporary = db.get_bind().dialect.name == "sqlite"
     if credits:
-        return "PERSISTENT_POSTGRES_REQUIRED"
+        return "PERSISTENT_POSTGRES_REQUIRED" if temporary else None
     if not trial_enabled():
-        return "FREE_BETA_AI_DISABLED"
+        return "FREE_BETA_AI_DISABLED" if temporary else None
     if studio == "video":
         maximum = int(os.environ.get("HAYTILE_TRIAL_MAX_VIDEO_SECONDS", "8"))
         if params.get("duration", 8) > maximum:
