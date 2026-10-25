@@ -13,6 +13,12 @@ deklare li deplwaye sou Cloud Run. Kont sèvis aktyèl la manke otorizasyon depl
 compute yo. 62 tès backend, 3 workflow navigatè, build/TypeScript ak tès dirèk sou
 Firebase/Firestore pase. Gade [detay offload la](FIREBASE_OFFLOAD.md).
 
+Deploy fddb194 live sou menm sèvis Render gratis la. Tès piblik la konfime medya
+Firebase dirèk, download prive/siyati/Range, izolasyon ant kont, kontè enskripsyon
+ki rete sou Firestore, ak refi AI_SERVICE_PAUSED san kreye travay. Nouvo assets
+entèfas yo pa gen ansyen etikèt vèsyon tès yo. Metadata kont/kredi yo toujou SQL
+tanporè; yo pa deklare tout app la fini oswa Cloud Run worker deplwaye.
+
 ## Chwa Firebase, 25 oktòb 2026
 
 Itilizatè a konfime Firebase pou medya; li kounye a kreye pwojè/app web la epi aktive

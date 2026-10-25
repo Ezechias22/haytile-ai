@@ -73,6 +73,22 @@ unlimited Render capacity is not promised.
   This is local validation, not a claim about live Render memory or an unlimited SLA.
 - No Google AI generation requests were sent during this work.
 
-Public deployment acceptance must confirm these configured switches, direct URL
-delivery and absence of test branding after the rollout. A source commit alone is
-not a public deployment receipt.
+## Public deployment acceptance
+
+Deploy `dep-dbf2l5jncjis73e270m0` of `fddb194` is live on the existing Render Free
+service. Runtime confirms firebase_direct media delivery, Firestore rate-limit
+storage, generation_paused=true and background_processing_enabled=false.
+
+The public API passed fresh-account registration through the Firestore limiter;
+the resulting counter was independently read back from Firestore. Binary upload,
+direct Firebase preview/download, private/no-store headers, 206 ranges, signature
+tampering rejection, anonymous/cross-account link denial and fixture cleanup pass.
+A provider-job admission returned AI_SERVICE_PAUSED and no job was queued; no AI
+generation call was made. Published client assets contain the new service notice
+and no old test-version labels; rendered local-browser checks also verified that
+the labels are absent. This does not claim remote-browser automation passed.
+
+Public account/job/credit/project metadata remains temporary SQL. The UI's Settings
+export warning remains accurate; removing test branding is not a claim of complete
+production durability or deployed cloud compute. No additional Render service or
+paid Render plan was created.
