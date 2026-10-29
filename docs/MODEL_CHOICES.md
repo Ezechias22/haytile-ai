@@ -72,5 +72,8 @@ Local browser acceptance passed selection by studio, persistence after reload an
 navigation, the official-pricing link and continued generation disablement. The
 three existing account/library/storyboard browser workflows also passed.
 
-Public rollout acceptance must verify the options list and continued paused state;
-source changes alone do not prove deployment.
+Public rollout `dep-dbh92ehsrm7s73f5ceog` of `3f73880` is live on the existing
+Render Free service. The public API returns 11 studio/model choices (nine distinct
+IDs), all unavailable for generation while paused. Runtime confirms generation
+paused and the Render worker disabled. The allowlist was checked against model
+metadata using the deployed provider key; no generation was invoked.

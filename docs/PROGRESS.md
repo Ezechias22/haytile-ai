@@ -11,6 +11,10 @@ yo verifye nan katalòg kont lan anvan yon nouvo travay. Imaj rete zewo kredi.
 Lis la sòti nan metadata read-only; pa gen jenerasyon peye lanse. AI/worker rete
 an poz paske pa gen kredi API. Gade [MODEL_CHOICES.md](MODEL_CHOICES.md).
 
+Deploy 3f73880 live sou Render gratis. API piblik la retounen 11 chwa pa estidyo
+(9 modèl diferan), ak jenerasyon/worker toujou an poz. Verifikasyon navigatè lokal
+konfime preferans modèl la rete apre rafrechisman ak chanjman estidyo.
+
 ## Dènye chanjman: entèfas ak chaj Render
 
 Etikèt vèsyon tès retire nan entèfas 9 lang yo. Disponibilite AI vin yon mesaj sèvis
