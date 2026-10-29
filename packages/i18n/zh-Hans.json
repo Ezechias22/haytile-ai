@@ -176,5 +176,9 @@
   "episodeReviewNote": "剧集使用角色参考图和生成片段合成最终视频。请审核对白、口型和连续性；不提供自动视觉质量保证。",
   "servicePausedTitle": "AI 生成已暂停",
   "servicePausedBody": "AI 创作暂时不可用。您仍可整理项目、上传文件、预览、收听和下载。",
-  "accountRetentionNotice": "请保留账户数据和项目信息的副本。服务重启时这些信息可能丢失。"
+  "accountRetentionNotice": "请保留账户数据和项目信息的副本。服务重启时这些信息可能丢失。",
+  "aiModel": "AI 模型",
+  "modelPricingNotice": "供应商价格因模型而异。Haytile 积分与 API 费用分开计算。",
+  "providerPricing": "查看官方价格",
+  "miniModelChoiceNote": "在 MiniDrama 中，此选项用于规划和剧本模型。图片和片段使用已配置的工作室模型。"
 }

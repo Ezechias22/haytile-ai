@@ -176,5 +176,9 @@
   "episodeReviewNote": "Kipindi hutumia picha za wahusika na klipu zilizozalishwa kisha kuunganisha video. Hakiki mazungumzo, midomo na mwendelezo; hakuna dhamana ya ubora wa picha kiotomatiki.",
   "servicePausedTitle": "Uzalishaji wa AI umesitishwa",
   "servicePausedBody": "Uundaji kwa AI haupatikani kwa sasa. Bado unaweza kupanga miradi, kupakia faili, kuzitazama, kuzisikiliza na kuzipakua.",
-  "accountRetentionNotice": "Hifadhi nakala ya data ya akaunti na taarifa za miradi yako. Zinaweza kupotea huduma inapoanzishwa upya."
+  "accountRetentionNotice": "Hifadhi nakala ya data ya akaunti na taarifa za miradi yako. Zinaweza kupotea huduma inapoanzishwa upya.",
+  "aiModel": "Modeli ya AI",
+  "modelPricingNotice": "Bei ya mtoa huduma hutegemea modeli. Salio la Haytile ni tofauti na gharama za API.",
+  "providerPricing": "Angalia bei rasmi",
+  "miniModelChoiceNote": "Kwa MiniDrama, chaguo hili ni la kupanga na kuandika hati. Picha na klipu hutumia modeli zilizowekwa kwa studio."
 }

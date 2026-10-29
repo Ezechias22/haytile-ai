@@ -35,6 +35,7 @@ from .db import (
 )
 from .downloads import byte_range, chunks
 from .media import MAX_BYTES, inspect_media
+from .model_choices import PRICING, configured_choices, select_choice
 from .runtime_checks import configuration_checks, require_durable_runtime
 from .security import (
     hash_token,
@@ -387,6 +388,7 @@ def export_account(user=Depends(current)):
 def models():
     with Session() as db:
         rows = {m.studio: m for m in db.scalars(select(Model))}
+        choices = {s: configured_choices(db, s) for s in STUDIOS}
     present = (
         generation_enabled()
         and worker_enabled()
@@ -411,7 +413,32 @@ def models():
             )
             if s == "minidrama"
             else False,
-            "model_id": rows[s].model_id if s in rows else None,
+            "model_id": rows[s].model_id
+            if s in rows
+            else (choices[s][0].model_id if choices[s] else None),
+            "options": [
+                {
+                    "model_id": choice.model_id,
+                    "label": choice.label,
+                    "credits": choice.credits,
+                    "available": bool(present and choice.enabled),
+                    "episode_available": bool(
+                        present
+                        and choice.enabled
+                        and s == "minidrama"
+                        and choice.credits == 0
+                        and all(
+                            rows.get(kind)
+                            and rows[kind].enabled
+                            and rows[kind].credits == 0
+                            for kind in ("image", "video")
+                        )
+                    ),
+                    "pricing_url": PRICING,
+                    "terms_url": choice.terms_url,
+                }
+                for choice in choices[s]
+            ],
             "credits": 0 if s == "image" else (rows[s].credits if s in rows else 0),
             "terms_url": rows[s].terms_url if s in rows else None,
             "reason": "AI_SERVICE_PAUSED"
@@ -431,6 +458,7 @@ class Generate(BaseModel):
     idempotency_key: str = Field(min_length=8, max_length=80)
     params: dict = Field(default_factory=dict)
     confirmed_credits: int = Field(ge=0)
+    model_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9._-]{1,120}$")
 
 
 @app.post("/v1/jobs", status_code=202)
@@ -443,6 +471,14 @@ def generate(body: Generate, user=Depends(current)):
         fail("CONTENT_REQUIRED")
     if any(str(key).startswith("_") for key in body.params):
         fail("PARAMS_INVALID")
+    if "model_id" in body.params:
+        fail("MODEL_CHOICE_INVALID")
+    selected = None
+    if body.model_id:
+        with Session() as db:
+            selected = select_choice(db, body.studio, body.model_id)
+        if not selected or not selected.enabled:
+            fail("MODEL_NOT_APPROVED", 409)
     if len(json.dumps(body.params)) > 20000:
         fail("PARAMS_TOO_LARGE")
     if body.params.get("aspect", "1:1") not in ("1:1", "16:9", "9:16", "4:3", "3:4"):
@@ -468,6 +504,13 @@ def generate(body: Generate, user=Depends(current)):
         86400,
     )
     limit("generation:" + user.id, 30, 3600)
+    if selected and selected.catalog_check:
+        try:
+            catalog = providers.discover()
+        except providers.ProviderError as exc:
+            fail(str(exc), 503)
+        if not any(item["name"] == "models/" + selected.model_id for item in catalog):
+            fail("MODEL_NOT_IN_ACCOUNT", 409)
     with Session.begin() as db:
         lock_sqlite_write(db)
         owner = db.scalar(select(User).where(User.id == user.id).with_for_update())
@@ -481,10 +524,15 @@ def generate(body: Generate, user=Depends(current)):
                 old.studio != body.studio
                 or old.prompt != body.prompt
                 or old.params.get("input_params") != body.params
+                or old.params.get("requested_model_id") != body.model_id
             ):
                 fail("IDEMPOTENCY_CONFLICT", 409)
             return job_json(old)
-        model = db.get(Model, body.studio)
+        model = (
+            select_choice(db, body.studio, body.model_id)
+            if body.model_id
+            else db.get(Model, body.studio)
+        )
         if (
             not model
             or not model.enabled
@@ -566,6 +614,7 @@ def generate(body: Generate, user=Depends(current)):
             params={
                 "input_params": body.params,
                 "model_id": model.model_id,
+                "requested_model_id": body.model_id,
                 "provider": model.provider,
                 "render_config": render_config,
             },

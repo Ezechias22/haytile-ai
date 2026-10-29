@@ -176,5 +176,9 @@
   "episodeReviewNote": "L’épisode utilise des références de personnages et des clips générés, puis assemble la vidéo finale. Vérifiez dialogues, lèvres et continuité ; aucune garantie visuelle automatique.",
   "servicePausedTitle": "La génération IA est suspendue",
   "servicePausedBody": "La création IA est momentanément indisponible. Vous pouvez organiser vos projets, importer des fichiers, les consulter, les écouter et les télécharger.",
-  "accountRetentionNotice": "Conservez une copie des données de votre compte et de vos projets. Elles peuvent être perdues au redémarrage du service."
+  "accountRetentionNotice": "Conservez une copie des données de votre compte et de vos projets. Elles peuvent être perdues au redémarrage du service.",
+  "aiModel": "Modèle IA",
+  "modelPricingNotice": "Les tarifs du fournisseur varient selon le modèle. Les crédits Haytile sont distincts des frais API.",
+  "providerPricing": "Voir les tarifs officiels",
+  "miniModelChoiceNote": "Pour MiniDrama, ce choix concerne le plan et le scénario. Les images et clips utilisent les modèles des studios configurés."
 }

@@ -36,6 +36,7 @@ bash scripts/test.sh
 - [Current implementation and limitations](docs/PROGRESS.md)
 - [Selected Firebase media storage and migration](docs/FIREBASE.md)
 - [Direct media delivery, Firestore counters and compute limits](docs/FIREBASE_OFFLOAD.md)
+- [User-selectable studio models](docs/MODEL_CHOICES.md)
 - [Verified public Google documentation and prices](docs/PROVIDER_RESEARCH.md)
 - [Architecture](docs/PHASE_1.md)
 - [Data/security design](docs/DATA_SECURITY.md)

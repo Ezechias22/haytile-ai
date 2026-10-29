@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Text, Alert } from 'react-native';
+import { Text, Alert, Linking } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { router, useLocalSearchParams } from 'expo-router';
 import { api, useApp, languages, type Model } from '../../src/client';
 import { Screen, Heading, Copy, Card, Input, Button, Chips, s } from '../../src/ui';
@@ -15,12 +16,19 @@ export default function Studio() {
     [models, setModels] = useState<Model[]>([]),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  useEffect(() => {
+    SecureStore.getItemAsync('haytile-model-' + studio).then(value => setSelectedModel(value || '')).catch(() => {});
+  }, [studio]);
   useEffect(() => {
     api<Model[]>('/models')
       .then(setModels)
       .catch(() => {});
   }, []);
-  const model = models.find((m) => m.studio === studio);
+  const studioModel = models.find((m) => m.studio === studio);
+  const options = studioModel?.options || (studioModel?.model_id ? [{ ...studioModel, model_id: studioModel.model_id, label: studioModel.model_id, pricing_url: 'https://ai.google.dev/gemini-api/docs/pricing' }] : []);
+  const choice = options.find(option => option.model_id === selectedModel) || options.find(option => option.model_id === studioModel?.model_id) || options[0];
+  const model = studioModel ? { ...studioModel, ...choice } : undefined;
   const credits =
     (model?.credits || 0) * (studio === 'video' ? Math.ceil(Number(duration) / 10) : 1);
   async function save() {
@@ -48,6 +56,7 @@ export default function Studio() {
         method: 'POST',
         body: JSON.stringify({
           studio,
+          model_id: choice?.model_id,
           title: title || t(studio),
           prompt,
           idempotency_key: Math.random().toString(36).slice(2) + Date.now(),
@@ -71,7 +80,7 @@ export default function Studio() {
       router.push('/auth');
       return;
     }
-    Alert.alert(t('confirmCost'), credits + ' ' + t('credits'), [
+    Alert.alert(t('confirmCost'), (choice?.label || '') + '\n' + credits + ' ' + t('credits') + '\n' + t('modelPricingNotice'), [
       { text: t('cancel'), style: 'cancel' },
       { text: t('confirm'), onPress: submit },
     ]);
@@ -81,6 +90,14 @@ export default function Studio() {
       <Heading>{t(studio)}</Heading>
       <Copy>{t(studio + 'Desc')}</Copy>
       <Card>
+        <Copy>{t('aiModel')}</Copy>
+        {options.length ? <Chips items={Object.fromEntries(options.map(option => [option.model_id, option.label]))} value={choice?.model_id || ''} onChange={value => {
+          setSelectedModel(value);
+          SecureStore.setItemAsync('haytile-model-' + studio, value).catch(() => {});
+        }} /> : <Copy>{t('notConfigured')}</Copy>}
+        <Copy>{t('modelPricingNotice')}</Copy>
+        <Button title={t('providerPricing')} onPress={() => Linking.openURL(choice?.pricing_url || 'https://ai.google.dev/gemini-api/docs/pricing')} />
+        {studio === 'minidrama' && <Copy>{t('miniModelChoiceNote')}</Copy>}
         <Input label={t('title')} value={title} onChangeText={setTitle} maxLength={120} />
         <Input
           label={t('prompt')}

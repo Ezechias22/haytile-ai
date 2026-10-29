@@ -176,5 +176,9 @@
   "episodeReviewNote": "Episode menggunakan referensi karakter dan klip yang dihasilkan lalu menyusun video akhir. Tinjau dialog, bibir, dan kesinambungan; tidak ada jaminan visual otomatis.",
   "servicePausedTitle": "Pembuatan AI dijeda",
   "servicePausedBody": "Pembuatan dengan AI sedang tidak tersedia. Anda tetap dapat mengatur proyek, mengunggah, melihat, mendengarkan, dan mengunduh berkas.",
-  "accountRetentionNotice": "Simpan salinan data akun dan informasi proyek Anda. Data ini dapat hilang saat layanan dimulai ulang."
+  "accountRetentionNotice": "Simpan salinan data akun dan informasi proyek Anda. Data ini dapat hilang saat layanan dimulai ulang.",
+  "aiModel": "Model AI",
+  "modelPricingNotice": "Harga penyedia berbeda menurut model. Kredit Haytile terpisah dari biaya API.",
+  "providerPricing": "Lihat harga resmi",
+  "miniModelChoiceNote": "Untuk MiniDrama, pilihan ini menentukan model perencanaan dan naskah. Gambar dan klip menggunakan model studio yang dikonfigurasi."
 }

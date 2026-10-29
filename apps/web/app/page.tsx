@@ -86,6 +86,7 @@ type Model = {
   model_id: string | null;
   credits: number;
   reason: string | null;
+  options?: { model_id: string; label: string; credits: number; available: boolean; episode_available?: boolean; pricing_url: string }[];
 };
 const studios: Studio[] = ['image', 'music', 'video', 'minidrama', 'voice', 'text'];
 const icons = {
@@ -198,6 +199,14 @@ function Artwork({ kind }: { kind: Studio }) {
   );
 }
 export default function App() {
+  const [selectedModels, setSelectedModels] = useState<Record<string, string>>({});
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('haytile-model-choices') || '{}');
+      if (saved && typeof saved === 'object' && !Array.isArray(saved))
+        setSelectedModels(Object.fromEntries(Object.entries(saved).filter(([, value]) => typeof value === 'string')) as Record<string, string>);
+    } catch {}
+  }, []);
   const [generationPaused, setGenerationPaused] = useState(false);
   const [temporaryDatabase, setTemporaryDatabase] = useState(false);
   const [backgroundProcessing, setBackgroundProcessing] = useState(true);
@@ -393,7 +402,10 @@ export default function App() {
         .catch(() => {});
   };
   const studio = studios.includes(page as Studio) ? (page as Studio) : null,
-    activeModel = models.find((m) => m.studio === studio);
+    studioModel = models.find((m) => m.studio === studio),
+    modelOptions = studioModel?.options || (studioModel?.model_id ? [{ ...studioModel, model_id: studioModel.model_id, label: studioModel.model_id, pricing_url: 'https://ai.google.dev/gemini-api/docs/pricing' }] : []),
+    activeChoice = modelOptions.find((option) => option.model_id === selectedModels[studio || '']) || modelOptions.find((option) => option.model_id === studioModel?.model_id) || modelOptions[0],
+    activeModel = studioModel ? { ...studioModel, ...activeChoice } : undefined;
   const canGenerate =
     !!activeModel?.available &&
     (studio !== 'minidrama' || miniMode !== 'episode' || !!activeModel?.episode_available);
@@ -426,6 +438,7 @@ export default function App() {
         method: 'POST',
         body: JSON.stringify({
           studio,
+          model_id: activeChoice?.model_id,
           title: title || t(page),
           prompt,
           idempotency_key: pendingKey.current,
@@ -915,6 +928,25 @@ export default function App() {
                       generate();
                     }}
                   >
+                    <label>
+                      {t('aiModel')}
+                      <select
+                        aria-label={t('aiModel')}
+                        value={activeChoice?.model_id || ''}
+                        disabled={!modelOptions.length}
+                        onChange={(event) => {
+                          const selected = { ...selectedModels, [studio]: event.target.value };
+                          setSelectedModels(selected);
+                          localStorage.setItem('haytile-model-choices', JSON.stringify(selected));
+                          pendingKey.current = null;
+                        }}
+                      >
+                        {!modelOptions.length && <option value="">{t('notConfigured')}</option>}
+                        {modelOptions.map((option) => <option key={option.model_id} value={option.model_id}>{option.label}</option>)}
+                      </select>
+                    </label>
+                    <p className="fine-print">{t('modelPricingNotice')} <a href={activeChoice?.pricing_url || 'https://ai.google.dev/gemini-api/docs/pricing'} target="_blank" rel="noreferrer">{t('providerPricing')}</a></p>
+                    {studio === 'minidrama' && <p className="fine-print">{t('miniModelChoiceNote')}</p>}
                     <label>
                       {t('title')}
                       <input

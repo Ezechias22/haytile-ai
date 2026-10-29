@@ -1,5 +1,16 @@
 # HAYTILE AI — estati livrezon
 
+## Lis modèl AI pa estidyo
+
+Selektè modèl ajoute nan web ak sous mobil. Preferans rete sou aparèy la; backend
+verifye allowlist/estidyo/pri epi sove modèl chwazi a nan travay la. Pri kredi soti
+sèlman sou sèvè; chanje modèl ak menm kle idempotency bay konfli. Modèl anviwònman
+yo verifye nan katalòg kont lan anvan yon nouvo travay. Imaj rete zewo kredi.
+
+66 tès backend pase, build web, TypeScript web/mobil ak 4 tès lang/discovery pase.
+Lis la sòti nan metadata read-only; pa gen jenerasyon peye lanse. AI/worker rete
+an poz paske pa gen kredi API. Gade [MODEL_CHOICES.md](MODEL_CHOICES.md).
+
 ## Dènye chanjman: entèfas ak chaj Render
 
 Etikèt vèsyon tès retire nan entèfas 9 lang yo. Disponibilite AI vin yon mesaj sèvis

@@ -176,5 +176,9 @@
   "episodeReviewNote": "A real episode uses character reference images and generated scene clips, then assembles the final video. Review dialogue, lip-sync and continuity; automated visual guarantees are not provided.",
   "servicePausedTitle": "AI generation is paused",
   "servicePausedBody": "AI creation is currently unavailable. You can still organize projects, upload files, preview, listen and download.",
-  "accountRetentionNotice": "Keep a copy of your account data and project information. They may be lost when the service restarts."
+  "accountRetentionNotice": "Keep a copy of your account data and project information. They may be lost when the service restarts.",
+  "aiModel": "AI model",
+  "modelPricingNotice": "Provider pricing varies by model. Haytile credits are separate from API charges.",
+  "providerPricing": "View official pricing",
+  "miniModelChoiceNote": "For MiniDrama, this selects the planning and script model. Images and clips use the configured studio models."
 }

@@ -176,5 +176,9 @@
   "episodeReviewNote": "Yon epizòd reyèl itilize imaj referans pèsonaj ak klip sèn jenere, epi li rasanble videyo final la. Revize dyalòg, bouch ak kontinwite; pa gen garanti otomatik sou kalite vizyèl.",
   "servicePausedTitle": "Jenerasyon AI an poz",
   "servicePausedBody": "Kreyasyon AI yo pa disponib kounye a. Ou kapab toujou òganize pwojè ou, ajoute fichye nan bibliyotèk ou, gade, koute ak telechaje yo.",
-  "accountRetentionNotice": "Konsève yon kopi done kont ak enfòmasyon pwojè ou yo. Yo ka pèdi lè sèvis la rekòmanse."
+  "accountRetentionNotice": "Konsève yon kopi done kont ak enfòmasyon pwojè ou yo. Yo ka pèdi lè sèvis la rekòmanse.",
+  "aiModel": "Modèl AI",
+  "modelPricingNotice": "Pri founisè a varye selon modèl la. Kredi Haytile yo pa pri API a.",
+  "providerPricing": "Gade pri ofisyèl yo",
+  "miniModelChoiceNote": "Pou MiniDrama, chwa sa a sèvi pou plan ak senaryo. Imaj ak klip yo itilize modèl estidyo ki konfigire yo."
 }
