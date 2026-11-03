@@ -44,6 +44,8 @@ def root():
 def name(collection, key):
     if collection not in (
         "accounts",
+        "wallets",
+        "wallet_events",
         "account_emails",
         "sessions",
         "password_resets",
@@ -322,6 +324,7 @@ def remove(user_id):
                         version=version,
                     ),
                     delete_write("account_emails", hash_token(data["email"])),
+                    delete_write("wallets", user_id),
                     audit_write(user_id, "account.delete", user_id),
                 ]
             )
@@ -462,7 +465,11 @@ def audit():
         {
             "action": d["action"],
             "created_at": d["created_at"],
-            "details": {"actor_id": d["actor_id"], "user_id": d["user_id"]},
+            "details": {
+                k: d[k]
+                for k in ("actor_id", "user_id", "amount", "plan", "days", "reason")
+                if k in d
+            },
         }
         for d in (decode(x["document"]) for x in response.json() if "document" in x)
     ]

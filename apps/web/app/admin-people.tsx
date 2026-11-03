@@ -15,9 +15,10 @@ type Props = {
   t: (key: string) => string;
   api: <T>(path: string, options?: RequestInit) => Promise<T>;
   durable: boolean;
+  creditStore?: string;
   onSaved: () => Promise<void>;
 };
-export default function AdminPeople({ t, api, durable, onSaved }: Props) {
+export default function AdminPeople({ t, api, durable, creditStore, onSaved }: Props) {
   const [people, setPeople] = useState<Person[]>([]),
     [search, setSearch] = useState(''),
     [offset, setOffset] = useState(0),
@@ -83,6 +84,7 @@ export default function AdminPeople({ t, api, durable, onSaved }: Props) {
   return (
     <section className="panel">
       <h2>{t('managePeople')}</h2>
+      {creditStore === 'firestore' && <p role="status">{t('walletReady')}</p>}
       {!durable && (
         <p role="status" className="notice">
           {t('adminPersistence')}

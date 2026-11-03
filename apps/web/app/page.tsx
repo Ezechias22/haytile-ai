@@ -268,6 +268,7 @@ export default function App() {
     } | null>(null),
     [adminData, setAdminData] = useState<{
       durable_finances: boolean;
+      credit_store?: string;
       users: number;
       jobs: number;
       failed: number;
@@ -290,6 +291,7 @@ export default function App() {
       setAuth('login');
       return t('accountNeeded');
     }
+    if (/DURABLE_JOB_BILLING_REQUIRED/.test(code)) return t('creditBillingPending');
     if (/LOGIN_INVALID/.test(code)) return t('authError');
     if (/AI_SERVICE_PAUSED|BACKGROUND_PROCESSING_PAUSED/.test(code)) return t('servicePausedBody');
     if (/PROVIDER_QUOTA_EXCEEDED/.test(code)) return t('providerQuota');
@@ -1512,7 +1514,7 @@ export default function App() {
                     </button>
                   </form>
                 </section>
-                <AdminPeople t={t} api={api} durable={adminData?.durable_finances === true} onSaved={async () => { setAdminData(await api('/admin/overview')); await refresh(); }} />
+                <AdminPeople t={t} api={api} durable={adminData?.durable_finances === true} creditStore={adminData?.credit_store} onSaved={async () => { setAdminData(await api('/admin/overview')); await refresh(); }} />
                 <section className="panel">
                   <h3 className="mt">{t('audit')}</h3>
                   {adminData?.audit.map((a, i) => (

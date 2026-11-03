@@ -196,5 +196,7 @@
   "activationHelp": "Owner only: enter the private activation code configured on the server. An email address alone cannot activate admin access.",
   "activationCode": "Private activation code",
   "adminSearch": "Search users by email prefix",
-  "durableAccountsNotice": "Your account and sign-in sessions are saved in Firebase. Project history, library metadata and credit balances still use temporary storage; export your project data."
+  "durableAccountsNotice": "Accounts, sessions, credit balances and manual plans are saved in Firebase. Job history, projects and library metadata still use temporary storage; export project data.",
+  "walletReady": "Balances and plans are saved in Firebase. Haytile credits do not recharge Google API. Per-generation credit debits are not enabled yet.",
+  "creditBillingPending": "Credit-based billing for this model is not available yet. No Haytile credits were charged."
 }

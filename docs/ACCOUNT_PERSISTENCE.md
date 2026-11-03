@@ -20,7 +20,7 @@ Account/email creation is one atomic commit with nonexistence preconditions. Pro
 
 ## Scope limits
 
-**Wallet balances/reservations, credit ledger, memberships, jobs, project documents and library asset metadata still use SQL.** Media bytes remain private in Firebase Cloud Storage. Do not mistake account persistence for the full application data migration. The financial-operation PostgreSQL guard stays enabled; no paid credit balance is awarded on disposable SQLite. The durable admin directory shows unavailable wallet amounts as `—`, rather than fabricating restored credit balances. Its indexed search matches normalized **email prefixes**; it does not scan every account to search names.
+**Update: manual balances, gift history and memberships now use Firestore; see [WALLETS.md](WALLETS.md). Jobs, project documents and library asset metadata still use SQL.** Media bytes remain private in Firebase Cloud Storage. Do not mistake account persistence for the full application data migration. Manual grants and plans use atomic Firestore transactions; their current balances are visible in the directory. Per-generation credit charging remains gated until job reservations/settlement are durable. Its indexed search matches normalized **email prefixes**; it does not scan every account to search names.
 
 Once enabled, future account/session persistence is independent of Render instance replacement. Already-deleted SQL accounts cannot be recovered without a backup. A pre-cutover account that exists only in an inaccessible old Render filesystem cannot be exported by this release before that filesystem disappears. No recovery of such accounts is claimed.
 

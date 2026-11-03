@@ -196,5 +196,7 @@
   "activationHelp": "Pou pwopriyetè a sèlman: antre kòd aktivasyon prive ki konfigire sou sèvè a. Imel la pou kont li pa bay aksè admin.",
   "activationCode": "Kòd aktivasyon prive",
   "adminSearch": "Chèche itilizatè ak kòmansman imel la",
-  "durableAccountsNotice": "Kont ou ak sesyon koneksyon yo sove nan Firebase. Istwa pwojè, enfòmasyon bibliyotèk ak balans kredi yo toujou nan depo tanporè; ekspòte done pwojè ou yo."
+  "durableAccountsNotice": "Kont, sesyon, balans kredi ak plan manyèl yo sove nan Firebase. Istwa travay, pwojè ak enfòmasyon bibliyotèk yo toujou nan depo tanporè; ekspòte done pwojè ou yo.",
+  "walletReady": "Balans ak plan yo sove nan Firebase. Kredi Haytile pa rechaje API Google. Debi kredi pa jenerasyon poko aktive.",
+  "creditBillingPending": "Fakti an kredi pou modèl sa a poko disponib. Yo pa retire okenn kredi Haytile."
 }

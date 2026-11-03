@@ -196,5 +196,7 @@
   "activationHelp": "Mmiliki pekee: ingiza msimbo binafsi uliowekwa kwenye seva. Barua pepe pekee haitoi ufikiaji.",
   "activationCode": "Msimbo binafsi wa kuwezesha",
   "adminSearch": "Tafuta kwa mwanzo wa barua pepe",
-  "durableAccountsNotice": "Akaunti na vipindi vya kuingia vinahifadhiwa kwenye Firebase. Historia ya miradi, taarifa za maktaba na salio bado ni za muda; hamisha data zako za miradi."
+  "durableAccountsNotice": "Akaunti, vipindi, salio na mipango ya mkono vinahifadhiwa kwenye Firebase. Historia ya kazi, miradi na taarifa za maktaba bado ni za muda; hamisha miradi yako.",
+  "walletReady": "Salio na mipango vinahifadhiwa kwenye Firebase. Salio la Haytile halijazi API ya Google. Kukata salio kwa kila kazi hakujawashwa bado.",
+  "creditBillingPending": "Malipo kwa salio kwa modeli hii bado hayapatikani. Hakuna salio la Haytile lililokatwa."
 }

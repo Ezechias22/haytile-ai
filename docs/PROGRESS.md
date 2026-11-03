@@ -1,5 +1,16 @@
 # HAYTILE AI — estati livrezon
 
+## Balans ak plan Firestore, jenerasyon reaktive
+
+Ajout kredi ak plan manyèl deplase sou Firestore (wallet + event + audit atomik,
+idempotency ak kontwòl vèsyon). /me, /wallet, export ak admin montre balans reyèl,
+ki rete apre SQL efase. 83 tès backend pase; tès vrè Firebase ajoute 100 + 25
+epi konfime 125 ak yon sèl event pou demann repete. Pa gen jenerasyon Google
+peye teste. Itilizatè a konfime Google rechaje epi mande pou nou pa depanse
+kredi yo nan tès. Debi Haytile pa jenerasyon toujou bloke jiskaske travay yo
+gen depo pèmanan; modèl zewo-kredi yo ka sèvi ak faktirasyon Google operatè a.
+Gade [WALLETS.md](WALLETS.md).
+
 ## Kont ki rete apre redeplwaman
 
 Sous kont/sesyon yo deplase sou Firestore avèk menm UUID, hash modpas, pwofil,

@@ -1,9 +1,8 @@
 # Private administration
 
-Update: Firestore now supports durable account/session/admin-role authority. See
-[ACCOUNT_PERSISTENCE.md](ACCOUNT_PERSISTENCE.md). Wallets and plan assignments
-remain SQL and their temporary-database financial guard remains in place. Older
-deployment receipts below describe the state at their specific commits.
+Firestore retains accounts, sessions, roles, manual credit balances and manual
+plan assignments. See [WALLETS.md](WALLETS.md) for the still-gated per-generation
+credit billing. Older deployment receipts below describe their specific releases.
 
 Web: sign in, open Settings, activate administrator access using the server's private activation code, then open Administration in the navigation.
 
@@ -15,7 +14,7 @@ A trusted server operator can alternatively run `python -m haytile.cli promote-a
 
 ## Implemented controls
 
-- Authenticated admin-only user directory, 25-user pages. Firestore uses indexed email-prefix search and returns unavailable wallet values as `—`; SQL mode supports escaped substring search and stored balances/plan expiry.
+- Authenticated admin-only user directory, 25-user pages. Firestore uses indexed email-prefix search and returns its durable wallet balances; SQL mode supports escaped substring search and stored balances/plan expiry.
 - Positive credit grants, with backend validation, user-row locking, ledger, actor audit and idempotency. A repeated request cannot grant twice. A reused key with a different target or amount is rejected.
 - Manual Free / Creator / Pro assignment for 1–366 days, optional 0–100,000 one-time credits, required reason and audit. Assignment and credits commit in one database transaction. Changing a plan does not remove existing credits or cancel active jobs. Free-plan assignments cannot include bonus credits.
 - Expired memberships report Free. Memberships are **manual labels plus optional explicit credit grants**; they do not implement different AI capabilities, recurring credits, recurring billing or store subscriptions. No prices or purchased status are fabricated. Google provider billing is independent of Haytile credits.
@@ -24,15 +23,13 @@ A trusted server operator can alternatively run `python -m haytile.cli promote-a
 
 ## Current deployment limitation
 
-Firestore now retains account credentials, sessions, profiles and admin roles. Firebase also stores private media and abuse counters. Jobs, credits, memberships, project documents and asset metadata still use disposable SQLite. Therefore both financial mutation endpoints reject SQLite (`PERSISTENT_POSTGRES_REQUIRED`), and their web buttons remain disabled with a clear notice. Model controls and the user directory remain accessible after owner activation. Do not sell or award balances on this temporary database.
-
-A durable wallet and project-data migration is required to enable these actions in the deployed service. Do not remove the guard or write grants only to Firebase while generation reads SQL balances: that creates two conflicting sources of truth. The remaining Firestore migration must cover wallet reservations, ledger, memberships, jobs, refunds and idempotency together, with transactional concurrency tests. No paid Render service has been created.
+Firestore retains credentials, sessions, profiles, roles, manual balances and manual plans. Jobs, project documents and asset metadata still use disposable SQL. Manual credit and plan buttons are now enabled with Firestore. Per-generation credit charging is still blocked until durable job reservations/settlement are implemented. All currently configured models have zero Haytile credit quotes; the operator's Google API billing remains independent. No paid Render service or store subscription was created.
 
 Migration `0004` adds memberships without replacing user rows. Test on a dedicated database; the backend test suite empties its test database deliberately.
 
 ## Validation
 
-78 backend tests pass, including admin authorization, directory privacy, concurrent assignment replay, credit-grant replay/conflicts, expiration, activation-code/email validation and temporary-database blocking. Web build and mobile TypeScript checks pass. These local tests use a dedicated PostgreSQL database and explicit activation/provider fixtures; no billable Google generation is required. See release progress for browser/deployment validation.
+83 backend tests pass, including admin authorization, directory privacy, concurrent assignment replay, credit-grant replay/conflicts, expiration, activation-code/email validation and temporary-database blocking. Web build and mobile TypeScript checks pass. These local tests use a dedicated PostgreSQL database and explicit activation/provider fixtures; no billable Google generation is required. See release progress for browser/deployment validation.
 
 ## Initial admin deployment receipt (historical)
 

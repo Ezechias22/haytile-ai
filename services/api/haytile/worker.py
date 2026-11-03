@@ -12,7 +12,7 @@ from pathlib import Path
 
 from sqlalchemy import select
 
-from . import providers, storage
+from . import providers, storage, wallets
 from .availability import generation_enabled, worker_enabled
 from .db import Asset, Job, Ledger, Project, Session, User, now
 from .downloads import chunks
@@ -74,6 +74,7 @@ def run_once():
         job = db.scalar(
             select(Job)
             .where(Job.status == "queued")
+            .where(Job.credits == 0 if wallets.enabled() else True)
             .where(True if generation_enabled() else Job.studio == "assembly")
             .order_by(Job.created_at)
             .with_for_update(skip_locked=True)

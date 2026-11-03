@@ -196,5 +196,7 @@
   "activationHelp": "Khusus pemilik: masukkan kode aktivasi pribadi yang diatur di server. Email saja tidak memberikan akses.",
   "activationCode": "Kode aktivasi pribadi",
   "adminSearch": "Cari berdasarkan awalan email",
-  "durableAccountsNotice": "Akun dan sesi masuk Anda disimpan di Firebase. Riwayat proyek, metadata pustaka, dan saldo masih memakai penyimpanan sementara; ekspor data proyek Anda."
+  "durableAccountsNotice": "Akun, sesi, saldo, dan paket manual disimpan di Firebase. Riwayat tugas, proyek, dan metadata pustaka masih sementara; ekspor proyek Anda.",
+  "walletReady": "Saldo dan paket disimpan di Firebase. Kredit Haytile tidak mengisi saldo API Google. Pemotongan kredit per pembuatan belum diaktifkan.",
+  "creditBillingPending": "Penagihan kredit untuk model ini belum tersedia. Tidak ada kredit Haytile yang dipotong."
 }

@@ -48,3 +48,5 @@ Render free testing is configured in `render.yaml`; see [the free-mode limitatio
 Private administrator setup and current financial-storage limits: [docs/ADMIN.md](docs/ADMIN.md).
 
 Account/session persistence and rollout limits: [docs/ACCOUNT_PERSISTENCE.md](docs/ACCOUNT_PERSISTENCE.md).
+
+Manual credit/plan persistence and generation-billing limits: [docs/WALLETS.md](docs/WALLETS.md).

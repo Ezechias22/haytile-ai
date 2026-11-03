@@ -196,5 +196,7 @@
   "activationHelp": "Solo el propietario: introduce el código privado configurado en el servidor. El correo por sí solo no concede acceso.",
   "activationCode": "Código privado de activación",
   "adminSearch": "Buscar por inicio del correo",
-  "durableAccountsNotice": "Tu cuenta y sesiones se guardan en Firebase. El historial, los metadatos de biblioteca y los saldos siguen siendo temporales; exporta tus proyectos."
+  "durableAccountsNotice": "Las cuentas, sesiones, saldos y planes manuales se guardan en Firebase. El historial de tareas, los proyectos y metadatos de biblioteca siguen siendo temporales; exporta tus proyectos.",
+  "walletReady": "Los saldos y planes se guardan en Firebase. Los créditos Haytile no recargan la API Google. El débito de créditos por generación aún no está activado.",
+  "creditBillingPending": "La facturación en créditos de este modelo aún no está disponible. No se ha descontado ningún crédito Haytile."
 }

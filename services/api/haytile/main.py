@@ -16,7 +16,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from starlette.background import BackgroundTask
 
-from . import accounts, providers, storage
+from . import accounts, providers, storage, wallets
 from .availability import generation_enabled, worker_enabled
 from .db import (
     Asset,
@@ -126,6 +126,9 @@ def user_json(u):
         k: getattr(u, k)
         for k in ("id", "email", "name", "locale", "role", "balance", "reserved")
     }
+    if wallets.enabled():
+        result.update(wallets.snapshot(u.id))
+        return result
     with Session() as db:
         membership = db.get(Membership, u.id)
         result["plan"] = (
@@ -443,7 +446,9 @@ def export_account(user=Depends(current)):
                 asset_json(x)
                 for x in db.scalars(select(Asset).where(Asset.user_id == user.id))
             ],
-            "ledger": [
+            "ledger": wallets.history(user.id)
+            if wallets.enabled()
+            else [
                 {"amount": x.amount, "kind": x.kind, "created_at": x.created_at}
                 for x in db.scalars(select(Ledger).where(Ledger.user_id == user.id))
             ],
@@ -577,9 +582,6 @@ def generate(body: Generate, user=Depends(current)):
             fail(str(exc), 503)
         if not any(item["name"] == "models/" + selected.model_id for item in catalog):
             fail("MODEL_NOT_IN_ACCOUNT", 409)
-    if accounts.enabled():
-        accounts.hydrate(accounts.change(user.id, {"role": "admin"}, actor=user.id))
-        return {"ok": True}
     with Session.begin() as db:
         lock_sqlite_write(db)
         owner = db.scalar(select(User).where(User.id == user.id).with_for_update())
@@ -636,6 +638,8 @@ def generate(body: Generate, user=Depends(current)):
                 else 1
             )
         )
+        if wallets.enabled() and credits:
+            fail("DURABLE_JOB_BILLING_REQUIRED", 409)
         trial_error = trial_limit_code(db, user.id, body.studio, body.params, credits)
         if trial_error:
             fail(
@@ -761,6 +765,8 @@ def retry(job_id: str, user=Depends(current)):
             if not can_resume:
                 fail("MANUAL_RECONCILIATION_REQUIRED", 409)
             job.params = {**job.params, "resume_operation_id": operation["id"]}
+        if wallets.enabled() and job.credits:
+            fail("DURABLE_JOB_BILLING_REQUIRED", 409)
         trial_error = trial_limit_code(
             db, user.id, job.studio, job.params.get("input_params", {}), job.credits
         )
@@ -959,6 +965,8 @@ def download(asset_id: str, expires: int, signature: str, request: Request):
 
 @app.get("/v1/wallet")
 def wallet(user=Depends(current)):
+    if wallets.enabled():
+        return {**wallets.snapshot(user.id), "transactions": wallets.history(user.id)}
     with Session() as db:
         owner = db.get(User, user.id)
         ledger = list(
@@ -1026,7 +1034,9 @@ def overview(user=Depends(admin)):
     durable_audit = accounts.audit() if accounts.enabled() else []
     with Session() as db:
         return {
-            "durable_finances": engine.dialect.name == "postgresql",
+            "credit_store": "firestore" if wallets.enabled() else "sql",
+            "durable_finances": wallets.enabled()
+            or engine.dialect.name == "postgresql",
             "users": durable_total
             if durable_total is not None
             else db.scalar(select(func.count()).select_from(User)),
@@ -1132,6 +1142,8 @@ class Grant(BaseModel):
 
 @app.post("/v1/admin/credits")
 def grant(body: Grant, user=Depends(admin)):
+    if wallets.enabled():
+        return wallets.grant(body.email, body.amount, user.id, body.idempotency_key)
     if engine.dialect.name != "postgresql":
         fail("PERSISTENT_POSTGRES_REQUIRED", 409)
     with Session.begin() as db:
@@ -1186,16 +1198,13 @@ def admin_users(search: str = "", offset: int = 0, user=Depends(admin)):
             "users": [
                 {
                     **{k: a[k] for k in ("id", "email", "name", "locale", "role")},
-                    "balance": None,
-                    "reserved": None,
-                    "plan": "free",
-                    "plan_expires_at": None,
+                    **wallets.snapshot(a["id"]),
                 }
                 for a in rows
             ],
             "total": total,
             "offset": offset,
-            "wallets_available": False,
+            "wallets_available": True,
         }
     with Session() as db:
         query = select(User)
@@ -1222,6 +1231,18 @@ class PlanAssignment(BaseModel):
 
 @app.post("/v1/admin/plans")
 def assign_plan(body: PlanAssignment, user=Depends(admin)):
+    if body.plan == "free" and body.credits:
+        fail("FREE_PLAN_CREDITS_INVALID")
+    if wallets.enabled():
+        return wallets.grant(
+            body.email,
+            body.credits,
+            user.id,
+            body.idempotency_key,
+            plan=body.plan,
+            days=body.days,
+            reason=body.reason,
+        )
     # No monetary entitlements on Render's disposable SQLite filesystem.
     if engine.dialect.name != "postgresql":
         fail("PERSISTENT_POSTGRES_REQUIRED", 409)

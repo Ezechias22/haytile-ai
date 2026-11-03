@@ -196,5 +196,7 @@
   "activationHelp": "仅限所有者：输入服务器上配置的私密激活码。仅有邮箱无法获得权限。",
   "activationCode": "私密激活码",
   "adminSearch": "按邮箱前缀搜索用户",
-  "durableAccountsNotice": "账户和登录会话已保存在 Firebase。项目历史、媒体库元数据和积分余额仍使用临时存储，请导出项目数据。"
+  "durableAccountsNotice": "账户、会话、积分余额和手动套餐已保存在 Firebase。任务历史、项目和媒体库元数据仍使用临时存储，请导出项目数据。",
+  "walletReady": "余额和套餐保存在 Firebase。Haytile 积分不会为 Google API 充值。目前尚未启用按生成任务扣除积分。",
+  "creditBillingPending": "此模型尚未支持积分计费。未扣除任何 Haytile 积分。"
 }
