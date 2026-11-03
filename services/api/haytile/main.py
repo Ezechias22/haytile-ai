@@ -251,6 +251,9 @@ def runtime_settings():
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
     return {
+        "api_release": "firestore-wallets-v1",
+        "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
+        "credit_store": "firestore" if wallets.enabled() else "sql",
         "free_beta": FREE_BETA,
         "temporary_storage": FREE_BETA and not storage.is_remote(),
         "temporary_database": engine.dialect.name == "sqlite",

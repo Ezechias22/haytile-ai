@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
+// Fetch the current app shell after deployments; hashed assets can still be cached.
+export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   icons: { icon: '/favicon.svg' },
   title: 'HAYTILE AI — Create beyond imagination',
