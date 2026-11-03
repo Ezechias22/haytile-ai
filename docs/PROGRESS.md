@@ -13,7 +13,9 @@ navigatè yo pase tou. Build web, TypeScript mobil ak 4 tès lang/discovery pase
 LIMIT LIVE: kont/kredi/travay yo toujou SQLite tanporè. Bouton finansye yo bloke
 sou sèvè ak nan UI jiskaske kont/wallet yo gen depo pèmanan. Firebase medya ak
 kontè pa reprezante migrasyon kont yo. Pa gen peman oswa renouvèlman otomatik;
-plan yo se etikèt manyèl ak kredi eksplisit. Gade [ADMIN.md](ADMIN.md).
+plan yo se etikèt manyèl ak kredi eksplisit. Gade [ADMIN.md](ADMIN.md). Deploy `8094e3a` live sou Render gratis; endpoint
+admin yo refize demann san koneksyon (401). Imel pwopriyetè konfigire; kòd
+aktivasyon prive a poko mete nan Render, kidonk pa gen kont live ki pwomote.
 
 
 ## Lis modèl AI pa estidyo

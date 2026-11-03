@@ -28,3 +28,16 @@ Migration `0004` adds memberships without replacing user rows. Test on a dedicat
 ## Validation
 
 71 backend tests pass, including admin authorization, directory privacy, concurrent assignment replay, credit-grant replay/conflicts, expiration, activation-code/email validation and temporary-database blocking. Web build and mobile TypeScript checks pass. These local tests use a dedicated PostgreSQL database and explicit activation/provider fixtures; no billable Google generation is required. See release progress for browser/deployment validation.
+
+## Deployment receipt
+
+Commit `8094e3a` deployed live to the existing **free** Render service
+(`dep-dbkk0hrbc2fs739ilgcg`). Public web returns 200; unauthenticated directory,
+plan assignment and activation endpoints all return 401. Global generation is
+still paused and the worker is disabled. Owner email is configured server-side;
+the private activation code is intentionally **not** created or exposed by this
+release. The owner must set it in Render before activation. No live account was
+promoted, no live credits/plan were awarded, and no paid AI request was made.
+SQLite migration 0003 → 0004 was also checked with an existing fixture user and
+balance retained. Full browser verification used a local persistent PostgreSQL
+fixture, not the public Render service.
