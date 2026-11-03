@@ -180,5 +180,20 @@
   "aiModel": "Modeli ya AI",
   "modelPricingNotice": "Bei ya mtoa huduma hutegemea modeli. Salio la Haytile ni tofauti na gharama za API.",
   "providerPricing": "Angalia bei rasmi",
-  "miniModelChoiceNote": "Kwa MiniDrama, chaguo hili ni la kupanga na kuandika hati. Picha na klipu hutumia modeli zilizowekwa kwa studio."
+  "miniModelChoiceNote": "Kwa MiniDrama, chaguo hili ni la kupanga na kuandika hati. Picha na klipu hutumia modeli zilizowekwa kwa studio.",
+  "managePeople": "Simamia watumiaji",
+  "adminPersistence": "Mabadiliko ya salio na mipango yamefungwa: salio bado linatumia hifadhi ya muda ya Render. Hifadhidata ya kudumu ya akaunti inahitajika.",
+  "plan": "Mpango",
+  "role": "Jukumu",
+  "previous": "Iliyotangulia",
+  "next": "Inayofuata",
+  "assignPlan": "Toa mpango",
+  "manualPlanNote": "Ufikiaji wa mkono wenye tarehe ya mwisho. Hakuna malipo, upya au salio la kila mwezi kiotomatiki. Salio lililoingizwa hutolewa mara moja tu; malipo ya mtoa huduma wa AI ni tofauti.",
+  "planDays": "Muda (siku)",
+  "planCredits": "Salio la mara moja",
+  "reason": "Sababu",
+  "activateAdmin": "Washa ufikiaji wa msimamizi",
+  "activationHelp": "Mmiliki pekee: ingiza msimbo binafsi uliowekwa kwenye seva. Barua pepe pekee haitoi ufikiaji.",
+  "activationCode": "Msimbo binafsi wa kuwezesha",
+  "adminSearch": "Tafuta watumiaji"
 }

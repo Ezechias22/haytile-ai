@@ -180,5 +180,20 @@
   "aiModel": "AI model",
   "modelPricingNotice": "Provider pricing varies by model. Haytile credits are separate from API charges.",
   "providerPricing": "View official pricing",
-  "miniModelChoiceNote": "For MiniDrama, this selects the planning and script model. Images and clips use the configured studio models."
+  "miniModelChoiceNote": "For MiniDrama, this selects the planning and script model. Images and clips use the configured studio models.",
+  "managePeople": "Manage users",
+  "adminPersistence": "Credit and plan changes are locked: account balances still use temporary Render storage. A durable account database is required.",
+  "plan": "Plan",
+  "role": "Role",
+  "previous": "Previous",
+  "next": "Next",
+  "assignPlan": "Assign plan",
+  "manualPlanNote": "Manual plan access with an expiry date. No automatic payment, renewal or monthly credits. Only the credits entered here are granted once; AI provider billing remains separate.",
+  "planDays": "Validity (days)",
+  "planCredits": "One-time credits",
+  "reason": "Reason",
+  "activateAdmin": "Activate administrator access",
+  "activationHelp": "Owner only: enter the private activation code configured on the server. An email address alone cannot activate admin access.",
+  "activationCode": "Private activation code",
+  "adminSearch": "Search users"
 }

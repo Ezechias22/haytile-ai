@@ -180,5 +180,20 @@
   "aiModel": "Modèle IA",
   "modelPricingNotice": "Les tarifs du fournisseur varient selon le modèle. Les crédits Haytile sont distincts des frais API.",
   "providerPricing": "Voir les tarifs officiels",
-  "miniModelChoiceNote": "Pour MiniDrama, ce choix concerne le plan et le scénario. Les images et clips utilisent les modèles des studios configurés."
+  "miniModelChoiceNote": "Pour MiniDrama, ce choix concerne le plan et le scénario. Les images et clips utilisent les modèles des studios configurés.",
+  "managePeople": "Gérer les utilisateurs",
+  "adminPersistence": "Crédits et plans verrouillés : les soldes utilisent encore le stockage temporaire Render. Une base de comptes durable est nécessaire.",
+  "plan": "Forfait",
+  "role": "Rôle",
+  "previous": "Précédent",
+  "next": "Suivant",
+  "assignPlan": "Attribuer un forfait",
+  "manualPlanNote": "Accès manuel avec expiration. Aucun paiement, renouvellement ou crédit mensuel automatique. Seuls les crédits saisis sont ajoutés une fois ; la facturation IA reste distincte.",
+  "planDays": "Durée (jours)",
+  "planCredits": "Crédits uniques",
+  "reason": "Motif",
+  "activateAdmin": "Activer l’accès administrateur",
+  "activationHelp": "Propriétaire uniquement : saisissez le code privé configuré sur le serveur. L’adresse e-mail seule ne suffit pas.",
+  "activationCode": "Code privé d’activation",
+  "adminSearch": "Rechercher un utilisateur"
 }

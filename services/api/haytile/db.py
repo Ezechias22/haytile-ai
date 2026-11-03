@@ -205,3 +205,15 @@ class Project(Base):
     document: Mapped[dict] = mapped_column(JSON, default=dict)
     version: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class Membership(Base):
+    """Manual entitlement; assigning a plan is not a payment or recurring charge."""
+
+    __tablename__ = "memberships"
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    plan: Mapped[str] = mapped_column(String(30))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

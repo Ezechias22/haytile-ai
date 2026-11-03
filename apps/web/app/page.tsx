@@ -47,6 +47,7 @@ import {
 } from 'lucide-react';
 import { dictionaries, languages } from './i18n';
 import Storyboard from './storyboard';
+import AdminPeople from './admin-people';
 type Studio = 'image' | 'music' | 'video' | 'minidrama' | 'voice' | 'text';
 type Page = Studio | 'home' | 'library' | 'pricing' | 'settings' | 'help' | 'admin';
 type User = {
@@ -263,6 +264,7 @@ export default function App() {
       transactions: { id: string; kind: string; amount: number; created_at: string }[];
     } | null>(null),
     [adminData, setAdminData] = useState<{
+      durable_finances: boolean;
       users: number;
       jobs: number;
       failed: number;
@@ -1282,6 +1284,13 @@ export default function App() {
                 </button>
               ) : (
                 <div className="settings-grid">
+                  {user.role !== 'admin' && <section className="panel">
+                    <h2>{t('activateAdmin')}</h2><p>{t('activationHelp')}</p>
+                    <form onSubmit={e => { e.preventDefault(); const code = new FormData(e.currentTarget).get('activationCode'); run(async () => { await api('/admin/activate', { method: 'POST', body: JSON.stringify({ code }) }); await refresh(); setUser(await api('/me')); setToast(t('saved')); }); }}>
+                      <label>{t('activationCode')}<input name="activationCode" type="password" minLength={32} maxLength={200} autoComplete="off" required /></label>
+                      <button className="button primary" disabled={busy}>{t('activateAdmin')}</button>
+                    </form>
+                  </section>}
                   <section className="panel">
                     <div className="panel-title">
                       <Settings size={18} />
@@ -1500,42 +1509,13 @@ export default function App() {
                     </button>
                   </form>
                 </section>
+                <AdminPeople t={t} api={api} durable={adminData?.durable_finances === true} onSaved={async () => { setAdminData(await api('/admin/overview')); await refresh(); }} />
                 <section className="panel">
-                  <h2>{t('grant')}</h2>
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const f = new FormData(e.currentTarget);
-                      run(async () => {
-                        await api('/admin/credits', {
-                          method: 'POST',
-                          body: JSON.stringify({
-                            email: f.get('email'),
-                            amount: Number(f.get('amount')),
-                            idempotency_key: crypto.randomUUID(),
-                          }),
-                        });
-                        setToast(t('saved'));
-                        await refresh();
-                      });
-                    }}
-                  >
-                    <label>
-                      {t('email')}
-                      <input name="email" type="email" required />
-                    </label>
-                    <label>
-                      {t('amount')}
-                      <input name="amount" type="number" min={1} max={100000} required />
-                    </label>
-                    <button className="button primary" disabled={busy}>
-                      {t('grant')}
-                    </button>
-                  </form>
                   <h3 className="mt">{t('audit')}</h3>
                   {adminData?.audit.map((a, i) => (
                     <div className="audit-row" key={i}>
                       <strong>{a.action}</strong>
+                      <small>{JSON.stringify(a.details)}</small>
                       <small>{new Date(a.created_at).toLocaleString(locale)}</small>
                     </div>
                   ))}

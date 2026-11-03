@@ -180,5 +180,20 @@
   "aiModel": "AI 模型",
   "modelPricingNotice": "供应商价格因模型而异。Haytile 积分与 API 费用分开计算。",
   "providerPricing": "查看官方价格",
-  "miniModelChoiceNote": "在 MiniDrama 中，此选项用于规划和剧本模型。图片和片段使用已配置的工作室模型。"
+  "miniModelChoiceNote": "在 MiniDrama 中，此选项用于规划和剧本模型。图片和片段使用已配置的工作室模型。",
+  "managePeople": "管理用户",
+  "adminPersistence": "积分和套餐更改已锁定：账户余额仍使用 Render 临时存储。需要持久的账户数据库。",
+  "plan": "套餐",
+  "role": "角色",
+  "previous": "上一页",
+  "next": "下一页",
+  "assignPlan": "分配套餐",
+  "manualPlanNote": "手动授予有期限的访问权限。不会自动付款、续订或每月发放积分。仅一次性添加输入的积分；AI 服务商费用另计。",
+  "planDays": "有效天数",
+  "planCredits": "一次性积分",
+  "reason": "原因",
+  "activateAdmin": "激活管理员权限",
+  "activationHelp": "仅限所有者：输入服务器上配置的私密激活码。仅有邮箱无法获得权限。",
+  "activationCode": "私密激活码",
+  "adminSearch": "搜索用户"
 }

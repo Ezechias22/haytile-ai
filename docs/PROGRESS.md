@@ -1,5 +1,21 @@
 # HAYTILE AI — estati livrezon
 
+## Panèl administratè prive
+
+Ajoute lis itilizatè ak rechèch/pajinasyon, balans, plan/dat ekspirasyon, atribisyon
+manyèl Free/Creator/Pro ak kredi yon sèl fwa, audit ak aktivasyon pwopriyetè avèk
+sesyon + imel sèvè + kòd prive. Pa gen pwomosyon otomatik selon imel sèlman.
+Repetisyon demann pa double kredi; tranzaksyon plan/kredi/audit atomik sou PostgreSQL.
+71 tès backend pase; workflow navigatè lokal verifye login/aktivasyon/rechèch,
+ajout 25 kredi ak plan Creator + 10 kredi (balans final 35). Twa ansyen workflow
+navigatè yo pase tou. Build web, TypeScript mobil ak 4 tès lang/discovery pase.
+
+LIMIT LIVE: kont/kredi/travay yo toujou SQLite tanporè. Bouton finansye yo bloke
+sou sèvè ak nan UI jiskaske kont/wallet yo gen depo pèmanan. Firebase medya ak
+kontè pa reprezante migrasyon kont yo. Pa gen peman oswa renouvèlman otomatik;
+plan yo se etikèt manyèl ak kredi eksplisit. Gade [ADMIN.md](ADMIN.md).
+
+
 ## Lis modèl AI pa estidyo
 
 Selektè modèl ajoute nan web ak sous mobil. Preferans rete sou aparèy la; backend

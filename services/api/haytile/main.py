@@ -24,6 +24,7 @@ from .db import (
     Job,
     Ledger,
     LoginSession,
+    Membership,
     Model,
     PasswordReset,
     Project,
@@ -116,10 +117,19 @@ def admin(user=Depends(current)):
 
 
 def user_json(u):
-    return {
+    result = {
         k: getattr(u, k)
         for k in ("id", "email", "name", "locale", "role", "balance", "reserved")
     }
+    with Session() as db:
+        membership = db.get(Membership, u.id)
+        result["plan"] = (
+            membership.plan
+            if membership and aware(membership.expires_at) > now()
+            else "free"
+        )
+        result["plan_expires_at"] = membership.expires_at if membership else None
+    return result
 
 
 def asset_json(a):
@@ -955,6 +965,7 @@ def operations(user=Depends(admin)):
 def overview(user=Depends(admin)):
     with Session() as db:
         return {
+            "durable_finances": engine.dialect.name == "postgresql",
             "users": db.scalar(select(func.count()).select_from(User)),
             "jobs": db.scalar(select(func.count()).select_from(Job)),
             "failed": db.scalar(
@@ -1050,7 +1061,7 @@ def model_settings(body: ModelSettings, user=Depends(admin)):
 
 
 class Grant(BaseModel):
-    email: str
+    email: str = Field(min_length=3, max_length=254)
     amount: int = Field(gt=0, le=100000)
     idempotency_key: str = Field(min_length=8, max_length=80)
 
@@ -1067,7 +1078,7 @@ def grant(body: Grant, user=Depends(admin)):
         )
         if not owner:
             fail("NOT_FOUND", 404)
-        key = "grant:" + body.idempotency_key
+        key = "grant:" + user.id + ":" + body.idempotency_key
         old = db.scalar(select(Ledger).where(Ledger.dedup_key == key))
         if old:
             if old.user_id != owner.id or old.amount != body.amount:
@@ -1096,3 +1107,119 @@ app.include_router(reset_router)
 from .projects import router as project_router  # noqa: E402 — shares core auth helpers
 
 app.include_router(project_router)
+
+
+@app.get("/v1/admin/users")
+def admin_users(search: str = "", offset: int = 0, user=Depends(admin)):
+    if len(search) > 254 or not 0 <= offset <= 1000000:
+        fail("INVALID_SEARCH")
+    with Session() as db:
+        query = select(User)
+        if search.strip():
+            query = query.where(
+                User.email.icontains(search.strip(), autoescape=True)
+                | User.name.icontains(search.strip(), autoescape=True)
+            )
+        total = db.scalar(select(func.count()).select_from(query.subquery()))
+        rows = db.scalars(
+            query.order_by(User.created_at.desc(), User.id).offset(offset).limit(25)
+        ).all()
+        return {"users": [user_json(u) for u in rows], "total": total, "offset": offset}
+
+
+class PlanAssignment(BaseModel):
+    email: str = Field(min_length=3, max_length=254)
+    plan: Literal["free", "creator", "pro"]
+    days: int = Field(ge=1, le=366)
+    credits: int = Field(ge=0, le=100000)
+    reason: str = Field(min_length=3, max_length=500)
+    idempotency_key: str = Field(min_length=8, max_length=80)
+
+
+@app.post("/v1/admin/plans")
+def assign_plan(body: PlanAssignment, user=Depends(admin)):
+    # No monetary entitlements on Render's disposable SQLite filesystem.
+    if engine.dialect.name != "postgresql":
+        fail("PERSISTENT_POSTGRES_REQUIRED", 409)
+    if body.plan == "free" and body.credits:
+        fail("FREE_PLAN_CREDITS_INVALID")
+    with Session.begin() as db:
+        owner = db.scalar(
+            select(User)
+            .where(User.email == body.email.strip().lower())
+            .with_for_update()
+        )
+        if not owner:
+            fail("NOT_FOUND", 404)
+        key = "plan:" + user.id + ":" + body.idempotency_key
+        payload = {
+            "user_id": owner.id,
+            "plan": body.plan,
+            "days": body.days,
+            "credits": body.credits,
+            "reason": body.reason,
+        }
+        old = db.scalar(select(Ledger).where(Ledger.dedup_key == key))
+        if old:
+            audit = db.get(Audit, old.id)
+            if not audit or audit.details != payload:
+                fail("IDEMPOTENCY_CONFLICT", 409)
+            return {"ok": True}
+        membership = db.get(Membership, owner.id)
+        if not membership:
+            membership = Membership(user_id=owner.id)
+            db.add(membership)
+        membership.plan = body.plan
+        membership.expires_at = now() + timedelta(days=body.days)
+        membership.updated_at = now()
+        owner.balance += body.credits
+        from .db import uid
+
+        receipt = uid()
+        db.add(
+            Ledger(
+                id=receipt,
+                user_id=owner.id,
+                amount=body.credits,
+                kind="admin_plan",
+                dedup_key=key,
+            )
+        )
+        db.add(
+            Audit(id=receipt, actor_id=user.id, action="plan.assign", details=payload)
+        )
+    return {"ok": True}
+
+
+class AdminActivation(BaseModel):
+    code: str = Field(min_length=32, max_length=200)
+
+
+@app.post("/v1/admin/activate")
+def activate_admin(body: AdminActivation, request: Request, user=Depends(current)):
+    limit("admin-activate-user:" + user.id, 5, 3600)
+    limit("admin-activate-ip:" + request.client.host, 10, 3600)
+    expected = os.environ.get("HAYTILE_ADMIN_ACTIVATION_CODE", "")
+    email = os.environ.get("HAYTILE_ADMIN_EMAIL", "").strip().lower()
+    if (
+        len(expected) < 32
+        or not email
+        or user.email != email
+        or not secrets.compare_digest(body.code.encode(), expected.encode())
+    ):
+        fail("ADMIN_ACTIVATION_DENIED", 403)
+    with Session.begin() as db:
+        lock_sqlite_write(db)
+        owner = db.scalar(select(User).where(User.id == user.id).with_for_update())
+        if not owner or owner.email != email:
+            fail("ADMIN_ACTIVATION_DENIED", 403)
+        if owner.role != "admin":
+            owner.role = "admin"
+            db.add(
+                Audit(
+                    actor_id=owner.id,
+                    action="admin.activate",
+                    details={"user_id": owner.id},
+                )
+            )
+    return {"ok": True}

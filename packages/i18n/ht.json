@@ -180,5 +180,20 @@
   "aiModel": "Modèl AI",
   "modelPricingNotice": "Pri founisè a varye selon modèl la. Kredi Haytile yo pa pri API a.",
   "providerPricing": "Gade pri ofisyèl yo",
-  "miniModelChoiceNote": "Pou MiniDrama, chwa sa a sèvi pou plan ak senaryo. Imaj ak klip yo itilize modèl estidyo ki konfigire yo."
+  "miniModelChoiceNote": "Pou MiniDrama, chwa sa a sèvi pou plan ak senaryo. Imaj ak klip yo itilize modèl estidyo ki konfigire yo.",
+  "managePeople": "Jere itilizatè yo",
+  "adminPersistence": "Ajout kredi ak chanjman plan bloke: balans kont yo toujou nan depo tanporè Render. Yo bezwen yon bazdone kont pèmanan.",
+  "plan": "Plan",
+  "role": "Wòl",
+  "previous": "Anvan",
+  "next": "Apre",
+  "assignPlan": "Bay yon plan",
+  "manualPlanNote": "Se yon plan manyèl ak dat ekspirasyon. Pa gen peman, renouvèlman oswa kredi otomatik chak mwa. Se sèlman kredi ou antre la ki ajoute yon sèl fwa; fakti founisè AI a rete apa.",
+  "planDays": "Dire (jou)",
+  "planCredits": "Kredi pou yon sèl fwa",
+  "reason": "Rezon",
+  "activateAdmin": "Aktive aksè administratè",
+  "activationHelp": "Pou pwopriyetè a sèlman: antre kòd aktivasyon prive ki konfigire sou sèvè a. Imel la pou kont li pa bay aksè admin.",
+  "activationCode": "Kòd aktivasyon prive",
+  "adminSearch": "Chèche itilizatè"
 }

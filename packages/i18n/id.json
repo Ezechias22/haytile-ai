@@ -180,5 +180,20 @@
   "aiModel": "Model AI",
   "modelPricingNotice": "Harga penyedia berbeda menurut model. Kredit Haytile terpisah dari biaya API.",
   "providerPricing": "Lihat harga resmi",
-  "miniModelChoiceNote": "Untuk MiniDrama, pilihan ini menentukan model perencanaan dan naskah. Gambar dan klip menggunakan model studio yang dikonfigurasi."
+  "miniModelChoiceNote": "Untuk MiniDrama, pilihan ini menentukan model perencanaan dan naskah. Gambar dan klip menggunakan model studio yang dikonfigurasi.",
+  "managePeople": "Kelola pengguna",
+  "adminPersistence": "Perubahan kredit dan paket terkunci: saldo masih menggunakan penyimpanan sementara Render. Diperlukan basis data akun permanen.",
+  "plan": "Paket",
+  "role": "Peran",
+  "previous": "Sebelumnya",
+  "next": "Berikutnya",
+  "assignPlan": "Tetapkan paket",
+  "manualPlanNote": "Akses manual dengan tanggal kedaluwarsa. Tanpa pembayaran, perpanjangan, atau kredit bulanan otomatis. Kredit yang dimasukkan diberikan sekali; tagihan penyedia AI terpisah.",
+  "planDays": "Masa berlaku (hari)",
+  "planCredits": "Kredit satu kali",
+  "reason": "Alasan",
+  "activateAdmin": "Aktifkan akses administrator",
+  "activationHelp": "Khusus pemilik: masukkan kode aktivasi pribadi yang diatur di server. Email saja tidak memberikan akses.",
+  "activationCode": "Kode aktivasi pribadi",
+  "adminSearch": "Cari pengguna"
 }
