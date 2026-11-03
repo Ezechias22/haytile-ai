@@ -38,3 +38,20 @@ Once enabled, future account/session persistence is independent of Render instan
 78 backend tests pass; web production build, mobile TypeScript and all four local browser workflows pass. Local backend tests cover complete SQL loss between API instances, original-ID/password/session retention, duplicate-email concurrency, profile/admin-role retention, fail-closed outages, reset/revocation/replay, expiration, deleted-account non-resurrection and explicit legacy import. The existing product tests continue to run against the independent SQL implementation.
 
 A separate probe exercised actual Firestore create/read/session/query/profile/role/reset/delete operations. Another probe used **two independent Python API processes and two new SQLite files** against the real Firestore database: the second process authenticated the original session and password with the original UUID. Disposable probe documents/accounts were removed. No billable AI generation was used. Public rollout verification is recorded below once complete.
+
+
+## Public deployment verification
+
+Commit `9160fc9` is live on the existing free Render service. Initial rollout
+`dep-dbkk9bajnfac73964pn0` enabled Firestore authority. A disposable public account was created and its
+profile edited. A second real deployment (`dep-dbkka849v7es73ejdlfg`) of the same commit replaced the
+service instance. After it reached live, the original bearer session still
+returned the same UUID, name and language; signing in with the original password
+also returned that UUID, without re-registration. Account deletion then revoked
+the session. Anonymous access to its Firestore document returned 403. Disposable
+probe documents were cleaned up; no real user was deleted or promoted by the probe.
+
+`HAYTILE_ACCOUNT_IMPORT_LOCAL=0` after cutover. Public runtime reports
+`account_store=firestore`, `temporary_accounts=false`, `temporary_database=true`.
+Generation stays paused and background processing disabled. The remaining SQL
+metadata/credit limitation is intentional and remains visible in Settings.

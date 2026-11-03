@@ -8,7 +8,9 @@ reset/revokasyon, pann Firestore, email inik ak kont efase pa resisite ajoute.
 Vrè Firestore ak de pwosesis API separe/de SQLite vid verifye menm sesyon/modpas/ID
 restaure. 78 tès backend, 4 workflow navigatè, build web ak TypeScript mobil pase.
 Wallet/travay/pwojè/metadata bibliyotèk poko migre; finans rete bloke
-sou SQLite. Gade [ACCOUNT_PERSISTENCE.md](ACCOUNT_PERSISTENCE.md).
+sou SQLite. Deploy `9160fc9` live; yon kont piblik tès kenbe menm ID/modpas/sesyon
+apre yon dezyèm vrè redeplwaman Render. Import SQL dezaktive apre pasaj la.
+Gade [ACCOUNT_PERSISTENCE.md](ACCOUNT_PERSISTENCE.md).
 
 ## Panèl administratè prive
 
