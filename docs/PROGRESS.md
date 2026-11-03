@@ -9,6 +9,10 @@ epi konfime 125 ak yon sèl event pou demann repete. Pa gen jenerasyon Google
 peye teste. Itilizatè a konfime Google rechaje epi mande pou nou pa depanse
 kredi yo nan tès. Debi Haytile pa jenerasyon toujou bloke jiskaske travay yo
 gen depo pèmanan; modèl zewo-kredi yo ka sèvi ak faktirasyon Google operatè a.
+Deploy `09ec380` live epi vèsyon API piblik la verifye. Tès piblik sou kont jetab
+konfime 13 kredi san double-ajout + plan 7 kredi = 20. Jenerasyon/worker aktive
+ak sis estidyo disponib dapre metadata. Pa gen jenerasyon Google peye teste.
+Shell web la pa kenbe ansyen vèsyon an nan kach yon ane ankò.
 Gade [WALLETS.md](WALLETS.md).
 
 ## Kont ki rete apre redeplwaman

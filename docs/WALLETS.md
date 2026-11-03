@@ -19,3 +19,28 @@ The operator confirmed Google was recharged and requested no paid generation tes
 83 backend tests pass. New tests cover concurrent duplicate/independent grants, plan/credit persistence after complete SQL deletion, expiry, wallet privacy, authorization, outage, export/history and the positive-cost job gate. A regression check also requires the real job-admission path to enqueue a zero-credit job without changing an ordinary user's role; its provider execution is an explicit local fixture.
 
 A disposable real-Firestore probe verified a replay-safe 100-credit gift plus a Creator plan with 25 credits gives exactly 125, with matching history and anonymous document access denied. Probe identities and records were removed. No real user's balance was modified. Web build, mobile TypeScript and all locale checks pass. Public rollout receipt follows after deployment.
+
+
+## Public rollout receipt
+
+Commit `09ec380` deployed live as `dep-dbkkprk9v7es73ekpkag` on the existing free Render service.
+Runtime explicitly reports `api_release=firestore-wallets-v1`, its matching
+`source_revision`, `credit_store=firestore`, `generation_paused=false` and
+`background_processing_enabled=true`. All six configured studios report available.
+These are configuration/metadata checks, not claims that paid provider outputs
+were tested after recharge.
+
+A public API probe with two disposable identities verified: an ordinary user
+cannot grant credits (403); a 13-credit grant replayed twice adds only 13; a
+Creator plan with 7 extra credits yields exactly 20; `/me`, wallet and directory
+agree. Probe identities, sessions, wallets, events and audit fixtures were cleaned
+up. Real customer balances were not modified. Paid generation test requests: **0**.
+
+The earlier deployment `76eb080` was reported live by Render while the public
+endpoint still returned the old paused/locked backend. Do not treat control-plane
+status alone as release verification. A cache-cleared rebuild and explicit source
+provenance were used for the successful rollout. The web app shell now returns
+`private, no-cache, no-store, max-age=0, must-revalidate` rather than a one-year
+static shell policy; hashed static assets may still cache normally. When inspecting
+Render environment variables, request complete pagination (the default first page
+can omit configured keys); never print secret values.
