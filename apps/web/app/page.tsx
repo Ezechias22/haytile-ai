@@ -210,6 +210,7 @@ export default function App() {
   }, []);
   const [generationPaused, setGenerationPaused] = useState(false);
   const [temporaryDatabase, setTemporaryDatabase] = useState(false);
+  const [durableAccounts, setDurableAccounts] = useState(false);
   const [backgroundProcessing, setBackgroundProcessing] = useState(true);
   const [videoMaximum, setVideoMaximum] = useState(180);
   const [episodeMaximum, setEpisodeMaximum] = useState(180);
@@ -223,11 +224,13 @@ export default function App() {
       provider_generation_disabled: boolean;
       generation_paused: boolean;
       temporary_database: boolean;
+      account_store?: string;
       background_processing_enabled: boolean;
     }>('/runtime')
       .then((config) => {
         setGenerationPaused(config.generation_paused);
         setTemporaryDatabase(config.temporary_database);
+        setDurableAccounts(config.account_store === 'firestore');
         setBackgroundProcessing(config.background_processing_enabled !== false);
         setVideoMaximum(config.trial_max_video_seconds || 180);
         setEpisodeMaximum(config.trial_max_episode_seconds || 180);
@@ -1273,7 +1276,7 @@ export default function App() {
           )}
           {page === 'settings' && (
             <>
-              {temporaryDatabase && <p className="alert info" role="note">{t('accountRetentionNotice')}</p>}
+              {temporaryDatabase && <p className="alert info" role="note">{t(durableAccounts ? 'durableAccountsNotice' : 'accountRetentionNotice')}</p>}
               <div className="page-heading">
                 <h1>{t('settings')}</h1>
                 <p>{t('privacy')}</p>

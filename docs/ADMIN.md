@@ -1,5 +1,10 @@
 # Private administration
 
+Update: Firestore now supports durable account/session/admin-role authority. See
+[ACCOUNT_PERSISTENCE.md](ACCOUNT_PERSISTENCE.md). Wallets and plan assignments
+remain SQL and their temporary-database financial guard remains in place. Older
+deployment receipts below describe the state at their specific commits.
+
 Web: sign in, open Settings, activate administrator access using the server's private activation code, then open Administration in the navigation.
 
 ## Owner setup

@@ -195,5 +195,6 @@
   "activateAdmin": "Activer l’accès administrateur",
   "activationHelp": "Propriétaire uniquement : saisissez le code privé configuré sur le serveur. L’adresse e-mail seule ne suffit pas.",
   "activationCode": "Code privé d’activation",
-  "adminSearch": "Rechercher un utilisateur"
+  "adminSearch": "Rechercher par début d’adresse e-mail",
+  "durableAccountsNotice": "Votre compte et vos sessions sont conservés dans Firebase. Historique, métadonnées de bibliothèque et soldes restent temporaires ; exportez vos projets."
 }

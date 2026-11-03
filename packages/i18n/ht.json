@@ -195,5 +195,6 @@
   "activateAdmin": "Aktive aksè administratè",
   "activationHelp": "Pou pwopriyetè a sèlman: antre kòd aktivasyon prive ki konfigire sou sèvè a. Imel la pou kont li pa bay aksè admin.",
   "activationCode": "Kòd aktivasyon prive",
-  "adminSearch": "Chèche itilizatè"
+  "adminSearch": "Chèche itilizatè ak kòmansman imel la",
+  "durableAccountsNotice": "Kont ou ak sesyon koneksyon yo sove nan Firebase. Istwa pwojè, enfòmasyon bibliyotèk ak balans kredi yo toujou nan depo tanporè; ekspòte done pwojè ou yo."
 }

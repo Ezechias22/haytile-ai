@@ -6,8 +6,8 @@ type Person = {
   email: string;
   name: string;
   role: string;
-  balance: number;
-  reserved: number;
+  balance: number | null;
+  reserved: number | null;
   plan: string;
   plan_expires_at: string | null;
 };
@@ -128,7 +128,7 @@ export default function AdminPeople({ t, api, durable, onSaved }: Props) {
                   <small>{person.name}</small>
                 </td>
                 <td>
-                  {person.balance} ({person.reserved} {t('reserved')})
+                  {person.balance ?? '—'} ({person.reserved ?? '—'} {t('reserved')})
                 </td>
                 <td>
                   {person.plan}

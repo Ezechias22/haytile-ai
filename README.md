@@ -46,3 +46,5 @@ Payments and mobile store releases are not implemented. The public web deploymen
 Render free testing is configured in `render.yaml`; see [the free-mode limitations](docs/RENDER.md). Download creations promptly because accounts and media on that deployment are temporary.
 
 Private administrator setup and current financial-storage limits: [docs/ADMIN.md](docs/ADMIN.md).
+
+Account/session persistence and rollout limits: [docs/ACCOUNT_PERSISTENCE.md](docs/ACCOUNT_PERSISTENCE.md).

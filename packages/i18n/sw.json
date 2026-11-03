@@ -195,5 +195,6 @@
   "activateAdmin": "Washa ufikiaji wa msimamizi",
   "activationHelp": "Mmiliki pekee: ingiza msimbo binafsi uliowekwa kwenye seva. Barua pepe pekee haitoi ufikiaji.",
   "activationCode": "Msimbo binafsi wa kuwezesha",
-  "adminSearch": "Tafuta watumiaji"
+  "adminSearch": "Tafuta kwa mwanzo wa barua pepe",
+  "durableAccountsNotice": "Akaunti na vipindi vya kuingia vinahifadhiwa kwenye Firebase. Historia ya miradi, taarifa za maktaba na salio bado ni za muda; hamisha data zako za miradi."
 }

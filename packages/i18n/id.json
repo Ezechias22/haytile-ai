@@ -195,5 +195,6 @@
   "activateAdmin": "Aktifkan akses administrator",
   "activationHelp": "Khusus pemilik: masukkan kode aktivasi pribadi yang diatur di server. Email saja tidak memberikan akses.",
   "activationCode": "Kode aktivasi pribadi",
-  "adminSearch": "Cari pengguna"
+  "adminSearch": "Cari berdasarkan awalan email",
+  "durableAccountsNotice": "Akun dan sesi masuk Anda disimpan di Firebase. Riwayat proyek, metadata pustaka, dan saldo masih memakai penyimpanan sementara; ekspor data proyek Anda."
 }

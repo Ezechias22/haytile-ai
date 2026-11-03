@@ -16,7 +16,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from starlette.background import BackgroundTask
 
-from . import providers, storage
+from . import accounts, providers, storage
 from .availability import generation_enabled, worker_enabled
 from .db import (
     Asset,
@@ -100,6 +100,11 @@ def current(request: Request):
     )
     if not token:
         fail("AUTH_REQUIRED", 401)
+    if accounts.enabled():
+        data = accounts.resolve(hash_token(token))
+        if not data:
+            fail("SESSION_EXPIRED", 401)
+        return accounts.hydrate(data)
     with Session() as db:
         session = db.get(LoginSession, hash_token(token))
         if not session or aware(session.expires_at) <= now():
@@ -158,16 +163,22 @@ def job_json(j):
     }
 
 
-def session_response(user, response):
+def session_response(user, response, account=None):
     raw = secrets.token_urlsafe(32)
-    with Session.begin() as db:
-        db.add(
-            LoginSession(
-                token_hash=hash_token(raw),
-                user_id=user.id,
-                expires_at=now() + timedelta(days=7),
+    if accounts.enabled():
+        if not account or not accounts.session(
+            account, hash_token(raw), now() + timedelta(days=7)
+        ):
+            fail("LOGIN_INVALID", 401)
+    else:
+        with Session.begin() as db:
+            db.add(
+                LoginSession(
+                    token_hash=hash_token(raw),
+                    user_id=user.id,
+                    expires_at=now() + timedelta(days=7),
+                )
             )
-        )
     response.set_cookie(
         COOKIE,
         raw,
@@ -182,14 +193,30 @@ def session_response(user, response):
 
 @asynccontextmanager
 async def lifespan(app):
+    if os.environ.get("HAYTILE_ACCOUNT_PROVIDER", "sql") not in ("sql", "firestore"):
+        raise RuntimeError("Invalid account provider")
     require_durable_runtime(engine.dialect.name)
     storage.validate_configuration()
     with engine.connect() as connection:
         connection.execute(select(1))
+    if accounts.enabled():
+        accounts.read("accounts", "_readiness")
+        if os.environ.get("HAYTILE_ACCOUNT_IMPORT_LOCAL") == "1":
+            accounts.migrate_local()
     yield
 
 
 app = FastAPI(title="HAYTILE AI", version="0.1.0", lifespan=lifespan)
+
+
+@app.exception_handler(accounts.Unavailable)
+async def account_store_unavailable(request, exc):
+    return RawResponse(
+        json.dumps({"detail": "ACCOUNT_STORE_UNAVAILABLE"}),
+        status_code=503,
+        media_type="application/json",
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @app.middleware("http")
@@ -224,6 +251,9 @@ def runtime_settings():
         "free_beta": FREE_BETA,
         "temporary_storage": FREE_BETA and not storage.is_remote(),
         "temporary_database": engine.dialect.name == "sqlite",
+        "account_store": "firestore" if accounts.enabled() else "sql",
+        "temporary_accounts": engine.dialect.name == "sqlite"
+        and not accounts.enabled(),
         "media_delivery": "firebase_direct"
         if storage.backend() == "firebase"
         else "api_stream",
@@ -281,6 +311,14 @@ def register(body: Register, request: Request, response: Response):
         fail("EMAIL_INVALID")
     if body.locale not in LOCALES:
         fail("LOCALE_INVALID")
+    if accounts.enabled():
+        try:
+            data = accounts.create(
+                email, password_hash(body.password), body.name.strip(), body.locale
+            )
+        except accounts.DuplicateEmail:
+            fail("EMAIL_UNAVAILABLE", 409)
+        return session_response(accounts.hydrate(data), response, account=data)
     user = User(
         email=email,
         name=body.name.strip(),
@@ -299,6 +337,14 @@ def register(body: Register, request: Request, response: Response):
 @app.post("/v1/auth/login")
 def login(body: Login, request: Request, response: Response):
     limit("login:" + request.client.host, 30, 900)
+    if accounts.enabled():
+        data = accounts.by_email(body.email.strip().lower())
+        if not data:
+            password_hash(body.password)
+            fail("LOGIN_INVALID", 401)
+        if not verify_password(body.password, data["password"]):
+            fail("LOGIN_INVALID", 401)
+        return session_response(accounts.hydrate(data), response, account=data)
     with Session() as db:
         user = db.scalar(select(User).where(User.email == body.email.strip().lower()))
     if not user:
@@ -315,10 +361,13 @@ def logout(request: Request, response: Response, user=Depends(current)):
     raw = (
         bearer[7:] if bearer.startswith("Bearer ") else request.cookies.get(COOKIE, "")
     )
-    with Session.begin() as db:
-        db.execute(
-            delete(LoginSession).where(LoginSession.token_hash == hash_token(raw))
-        )
+    if accounts.enabled():
+        accounts.logout(hash_token(raw))
+    else:
+        with Session.begin() as db:
+            db.execute(
+                delete(LoginSession).where(LoginSession.token_hash == hash_token(raw))
+            )
     response.delete_cookie(COOKIE, path="/")
     return {"ok": True}
 
@@ -339,6 +388,11 @@ def preferences(body: Preferences, user=Depends(current)):
         fail("NAME_INVALID")
     if body.locale not in LOCALES:
         fail("LOCALE_INVALID")
+    if accounts.enabled():
+        data = accounts.change(
+            user.id, {"name": body.name.strip(), "locale": body.locale}
+        )
+        return user_json(accounts.hydrate(data))
     with Session.begin() as db:
         row = db.get(User, user.id)
         row.name = body.name.strip()
@@ -354,6 +408,8 @@ class DeleteAccount(BaseModel):
 def delete_account(body: DeleteAccount, response: Response, user=Depends(current)):
     if not verify_password(body.password, user.password):
         fail("LOGIN_INVALID", 401)
+    if accounts.enabled():
+        accounts.remove(user.id)
     with Session.begin() as db:
         row = db.scalar(select(User).where(User.id == user.id).with_for_update())
         for key in db.scalars(select(Asset.key).where(Asset.user_id == user.id)):
@@ -521,6 +577,9 @@ def generate(body: Generate, user=Depends(current)):
             fail(str(exc), 503)
         if not any(item["name"] == "models/" + selected.model_id for item in catalog):
             fail("MODEL_NOT_IN_ACCOUNT", 409)
+    if accounts.enabled():
+        accounts.hydrate(accounts.change(user.id, {"role": "admin"}, actor=user.id))
+        return {"ok": True}
     with Session.begin() as db:
         lock_sqlite_write(db)
         owner = db.scalar(select(User).where(User.id == user.id).with_for_update())
@@ -963,10 +1022,14 @@ def operations(user=Depends(admin)):
 
 @app.get("/v1/admin/overview")
 def overview(user=Depends(admin)):
+    durable_total = accounts.directory()[1] if accounts.enabled() else None
+    durable_audit = accounts.audit() if accounts.enabled() else []
     with Session() as db:
         return {
             "durable_finances": engine.dialect.name == "postgresql",
-            "users": db.scalar(select(func.count()).select_from(User)),
+            "users": durable_total
+            if durable_total is not None
+            else db.scalar(select(func.count()).select_from(User)),
             "jobs": db.scalar(select(func.count()).select_from(Job)),
             "failed": db.scalar(
                 select(func.count()).select_from(Job).where(Job.status == "failed")
@@ -981,7 +1044,8 @@ def overview(user=Depends(admin)):
                 }
                 for m in db.scalars(select(Model))
             ],
-            "audit": [
+            "audit": durable_audit
+            + [
                 {"action": x.action, "details": x.details, "created_at": x.created_at}
                 for x in db.scalars(
                     select(Audit).order_by(Audit.created_at.desc()).limit(30)
@@ -1113,6 +1177,26 @@ app.include_router(project_router)
 def admin_users(search: str = "", offset: int = 0, user=Depends(admin)):
     if len(search) > 254 or not 0 <= offset <= 1000000:
         fail("INVALID_SEARCH")
+    if accounts.enabled():
+        if offset > 10000:
+            fail("INVALID_SEARCH")
+        rows, total = accounts.directory(search, offset)
+        # Remote directory does not fabricate cached wallet balances.
+        return {
+            "users": [
+                {
+                    **{k: a[k] for k in ("id", "email", "name", "locale", "role")},
+                    "balance": None,
+                    "reserved": None,
+                    "plan": "free",
+                    "plan_expires_at": None,
+                }
+                for a in rows
+            ],
+            "total": total,
+            "offset": offset,
+            "wallets_available": False,
+        }
     with Session() as db:
         query = select(User)
         if search.strip():
@@ -1208,6 +1292,9 @@ def activate_admin(body: AdminActivation, request: Request, user=Depends(current
         or not secrets.compare_digest(body.code.encode(), expected.encode())
     ):
         fail("ADMIN_ACTIVATION_DENIED", 403)
+    if accounts.enabled():
+        accounts.hydrate(accounts.change(user.id, {"role": "admin"}, actor=user.id))
+        return {"ok": True}
     with Session.begin() as db:
         lock_sqlite_write(db)
         owner = db.scalar(select(User).where(User.id == user.id).with_for_update())

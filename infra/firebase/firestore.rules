@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // All app access goes through the backend, authorized using service-account IAM.
+    // Password hashes, sessions, email indexes, roles and counters are never client-readable.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -44,7 +44,7 @@ test('private admin: activate, search user, grant credits and assign expiring pl
   const section = page
     .locator('section')
     .filter({ has: page.getByRole('heading', { name: 'Manage users', exact: true }) });
-  await section.getByLabel('Search users', { exact: true }).fill(recipient);
+  await section.getByLabel('Search users by email prefix', { exact: true }).fill(recipient);
   await section.getByRole('button', { name: recipient, exact: true }).click();
   await section.getByLabel('Amount', { exact: true }).fill('25');
   await section.getByRole('button', { name: 'Grant credits', exact: true }).click();

@@ -11,6 +11,7 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import delete, select
 
+from . import accounts
 from .db import LoginSession, PasswordReset, Session, User, now
 from .main import aware, fail, limit
 from .security import hash_token, password_hash
@@ -34,19 +35,30 @@ def request_reset(body: ResetRequest, request: Request):
     sender = os.environ.get("SMTP_FROM")
     if not host or not sender:
         fail("EMAIL_DELIVERY_NOT_CONFIGURED", 503)
-    with Session() as db:
-        user = db.scalar(select(User).where(User.email == body.email.strip().lower()))
+    data = accounts.by_email(body.email.strip().lower()) if accounts.enabled() else None
+    if accounts.enabled():
+        user = accounts.hydrate(data) if data else None
+    else:
+        with Session() as db:
+            user = db.scalar(
+                select(User).where(User.email == body.email.strip().lower())
+            )
     if user:
         raw = secrets.token_urlsafe(32)
-        with Session.begin() as db:
-            db.execute(delete(PasswordReset).where(PasswordReset.user_id == user.id))
-            db.add(
-                PasswordReset(
-                    token_hash=hash_token(raw),
-                    user_id=user.id,
-                    expires_at=now() + timedelta(minutes=20),
+        if accounts.enabled():
+            accounts.issue_reset(data, hash_token(raw))
+        else:
+            with Session.begin() as db:
+                db.execute(
+                    delete(PasswordReset).where(PasswordReset.user_id == user.id)
                 )
-            )
+                db.add(
+                    PasswordReset(
+                        token_hash=hash_token(raw),
+                        user_id=user.id,
+                        expires_at=now() + timedelta(minutes=20),
+                    )
+                )
         message = EmailMessage()
         message["From"] = sender
         message["To"] = user.email
@@ -77,6 +89,12 @@ def request_reset(body: ResetRequest, request: Request):
 @router.post("/v1/auth/password-reset/confirm")
 def confirm_reset(body: ResetConfirm, request: Request):
     limit("reset-confirm:" + request.client.host, 10, 900)
+    if accounts.enabled():
+        if not accounts.reset_password(
+            hash_token(body.token), password_hash(body.password)
+        ):
+            fail("RESET_INVALID_OR_EXPIRED")
+        return {"ok": True}
     with Session.begin() as db:
         reset = db.scalar(
             select(PasswordReset)

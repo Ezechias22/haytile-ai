@@ -195,5 +195,6 @@
   "activateAdmin": "Activate administrator access",
   "activationHelp": "Owner only: enter the private activation code configured on the server. An email address alone cannot activate admin access.",
   "activationCode": "Private activation code",
-  "adminSearch": "Search users"
+  "adminSearch": "Search users by email prefix",
+  "durableAccountsNotice": "Your account and sign-in sessions are saved in Firebase. Project history, library metadata and credit balances still use temporary storage; export your project data."
 }

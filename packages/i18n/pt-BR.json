@@ -195,5 +195,6 @@
   "activateAdmin": "Ativar acesso de administrador",
   "activationHelp": "Somente o proprietário: informe o código privado configurado no servidor. O e-mail sozinho não concede acesso.",
   "activationCode": "Código privado de ativação",
-  "adminSearch": "Buscar usuários"
+  "adminSearch": "Buscar pelo início do e-mail",
+  "durableAccountsNotice": "Sua conta e sessões ficam salvas no Firebase. Histórico, metadados da biblioteca e saldos ainda usam armazenamento temporário; exporte seus projetos."
 }

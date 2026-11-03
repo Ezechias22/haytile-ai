@@ -195,5 +195,6 @@
   "activateAdmin": "激活管理员权限",
   "activationHelp": "仅限所有者：输入服务器上配置的私密激活码。仅有邮箱无法获得权限。",
   "activationCode": "私密激活码",
-  "adminSearch": "搜索用户"
+  "adminSearch": "按邮箱前缀搜索用户",
+  "durableAccountsNotice": "账户和登录会话已保存在 Firebase。项目历史、媒体库元数据和积分余额仍使用临时存储，请导出项目数据。"
 }
