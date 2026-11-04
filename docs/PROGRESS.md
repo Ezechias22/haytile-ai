@@ -1,5 +1,14 @@
 # HAYTILE AI — estati livrezon
 
+## Vokal nan bwat mesaj la, san fòm bidjè
+
+Bouton vokal toupre mikwo ak voye mesaj, kòmanse ak yon sèl klik, kanpe ak menm
+bouton an. Chwa vwa/modèl nan meni pliab anba bwat mesaj la. Pa gen demann
+bidjè oswa modal konfimasyon sesyon. Vwa toujou sèvi ak kredi; pri modèl la
+verifye sou backend, balans pa ka vin negatif. Tèks toujou gratis.
+5 tès backend vokal, 6 workflow navigatè, build web ak 4 tès konfigirasyon/tradiksyon
+pase san jenerasyon Google AI.
+
 ## Konvèsasyon vokal otomatik ak jesyon chat — nouvo livrezon web
 
 Repons vokal otomatik ak vwa/modèl chwazi, plafon kredi valide sou backend,

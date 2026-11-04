@@ -16,7 +16,6 @@ type Options = {
 };
 export function useVoiceConversation(options: Options) {
   const latest = useRef(options); latest.current = options;
-  const [setup, setSetup] = useState(false), [perReply, setPerReply] = useState(0), [cap, setCap] = useState('100');
   const [session, setSession] = useState<VoiceSession | null>(null);
   const current = useRef<VoiceSession | null>(null);
   const [phase, setPhase] = useState('off');
@@ -46,7 +45,6 @@ export function useVoiceConversation(options: Options) {
   useEffect(() => { window.addEventListener('haytile-stop-voice', stop); return () => window.removeEventListener('haytile-stop-voice', stop); }, [stop]);
   useEffect(() => () => { const old = current.current; current.current = null; audio.current?.pause(); if (old) latest.current.request('/chat/voice-sessions/' + old.id + '/stop', { method: 'POST', keepalive: true }).catch(() => {}); }, []);
   useEffect(() => { if (current.current && current.current.conversation_id !== options.conversation) stop(); }, [options.conversation, stop]);
-  useEffect(() => { setSetup(false); setPerReply(0); }, [options.voice, options.model]);
   useEffect(() => {
     if (!session || phase !== 'listening' || speech.listening) return;
     const timer = setTimeout(speech.start, 300);
@@ -54,24 +52,17 @@ export function useVoiceConversation(options: Options) {
   }, [session?.id, phase, speech.listening, speech.start]);
   useEffect(() => { if (phase !== 'listening') speech.stop(); }, [phase, speech.stop]);
 
-  const prepare = async () => {
-    if (!options.authenticated) { options.onAuth(); return; }
-    setBusy(true);
-    try {
-      const q = await options.request<{ credits: number }>('/quotes', { method: 'POST', body: JSON.stringify({ studio: 'voice', model_id: options.model, prompt: 'a'.repeat(1000), params: { voice_name: options.voice } }) });
-      setPerReply(q.credits); setSetup(true);
-    } catch (error) { options.onError(error); }
-    finally { setBusy(false); }
-  };
   const begin = async () => {
+    if (!options.authenticated) { options.onAuth(); return; }
     options.beforeStart(); setBusy(true); setPhase('starting');
     // Resume media playback from the user gesture; actual AI audio arrives later.
     if (audio.current) { audio.current.src = 'data:audio/wav;base64,UklGRgQCAABXQVZFZm10IBAAAAABAAEAwF0AAIC7AAACABAAZGF0YeABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='; void audio.current.play().catch(() => {}); }
     try {
+      const quote = await options.request<{ credits: number }>('/quotes', { method: 'POST', body: JSON.stringify({ studio: 'voice', model_id: options.model, prompt: 'a'.repeat(1000), params: { voice_name: options.voice } }) });
       const cid = options.conversation || crypto.randomUUID();
       options.setConversation(cid);
-      const next = await options.request<VoiceSession>('/chat/voice-sessions', { method: 'POST', body: JSON.stringify({ conversation_id: cid, model_id: options.model, voice_name: options.voice, credit_cap: Number(cap), confirmed_per_reply: perReply }) });
-      current.current = next; setSession(next); setSetup(false); setPhase('listening');
+      const next = await options.request<VoiceSession>('/chat/voice-sessions', { method: 'POST', body: JSON.stringify({ conversation_id: cid, model_id: options.model, voice_name: options.voice, confirmed_per_reply: quote.credits }) });
+      current.current = next; setSession(next); setPhase('listening');
     } catch (error) { setPhase('off'); options.onError(error); }
     finally { setBusy(false); }
   };
@@ -128,5 +119,5 @@ export function useVoiceConversation(options: Options) {
     return () => { alive = false; clearInterval(timer); };
   }, [job?.id, job?.status, session?.id, stop]);
   const ended = () => { if (current.current && ['speaking','tapToHear'].includes(phase)) { if (current.current.remaining < current.current.per_reply) { latest.current.onError(new Error('VOICE_SESSION_BUDGET_REACHED')); stop(); } else { setTarget(''); setJob(null); setPhase('listening'); } } };
-  return { submitText, session, setup, setSetup, perReply, cap, setCap, busy, phase, prepare, begin, stop, audio, audioUrl, ended, supported: speech.supported, listening: speech.listening };
+  return { submitText, session, busy, phase, begin, stop, audio, audioUrl, ended, supported: speech.supported, listening: speech.listening };
 }

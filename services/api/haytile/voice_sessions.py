@@ -20,7 +20,7 @@ class StartVoice(BaseModel):
     conversation_id: str = Field(pattern=r"^[a-zA-Z0-9_-]{8,80}$")
     model_id: str = Field(min_length=1, max_length=120)
     voice_name: str
-    credit_cap: int = Field(ge=1, le=5000)
+    credit_cap: int | None = Field(default=None, ge=1, le=5000)
     confirmed_per_reply: int = Field(ge=1, le=100000)
 
 
@@ -44,10 +44,11 @@ def start(body: StartVoice, user=Depends(current)):
         )["credits"]
         if per_reply != body.confirmed_per_reply or per_reply <= 0:
             fail("PRICE_CHANGED", 409)
-        if body.credit_cap < per_reply:
-            fail("VOICE_BUDGET_TOO_SMALL", 409)
+        credit_cap = body.credit_cap if body.credit_cap is not None else min(5000, owner.balance - owner.reserved)
         if owner.balance - owner.reserved < per_reply:
             fail("INSUFFICIENT_CREDITS", 402)
+        if credit_cap < per_reply:
+            fail("VOICE_BUDGET_TOO_SMALL", 409)
         project = Project(
             user_id=user.id,
             title="Voice conversation",
@@ -56,8 +57,8 @@ def start(body: StartVoice, user=Depends(current)):
                 "conversation_id": body.conversation_id,
                 "model_id": model.model_id,
                 "voice_name": body.voice_name,
-                "credit_cap": body.credit_cap,
-                "remaining": body.credit_cap,
+                "credit_cap": credit_cap,
+                "remaining": credit_cap,
                 "per_reply": per_reply,
                 "max_reply_chars": 1000,
                 "active": True,

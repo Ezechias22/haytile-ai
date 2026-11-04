@@ -1,17 +1,22 @@
 # Automatic voice and chat management
 
-Web release `voice-mode-navigation-v3` adds automatic turn-based voice conversations.
-Select a text model, a TTS model and a reply voice, approve the displayed per-reply
-price ceiling and session credit cap, then speak. Speech recognition submits a text
+Web release `composer-voice-v4` places voice conversation beside the microphone
+and send buttons in the message composer. One click starts speaking, with no
+budget form or approval dialog. Voice/model preferences are in a collapsible menu
+under the composer; a persistent notice explains that voice uses credits.
+Select a text model, a TTS model and a reply voice, then speak. Speech recognition submits a text
 turn; the selected text model answers; the selected TTS model speaks the reply and
 the microphone resumes after playback. This is not full-duplex native model audio.
 Text chat remains free in Haytile credits; voice output and images are paid.
 
 A server-owned Firestore session expires after 30 minutes and limits each spoken
-reply to 1,000 characters. Each audio job reserves its quoted credits and session
+reply to 1,000 characters. For one-click start its internal spending ceiling uses
+the currently available wallet balance (at most 5,000 credits); users are never
+asked to enter a budget. The server still rejects insufficient funds and validates
+the current model rate. Existing explicit-cap API clients remain supported. Each audio job reserves its quoted credits and session
 budget atomically. Completion debits once; failure releases the reservation and
 restores the budget once. The cap is not an upfront debit. Model, voice and
-conversation cannot be changed within an approved session. Stopping prevents new
+conversation cannot be changed within an active session. Stopping prevents new
 turns; already accepted generation may finish. Browser speech recognition,
 language support and autoplay vary; playback controls remain available.
 

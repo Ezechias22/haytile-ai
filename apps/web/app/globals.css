@@ -2369,3 +2369,16 @@ textarea {
 .voice-conversation audio { margin-top: 12px; width: min(100%, 460px); }
 @media(min-width:851px) { .app-shell.sidebar-collapsed .sidebar { transform: translateX(-100%); visibility: hidden; } [dir='rtl'] .app-shell.sidebar-collapsed .sidebar { transform: translateX(100%); } .app-shell.sidebar-collapsed .main-shell { margin-inline-start: 0; } .sidebar-scrim { display: none; } }
 @media(max-width:850px) { .sidebar-scrim { display: block; } .voice-conversation { margin: 14px; } }
+
+/* Voice starts beside dictation/send, with no budget dialog. */
+.chat-composer-controls { display: flex; align-items: center; gap: 8px; }
+.chat-voice-toggle { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; border: 0; background: #eee9f5; color: #19131f; cursor: pointer; }
+.chat-voice-toggle[aria-pressed='true'] { background: #a78bfa; }
+.chat-voice-toggle:disabled { opacity: .45; cursor: default; }
+.chat-footer .voice-conversation { margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; background: #282135; font-size: 13px; }
+.chat-voice-audio { width: min(100%, 460px); margin-bottom: 10px; }
+.chat-voice-preferences { margin-top: 12px; font-size: 12px; color: #b9accb; }
+.chat-voice-preferences summary { cursor: pointer; width: fit-content; }
+.chat-voice-preferences .chat-voice-settings { padding: 12px 0; }
+
+.chat-voice-cost { font-size: 11px; color: #a99bb8; margin: 10px 0 0; }

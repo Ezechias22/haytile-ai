@@ -36,6 +36,7 @@ test('offline chat: identity, replies in place, context and persisted history', 
   await log.getByRole('button', { name: 'Generate voice reply', exact: true }).click();
   const consent = log.getByRole('group', { name: 'Confirm generation cost' });
   await expect(consent).toContainText('3');
+  await page.locator('.chat-voice-preferences summary').click();
   await page.getByRole('combobox', { name: 'Reply voice', exact: true }).selectOption('Kore');
   await expect(consent).toHaveCount(0);
   await page.getByRole('combobox', { name: 'Reply voice', exact: true }).selectOption('Puck');

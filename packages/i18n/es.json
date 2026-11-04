@@ -261,7 +261,7 @@
   "chatListen": "Generar respuesta de voz",
   "chatAudioReply": "Respuesta de voz",
   "chatVoice": "Voz de respuesta",
-  "chatVoicePriceNotice": "El texto es gratis. Las respuestas de voz con IA usan créditos tras confirmar.",
+  "chatVoicePriceNotice": "El texto es gratis. Iniciar una conversación de voz utiliza créditos según la tarifa del modelo de voz elegido.",
   "chatSpeak": "Dictar un mensaje",
   "stopRecording": "Detener micrófono",
   "voiceInputNotice": "El dictado usa el servicio de voz del navegador. Revisa el texto antes de enviarlo.",

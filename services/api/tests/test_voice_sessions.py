@@ -219,3 +219,17 @@ def test_topup_scope_does_not_leak_commerce_links_into_media_answers():
         assert topup_relevant(prompt)
         policy = system_for(prompt)
         assert "https://app.haytiles.com" in policy and "another product" in policy
+
+
+def test_voice_start_without_budget_uses_available_balance(client, monkeypatch):
+    user, auth, cid, session, body = setup_voice(client, monkeypatch)
+    started = client.post(
+        '/v1/chat/voice-sessions', headers=auth,
+        json={'conversation_id': cid, 'model_id': 'offline-voice',
+              'voice_name': 'Charon', 'confirmed_per_reply': 3},
+    )
+    assert started.status_code == 201, started.text
+    assert started.json()['credit_cap'] == 30
+    assert started.json()['remaining'] == 30
+    assert client.get('/v1/wallet', headers=auth).json()['reserved'] == 0
+    assert client.post('/v1/chat/voice-sessions/'+started.json()['id']+'/stop', headers=auth).status_code == 200

@@ -261,7 +261,7 @@
   "chatListen": "生成语音回复",
   "chatAudioReply": "语音回复",
   "chatVoice": "回复声音",
-  "chatVoicePriceNotice": "文字免费。AI 语音回复在确认后扣除积分。",
+  "chatVoicePriceNotice": "文字聊天免费。启动语音对话将按所选语音模型的费率使用积分。",
   "chatSpeak": "语音输入",
   "stopRecording": "停止麦克风",
   "voiceInputNotice": "听写使用浏览器的语音服务。发送前请核对转写文字。",

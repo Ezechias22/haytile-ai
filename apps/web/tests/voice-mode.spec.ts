@@ -1,7 +1,7 @@
 import { test, expect, chromium } from '@playwright/test';
 import serverChromium from '@sparticuz/chromium';
 
-test('voice session: selected voice, automatic paid replies, budget, separate navigation and deletion', async () => {
+test('voice session: selected voice, automatic paid replies without budget prompt, separate navigation and deletion', async () => {
   test.skip(process.env.HAYTILE_OFFLINE_CREATIONS !== '1', 'Requires explicit offline provider.');
   const browser = await chromium.launch({ executablePath: await serverChromium.executablePath(), args: serverChromium.args.filter(x => x !== '--disable-web-security'), headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, reducedMotion: 'reduce' });
@@ -32,14 +32,13 @@ test('voice session: selected voice, automatic paid replies, budget, separate na
   await expect(page.getByRole('button',{name:'Music Studio',exact:true})).toBeVisible();
   await expect(page.locator('.sidebar-chat-history')).toHaveCount(0);
   await page.getByRole('tab',{name:'Chats',exact:true}).click();
+  await page.locator('.chat-voice-preferences summary').click();
   await page.getByRole('combobox',{name:'Reply voice',exact:true}).selectOption('Charon');
   await expect(page.getByRole('combobox',{name:'Voice model',exact:true})).toHaveValue('offline-voice-model');
-  await page.getByRole('button',{name:'Start voice conversation',exact:true}).click();
-  const approval = page.getByRole('group',{name:'Approve voice session',exact:true});
-  await expect(approval).toContainText('3 credits');
-  await approval.getByRole('spinbutton',{name:'Session credit budget',exact:true}).fill('6');
   const started = page.waitForResponse(response => response.url().endsWith('/api/v1/chat/voice-sessions') && response.request().method() === 'POST');
-  await approval.getByRole('button',{name:'Approve budget and start',exact:true}).click();
+  await page.locator('.chat-input-box').getByRole('button',{name:'Start voice conversation',exact:true}).click();
+  await expect(page.getByRole('spinbutton',{name:'Session credit budget',exact:true})).toHaveCount(0);
+  await expect(page.getByRole('group',{name:'Approve voice session',exact:true})).toHaveCount(0);
   const session = await (await started).json();
   const say = async (text: string) => {
     await expect.poll(() => page.evaluate(() => !!(window as any).__voiceRecognition?.onresult)).toBe(true);
@@ -52,14 +51,19 @@ test('voice session: selected voice, automatic paid replies, budget, separate na
   await expect(page.getByText('Listening… speak naturally',{exact:true})).toBeVisible({timeout:10000});
   await page.screenshot({path:'test-results/natural-voice-mode.png',fullPage:true});
   await say('Natural voice two');
-  await expect(page.getByRole('button',{name:'End voice conversation',exact:true})).toHaveCount(0,{timeout:30000});
+  await expect.poll(() => jobs.filter(job => job.studio === 'voice').length, {timeout:30000}).toBe(2);
+  await expect(page.locator('.credit-pill')).toContainText(String(before.balance-6));
+  await expect(page.getByText('Listening… speak naturally',{exact:true})).toBeVisible({timeout:30000});
+  await page.locator('.chat-input-box').getByRole('button',{name:'End voice conversation',exact:true}).click();
+  await expect(page.getByRole('button',{name:'End voice conversation',exact:true})).toHaveCount(0);
   await expect(page.locator('.credit-pill')).toContainText(String(before.balance-6));
   const voiceJobs = jobs.filter(job => job.studio==='voice');
   expect(voiceJobs).toHaveLength(2);
   expect(voiceJobs.every(job => job.params.voice_name==='Charon' && job.model_id==='offline-voice-model' && job.params.voice_session_id===session.id)).toBe(true);
   expect(jobs.filter(job=>job.studio==='text').every(job=>job.model_id==='offline-chat-model' && job.confirmed_credits===0)).toBe(true);
   const ended=await (await page.request.get(base+'/api/v1/chat/voice-sessions/'+session.id)).json();
-  expect(ended.remaining).toBe(0);
+  expect(ended.remaining).toBe(session.credit_cap-6);
+  expect(ended.active).toBe(false);
   await page.getByRole('button',{name:'Delete conversation Natural voice one',exact:true}).click();
   await page.getByRole('dialog').getByRole('button',{name:'Delete',exact:true}).click();
   await expect(page.getByRole('dialog')).not.toBeVisible();

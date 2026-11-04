@@ -261,7 +261,7 @@
   "chatListen": "Buat balasan suara",
   "chatAudioReply": "Balasan suara",
   "chatVoice": "Suara balasan",
-  "chatVoicePriceNotice": "Teks gratis. Balasan suara AI memakai kredit setelah konfirmasi.",
+  "chatVoicePriceNotice": "Teks gratis. Memulai percakapan suara menggunakan kredit sesuai tarif model suara yang dipilih.",
   "chatSpeak": "Dikte pesan",
   "stopRecording": "Hentikan mikrofon",
   "voiceInputNotice": "Dikte memakai layanan suara browser. Periksa teks sebelum mengirim.",
