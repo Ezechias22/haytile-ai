@@ -36,11 +36,14 @@ def trial_limit_code(db, user_id, studio, params, credits):
         maximum = int(os.environ.get("HAYTILE_TRIAL_MAX_EPISODE_SECONDS", "180"))
         if params.get("duration", 16) > maximum:
             return "TRIAL_VIDEO_DURATION_LIMIT"
-    daily = (
-        int(os.environ.get("HAYTILE_CHAT_PER_DAY", "20"))
-        if studio == "text" and params.get("chat") is True
-        else int(os.environ.get("HAYTILE_TRIAL_PER_STUDIO_PER_DAY", "2"))
-    )
+    if studio == "voice" and params.get("chat_audio") is True:
+        daily = int(os.environ.get("HAYTILE_CHAT_VOICE_PER_DAY", "10"))
+    else:
+        daily = (
+            int(os.environ.get("HAYTILE_CHAT_PER_DAY", "20"))
+            if studio == "text" and params.get("chat") is True
+            else int(os.environ.get("HAYTILE_TRIAL_PER_STUDIO_PER_DAY", "2"))
+        )
     attempts = db.scalar(
         select(func.coalesce(func.sum(Job.attempt), 0)).where(
             Job.user_id == user_id,

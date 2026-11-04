@@ -41,7 +41,10 @@ def configured_choices(db, studio):
                 or type(entry.get("credits", 0)) is not int
                 or not 0 <= entry.get("credits", 0) <= 100000
                 or (
-                    entry["studio"] in ("image", "text")
+                    (
+                        entry["studio"] == "text"
+                        or (entry["studio"] == "image" and not pricing.paid_images())
+                    )
                     and entry.get("credits", 0) != 0
                 )
                 or not isinstance(entry.get("label", entry["model_id"]), str)
@@ -59,14 +62,14 @@ def configured_choices(db, studio):
             )
         row = db.get(Model, studio)
         if row:
-            label = (
-                result[row.model_id].label if row.model_id in result else row.model_id
-            )
+            label = result[row.model_id].label if row.model_id in result else row.model_id
             result[row.model_id] = Choice(
                 studio,
                 row.model_id,
                 label,
-                0 if studio in ("image", "text") else row.credits,
+                0
+                if studio == "text" or (studio == "image" and not pricing.paid_images())
+                else row.credits,
                 row.enabled,
                 False,
                 row.provider,
@@ -77,9 +80,7 @@ def configured_choices(db, studio):
                     choice.enabled = False
         for choice in result.values():
             try:
-                choice.credits = pricing.base_credits(
-                    studio, choice.model_id, choice.credits
-                )
+                choice.credits = pricing.base_credits(studio, choice.model_id, choice.credits)
             except HTTPException:
                 choice.enabled = False
                 choice.unavailable_reason = "PRICING_NOT_VERIFIED"
@@ -90,10 +91,6 @@ def configured_choices(db, studio):
 
 def select_choice(db, studio, model_id):
     return next(
-        (
-            choice
-            for choice in configured_choices(db, studio)
-            if choice.model_id == model_id
-        ),
+        (choice for choice in configured_choices(db, studio) if choice.model_id == model_id),
         None,
     )

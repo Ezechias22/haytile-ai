@@ -46,7 +46,7 @@ from .security import (
 )
 from .titles import suggest_title
 from .trials import lock_sqlite_write, trial_enabled, trial_limit_code
-from .voice_choices import VOCALS, VOICES
+from .voice_choices import VOCALS, VOICE_OPTIONS, VOICES
 
 STUDIOS = ("image", "text", "voice", "music", "video", "minidrama")
 LOCALES = ("ht", "en", "fr", "pt-BR", "es", "ar", "zh-Hans", "id", "sw")
@@ -266,10 +266,11 @@ def runtime_settings():
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
     return {
-        "api_release": "durable-creations-chat-v1",
+        "api_release": "sidebar-chat-voices-v2",
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
         "metadata_store": "firestore" if records.enabled() else "sql",
+        "images_paid": pricing.paid_images(),
         "chat_available": configured and generation_enabled() and worker_enabled(),
         "free_beta": FREE_BETA,
         "temporary_storage": FREE_BETA and not storage.is_remote(),
@@ -528,6 +529,7 @@ def models():
 def voice_options():
     return {
         "voices": list(VOICES),
+        "voice_options": list(VOICE_OPTIONS),
         "source": "https://ai.google.dev/gemini-api/docs/speech-generation#voices",
     }
 
@@ -669,6 +671,12 @@ def generate(body: Generate, user=Depends(current)):
             ):
                 fail("IDEMPOTENCY_CONFLICT", 409)
             return job_json(old)
+        if body.params.get("chat_audio") is not None:
+            if body.studio != "voice" or body.params.get("chat_audio") is not True:
+                fail("CHAT_INVALID")
+            from .chat import validate_audio
+
+            validate_audio(db, user.id, body.params, body.prompt)
         chat_contents = None
         if body.params.get("chat") is not None:
             if body.studio != "text" or body.params.get("chat") is not True:
@@ -800,9 +808,25 @@ def jobs(user=Depends(current)):
         return [
             job_json(j)
             for j in db.scalars(
-                select(Job).where(Job.user_id == user.id).order_by(Job.created_at.desc()).limit(100)
+                select(Job)
+                .where(
+                    Job.user_id == user.id,
+                    Job.params["input_params"]["chat"].as_boolean().is_not(True),
+                    Job.params["input_params"]["chat_audio"].as_boolean().is_not(True),
+                )
+                .order_by(Job.created_at.desc())
+                .limit(100)
             )
         ]
+
+
+@app.get("/v1/jobs/{job_id}")
+def get_job(job_id: str, user=Depends(current)):
+    with Session() as db:
+        job = db.scalar(select(Job).where(Job.id == job_id, Job.user_id == user.id))
+        if not job:
+            fail("NOT_FOUND", 404)
+        return job_json(job)
 
 
 @app.get("/v1/chat/conversations")
@@ -859,8 +883,25 @@ def chat_messages(conversation_id: str, user=Depends(current)):
             if rows
             else {}
         )
+        audio = {}
+        for item in db.scalars(
+            select(Job)
+            .where(
+                Job.user_id == user.id,
+                Job.studio == "voice",
+                Job.params["input_params"]["chat_audio"].as_boolean().is_(True),
+                Job.params["input_params"]["conversation_id"].as_string() == conversation_id,
+            )
+            .order_by(Job.created_at.desc())
+            .limit(100)
+        ):
+            audio.setdefault(item.params["input_params"].get("parent_message_id"), job_json(item))
         return [
-            {**job_json(j), "reply": outputs.get(j.id) if j.status == "completed" else None}
+            {
+                **job_json(j),
+                "reply": outputs.get(j.id) if j.status == "completed" else None,
+                "audio": audio.get(j.id),
+            }
             for j in rows
         ]
 
@@ -930,7 +971,11 @@ def assets(user=Depends(current)):
                 .where(
                     Asset.job_id.is_(None)
                     | Asset.job_id.in_(
-                        select(Job.id).where((Job.credits == 0) | (Job.status == "completed"))
+                        select(Job.id).where(
+                            (Job.credits == 0) | (Job.status == "completed"),
+                            Job.params["input_params"]["chat"].as_boolean().is_not(True),
+                            Job.params["input_params"]["chat_audio"].as_boolean().is_not(True),
+                        )
                     )
                 )
                 .order_by(Asset.created_at.desc())
@@ -1255,7 +1300,7 @@ def model_settings(body: ModelSettings, user=Depends(admin)):
         fail("FREE_BETA_AI_DISABLED", 409)
     if body.credits and engine.dialect.name != "postgresql" and not records.enabled():
         fail("PERSISTENT_POSTGRES_REQUIRED", 409)
-    if body.studio == "image" and body.credits != 0:
+    if body.studio == "image" and body.credits != 0 and not pricing.paid_images():
         fail("BASIC_IMAGES_MUST_BE_FREE")
     if body.studio == "text" and body.credits != 0:
         fail("TEXT_MUST_BE_FREE")

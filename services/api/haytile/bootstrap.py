@@ -4,7 +4,7 @@ import json
 import logging
 import os
 
-from . import providers
+from . import pricing, providers
 from .availability import generation_enabled
 from .db import Audit, Model, Session, now
 
@@ -18,9 +18,7 @@ def configure_models():
     if not raw:
         return
     if os.environ.get("HAYTILE_OPERATOR_BILLING_ACK") != "1":
-        raise RuntimeError(
-            "Operator model billing approval is required before activation."
-        )
+        raise RuntimeError("Operator model billing approval is required before activation.")
     entries = json.loads(raw)
     if not isinstance(entries, list) or len(entries) > 6:
         raise RuntimeError("Invalid model configuration.")
@@ -35,14 +33,14 @@ def configure_models():
         credits = item.get("credits", 0)
         if type(credits) is not int or not 0 <= credits <= 100000:
             raise RuntimeError("Invalid model credit configuration.")
-        if credits != 0 and item["studio"] in ("image", "text"):
+        if credits != 0 and (
+            item["studio"] == "text" or (item["studio"] == "image" and not pricing.paid_images())
+        ):
             raise RuntimeError("Basic images and text must remain zero-credit.")
     try:
         names = {m["name"] for m in providers.discover()}
     except providers.ProviderError:
-        log.warning(
-            "Provider catalog check failed; model configuration was not activated."
-        )
+        log.warning("Provider catalog check failed; model configuration was not activated.")
         return
     with Session.begin() as db:
         for item in entries:

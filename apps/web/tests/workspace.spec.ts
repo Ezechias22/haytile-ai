@@ -2,7 +2,7 @@ import { test, expect, chromium } from '@playwright/test';
 import serverChromium from '@sparticuz/chromium';
 const base = process.env.HAYTILE_TEST_URL || 'http://localhost:3000';
 // Chromium is delivered through the integrity-checked npm package for this sandbox.
-test('real backend: account, draft, private download, handoff, rename, delete and logout', async () => {
+test('real backend: account, imported text, private download, handoff, rename, delete and logout', async () => {
   const browser = await chromium.launch({
     executablePath: await serverChromium.executablePath(),
     args: serverChromium.args.filter((a) => a !== '--disable-web-security'),
@@ -26,12 +26,7 @@ test('real backend: account, draft, private download, handoff, rename, delete an
   await dialog.getByLabel('Password', { exact: true }).fill('Browser-test-password-123');
   await dialog.getByRole('button', { name: 'Create account', exact: true }).click();
   await expect(dialog).not.toBeVisible();
-  await page.getByRole('button', { name: 'Text Studio', exact: true }).first().click();
-  await page.getByLabel('Project title', { exact: true }).fill('My tested story');
-  await page
-    .getByLabel('Describe your idea', { exact: true })
-    .fill('Pawòl mwen rete egzakteman.\nA real saved document.');
-  await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await page.locator('input[type=file]').setInputFiles({ name: 'My tested story', mimeType: 'text/plain', buffer: Buffer.from('Pawòl mwen rete egzakteman.\nA real saved document.') });
   await expect(page.getByRole('status')).toContainText('Saved to your library.');
   await page.getByRole('button', { name: 'My Creations', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'My tested story', exact: true })).toBeVisible();
@@ -48,7 +43,8 @@ test('real backend: account, draft, private download, handoff, rename, delete an
   await expect(page.getByLabel('Describe your idea', { exact: true })).toHaveValue(
     'Pawòl mwen rete egzakteman.\nA real saved document.',
   );
-  await expect(page.getByRole('button', { name: /^Generate/ })).toBeDisabled();
+  expect((await (await page.request.get(base + '/api/v1/wallet')).json()).balance).toBe(0);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', { name: 'My Creations', exact: true }).click();
   await page.getByRole('button', { name: 'Rename', exact: true }).click();
   await page

@@ -23,6 +23,7 @@ test('offline provider: auto-title, consent, My Creations, live stages, rename a
   await dialog.getByLabel('Password', { exact: true }).fill('Offline-browser-password-123');
   await dialog.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(dialog).not.toBeVisible();
+  const initialWallet = await (await page.request.get(base + '/api/v1/wallet')).json();
   await page.getByRole('button', { name: 'Music Studio', exact: true }).first().click();
   await page
     .getByLabel('Describe your idea', { exact: true })
@@ -46,7 +47,7 @@ test('offline provider: auto-title, consent, My Creations, live stages, rename a
   await expect(live.getByRole('heading', { name: 'Mizik mwen renome', exact: true })).toBeVisible();
   await page.screenshot({ path: 'test-results/creation-progress-live.png', fullPage: true });
   await expect(live).toContainText('Your file is ready', { timeout: 20000 });
-  await expect(page.locator('.credit-pill')).toContainText('38');
+  await expect(page.locator('.credit-pill')).toContainText(String(initialWallet.balance - 12));
   await expect(page.locator('.asset-grid')).toContainText('Mizik mwen renome');
   await live.getByRole('button', { name: 'Preview', exact: true }).click();
   const audio = page.getByRole('dialog').locator('audio');

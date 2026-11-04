@@ -94,6 +94,7 @@ type Model = {
   options?: { model_id: string; label: string; credits: number; available: boolean; episode_available?: boolean; pricing_url: string; unavailable_reason?: string | null }[];
 };
 const studios: Studio[] = ['image', 'music', 'video', 'minidrama', 'voice', 'text'];
+const visibleStudios: Studio[] = studios.filter(s => s !== 'text');
 const icons = {
   home: Home,
   chat: MessageCircle,
@@ -214,6 +215,7 @@ export default function App() {
     } catch {}
   }, []);
   const [generationPaused, setGenerationPaused] = useState(false);
+  const [imagesPaid, setImagesPaid] = useState(true);
   const [temporaryDatabase, setTemporaryDatabase] = useState(false);
   const [durableAccounts, setDurableAccounts] = useState(false);
   const [backgroundProcessing, setBackgroundProcessing] = useState(true);
@@ -223,6 +225,7 @@ export default function App() {
   useEffect(() => {
     api<{
       free_beta: boolean;
+      images_paid?: boolean;
       trial_ai: boolean;
       trial_max_video_seconds: number;
       trial_max_episode_seconds: number;
@@ -234,6 +237,7 @@ export default function App() {
     }>('/runtime')
       .then((config) => {
         setGenerationPaused(config.generation_paused);
+        setImagesPaid(config.images_paid === true);
         setTemporaryDatabase(config.temporary_database);
         setDurableAccounts(config.account_store === 'firestore');
         setBackgroundProcessing(config.background_processing_enabled !== false);
@@ -244,6 +248,9 @@ export default function App() {
   }, []);
   const [page, setPage] = useState<Page>('chat'),
     [locale, setLocale] = useState('ht'),
+    [chatConversation, setChatConversation] = useState(''),
+    [chatEpoch, setChatEpoch] = useState(0),
+    [chatThreads, setChatThreads] = useState<{ id: string; title: string }[]>([]),
     [user, setUser] = useState<User | null>(null),
     [assets, setAssets] = useState<Asset[]>([]),
     [jobs, setJobs] = useState<Job[]>([]),
@@ -272,6 +279,8 @@ export default function App() {
     [outputLanguage, setOutputLanguage] = useState('ht'),
     [voiceName, setVoiceName] = useState('Kore'),
     [voiceOptions, setVoiceOptions] = useState<string[]>([]),
+    [voiceDetails, setVoiceDetails] = useState<{ name: string; gender: string }[]>([]),
+    [voiceGender, setVoiceGender] = useState('all'),
     [vocalStyle, setVocalStyle] = useState('auto'),
     [dramaVideoModel, setDramaVideoModel] = useState(''),
     [generationQuote, setGenerationQuote] = useState<{ key: string; credits: number; clip_count: number; free: boolean } | null>(null),
@@ -308,6 +317,7 @@ export default function App() {
       return t('accountNeeded');
     }
     if (/DURABLE_JOB_BILLING_REQUIRED/.test(code)) return t('creditBillingPending');
+    if (/VOICE_INPUT_UNAVAILABLE/.test(code)) return t('voiceInputUnsupported');
     if (/LOGIN_INVALID/.test(code)) return t('authError');
     if (/AI_SERVICE_PAUSED|BACKGROUND_PROCESSING_PAUSED/.test(code)) return t('servicePausedBody');
     if (/PROVIDER_QUOTA_EXCEEDED/.test(code)) return t('providerQuota');
@@ -357,7 +367,7 @@ export default function App() {
             ? detected.split('-')[0]
             : 'ht',
     );
-    api<{ voices: string[] }>('/voices').then(data => setVoiceOptions(data.voices)).catch(() => {});
+    api<{ voices: string[]; voice_options?: { name: string; gender: string }[] }>('/voices').then(data => { setVoiceOptions(data.voices); setVoiceDetails(data.voice_options || []); }).catch(() => {});
     api<Model[]>('/models')
       .then(setModels)
       .catch(() => {});
@@ -368,6 +378,16 @@ export default function App() {
       })
       .catch(() => {});
   }, []);
+  useEffect(() => {
+    let alive = true;
+    setChatThreads([]);
+    setChatConversation(user ? localStorage.getItem('haytile-chat-' + user.id) || '' : '');
+    if (!user) return;
+    const load = () => api<{ id: string; title: string }[]>('/chat/conversations').then(rows => { if (alive) setChatThreads(rows); }).catch(() => {});
+    load();
+    window.addEventListener('focus', load);
+    return () => { alive = false; window.removeEventListener('focus', load); };
+  }, [user?.id]);
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
@@ -423,7 +443,7 @@ export default function App() {
         .catch(() => {});
   }, [page, user]);
   const navigate = (p: Page) => {
-    setPage(p);
+    setPage(p === 'text' ? 'chat' : p);
     setMenu(false);
     setError('');
     setSearch('');
@@ -439,7 +459,7 @@ export default function App() {
         .then(setUser)
         .catch(() => {});
   };
-  const studio = studios.includes(page as Studio) ? (page as Studio) : null,
+  const studio = visibleStudios.includes(page as Studio) ? (page as Studio) : null,
     studioModel = models.find((m) => m.studio === studio),
     modelOptions = studioModel?.options || (studioModel?.model_id ? [{ ...studioModel, model_id: studioModel.model_id, label: studioModel.model_id, pricing_url: 'https://ai.google.dev/gemini-api/docs/pricing' }] : []),
     activeChoice = modelOptions.find((option) => option.model_id === selectedModels[studio || '']) || modelOptions.find((option) => option.model_id === studioModel?.model_id) || modelOptions[0],
@@ -460,7 +480,7 @@ export default function App() {
   };
   const quoteRequest = { studio, model_id: activeChoice?.model_id, prompt, params: quoteParams };
   const quoteKey = JSON.stringify(quoteRequest);
-  const freeStudio = studio === 'image' || studio === 'text';
+  const freeStudio = studio === 'text' || (studio === 'image' && !imagesPaid);
   const quoteReady = freeStudio || generationQuote?.key === quoteKey;
   const quoteCredits = freeStudio ? 0 : quoteReady ? generationQuote?.credits || 0 : activeModel?.credits || 0;
   const costLabel = freeStudio ? t('freeGeneration') : quotePending ? t('calculatingPrice') : generationQuote?.key === quoteKey ? generationQuote.credits ? generationQuote.credits + ' ' + t('credits') : t('freeGeneration') : activeModel?.credits ? t('priceFrom') + ' ' + activeModel.credits + ' ' + t('credits') : t('quoteRequired');
@@ -644,7 +664,7 @@ export default function App() {
       {menu && <div className="sidebar-scrim" onClick={() => setMenu(false)} />}
       <aside className={'sidebar ' + (menu ? 'is-open' : '')}>
         <button className="brand" onClick={() => navigate('home')}>
-          <img src="/mark.svg" alt="" width={35} height={35} />
+          <img src="/mark.png" alt="" width={35} height={35} />
           <span>
             HAYTILE<span className="ai-tag">AI</span>
           </span>
@@ -665,8 +685,10 @@ export default function App() {
             {t('home')}
           </button>
           <button className={'nav-item ' + (page === 'chat' ? 'active' : '')} onClick={() => navigate('chat')}><MessageCircle size={18} />HAYTILE Chat</button>
+          <button className="nav-item" onClick={() => { setChatConversation(''); setChatEpoch(value => value + 1); if (user) localStorage.removeItem('haytile-chat-' + user.id); navigate('chat'); }}><Plus size={18} />{t('newChat')}</button>
+          {user && <section className="sidebar-chat-history" aria-label={t('chatHistory')}><p className="nav-label">{t('chatHistory')}</p>{chatThreads.map(thread => <button key={thread.id} className={'nav-item sidebar-chat-thread ' + (page === 'chat' && chatConversation === thread.id ? 'active' : '')} title={thread.title} onClick={() => { setChatConversation(thread.id); navigate('chat'); }}><MessageCircle size={15} /><span>{thread.title}</span></button>)}</section>}
           <p className="nav-label">{t('studios')}</p>
-          {studios.map((s) => {
+          {visibleStudios.map((s) => {
             const Icon = icons[s];
             return (
               <button
@@ -676,7 +698,7 @@ export default function App() {
               >
                 <Icon size={18} style={{ color: colors[s] }} />
                 {t(s)}
-                {s === 'image' && <span className="tiny-badge">FREE</span>}
+                {s === 'image' && !imagesPaid && <span className="tiny-badge">{t('freeGeneration')}</span>}
               </button>
             );
           })}
@@ -888,11 +910,11 @@ export default function App() {
                     <p>{t('chooseDescription')}</p>
                   </div>
                   <span className="count-label">
-                    6 STUDIOS <Layers size={14} />
+                    {visibleStudios.length} STUDIOS <Layers size={14} />
                   </span>
                 </div>
                 <div className="studio-grid">
-                  {studios.map((s, i) => {
+                  {visibleStudios.map((s, i) => {
                     const Icon = icons[s];
                     return (
                       <button
@@ -908,7 +930,7 @@ export default function App() {
                               <Icon size={17} />
                             </span>
                             <h3>{t(s)}</h3>
-                            {i === 0 ? (
+                            {i === 0 && !imagesPaid ? (
                               <span className="free-badge">FREE</span>
                             ) : (
                               <ArrowUpRight size={17} className="card-arrow" />
@@ -944,7 +966,7 @@ export default function App() {
                     </div>
                     <h3>{t('empty')}</h3>
                     <p>{t('emptyDescription')}</p>
-                    <button className="button" onClick={() => navigate('text')}>
+                    <button className="button" onClick={() => navigate('chat')}>
                       <Plus size={16} />
                       {t('new')}
                     </button>
@@ -953,7 +975,7 @@ export default function App() {
               </section>
             </>
           )}
-          {page === 'chat' && <HaytileChat request={api} t={t} userId={user?.id} locale={locale} models={models.find(m => m.studio === 'text')?.options || []} available={!generationPaused && backgroundProcessing && !!models.find(m => m.studio === 'text')?.available} onAuth={() => setAuth('login')} onError={err => setError(describeError(err))} />}
+          {page === 'chat' && <HaytileChat key={(user?.id || 'guest') + ':' + chatEpoch} conversation={chatConversation} setConversation={setChatConversation} onThread={thread => setChatThreads(rows => [thread, ...rows.filter(row => row.id !== thread.id)])} request={api} t={t} userId={user?.id} locale={locale} voiceOptions={voiceDetails} voiceModels={models.find(m => m.studio === 'voice')?.options || []} onWalletChange={() => refresh().catch(() => setSyncIssue(true))} models={models.find(m => m.studio === 'text')?.options || []} available={!generationPaused && backgroundProcessing && !!models.find(m => m.studio === 'text')?.available} onAuth={() => setAuth('login')} onError={err => setError(describeError(err))} />}
           {studio && (
             <>
               <div className="page-heading studio-heading">
@@ -975,7 +997,7 @@ export default function App() {
                     </span>
                     <h2>{t('new')}</h2>
                     <span className="subtle-badge">
-                      {studio === 'image'
+                      {studio === 'image' && !imagesPaid
                         ? t('freeGeneration')
                         : activeModel?.model_id || t('notConfigured')}
                     </span>
@@ -1034,7 +1056,7 @@ export default function App() {
                       />
                     </label>
                     {studio === 'minidrama' && miniMode === 'episode' && <label>{t('sceneVideoModel')}<select aria-label={t('sceneVideoModel')} value={dramaVideoModel || models.find(m => m.studio === 'video')?.model_id || ''} onChange={e => { setDramaVideoModel(e.target.value); pendingKey.current = null; }}>{(models.find(m => m.studio === 'video')?.options || []).map(option => <option key={option.model_id} value={option.model_id} disabled={!!option.unavailable_reason}>{option.label}{option.unavailable_reason ? ' — ' + t('pricingPending') : ''}</option>)}</select></label>}
-                    {studio === 'voice' && <label>{t('chooseVoice')}<select aria-label={t('chooseVoice')} value={voiceName} onChange={e => { setVoiceName(e.target.value); pendingKey.current = null; }}>{(voiceOptions.length ? voiceOptions : ['Kore']).map(voice => <option key={voice} value={voice}>{voice}</option>)}</select></label>}
+                    {studio === 'voice' && <><div className="voice-filter" role="group" aria-label={t('voiceType')}>{[['all', 'allVoices'], ['male', 'maleVoices'], ['female', 'femaleVoices']].map(([gender, label]) => <button key={gender} type="button" aria-pressed={voiceGender === gender} onClick={() => { setVoiceGender(gender); const first = voiceDetails.find(v => gender === 'all' || v.gender === gender); if (first) setVoiceName(first.name); pendingKey.current = null; }}>{t(label)}</button>)}</div><label>{t('chooseVoice')}<select aria-label={t('chooseVoice')} value={voiceName} onChange={e => { setVoiceName(e.target.value); pendingKey.current = null; }}>{(voiceOptions.length ? voiceOptions : ['Kore']).filter(voice => voiceGender === 'all' || voiceDetails.some(v => v.name === voice && v.gender === voiceGender)).map(voice => { const gender = voiceDetails.find(v => v.name === voice)?.gender; return <option key={voice} value={voice}>{voice}{gender ? ' · ' + t(gender === 'male' ? 'maleVoiceLabel' : gender === 'female' ? 'femaleVoiceLabel' : 'otherVoices') : ''}</option>; })}</select></label></>}
                     {studio === 'music' && <label>{t('vocalStyle')}<select aria-label={t('vocalStyle')} value={vocalStyle} onChange={e => { setVocalStyle(e.target.value); pendingKey.current = null; }}>{[['auto','autoVocal'],['male','maleVocal'],['female','femaleVocal'],['duet','duetVocal'],['instrumental','instrumentalVocal']].map(([key,label]) => <option key={key} value={key}>{t(label)}</option>)}</select></label>}
                     <div className="field-row">
                       <label>
@@ -1230,7 +1252,7 @@ export default function App() {
                       className={filter === f ? 'selected' : ''}
                       onClick={() => setFilter(f)}
                     >
-                      {t(f === 'audio' ? 'music' : f)}
+                      {t(f === 'audio' ? 'music' : f === 'text' ? 'textFiles' : f)}
                     </button>
                   ))}
                 </div>
@@ -1252,7 +1274,7 @@ export default function App() {
                   <FolderHeart size={34} />
                   <h2>{t('empty')}</h2>
                   <p>{t('emptyDescription')}</p>
-                  <button className="button" onClick={() => navigate('text')}>
+                  <button className="button" onClick={() => navigate('chat')}>
                     <Plus size={16} />
                     {t('new')}
                   </button>
@@ -1529,7 +1551,7 @@ export default function App() {
                       >
                         {studios.map((s) => (
                           <option key={s} value={s}>
-                            {t(s)}
+                            {t(s === 'text' ? 'chat' : s)}
                           </option>
                         ))}
                       </select>
@@ -1817,7 +1839,7 @@ export default function App() {
               <div className="handoff">
                 <label>{t('sendTo')}</label>
                 <div>
-                  {studios.map((s) => (
+                  {visibleStudios.map((s) => (
                     <button className="button small" key={s} onClick={() => sendTo(preview, s)}>
                       {t(s)}
                       <ArrowUpRight size={13} />

@@ -27,9 +27,7 @@ def finalize_failure(job_id, code):
         snapshot = db.get(Job, job_id)
         if not snapshot:
             return
-        owner = db.scalar(
-            select(User).where(User.id == snapshot.user_id).with_for_update()
-        )
+        owner = db.scalar(select(User).where(User.id == snapshot.user_id).with_for_update())
         job = db.scalar(
             select(Job)
             .where(Job.id == job_id)
@@ -111,6 +109,8 @@ def run_once():
 
     if job.params.get("pricing_quote", {}).get("voice_token_limit"):
         params["_max_output_tokens"] = job.params["pricing_quote"]["voice_token_limit"]
+    if job.params.get("pricing_quote", {}).get("image_size"):
+        params["_image_size"] = job.params["pricing_quote"]["image_size"]
     params["_operation_callback"] = record_operation
     if job.params.get("resume_operation_id"):
         params["_resume_operation_id"] = job.params["resume_operation_id"]
@@ -227,9 +227,7 @@ def run_once():
             output_size = len(data)
             key = storage.put(data, mime)
         with Session.begin() as db:
-            owner = db.scalar(
-                select(User).where(User.id == job.user_id).with_for_update()
-            )
+            owner = db.scalar(select(User).where(User.id == job.user_id).with_for_update())
             row = db.scalar(select(Job).where(Job.id == job_id).with_for_update())
             if not owner or not row or row.status != "quality_check":
                 storage.delete(key)
@@ -299,11 +297,7 @@ def run_once():
     except Exception as exc:
         if key:
             storage.delete(key)
-        code = (
-            str(exc)
-            if isinstance(exc, providers.ProviderError)
-            else "MEDIA_OR_STORAGE_FAILED"
-        )
+        code = str(exc) if isinstance(exc, providers.ProviderError) else "MEDIA_OR_STORAGE_FAILED"
         if code in (
             "PROVIDER_NETWORK_OR_RESPONSE",
             "MEDIA_OR_STORAGE_FAILED",

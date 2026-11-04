@@ -1,7 +1,8 @@
 """Server quotes from dated official rates plus an explicit Haytile reserve/margin.
 
 1 reference credit = US$0.01. This is an app policy, not a Google price or an
-implemented credit purchase. Free images/text still cost the operator money.
+implemented credit purchase. Free text still costs the operator money; paid
+images are enabled explicitly by the operator.
 """
 
 import math
@@ -46,9 +47,40 @@ def credits_for(cost):
     return int((cost * MARKUP / CREDIT_USD).to_integral_value(rounding=ROUND_CEILING))
 
 
+# Official 1K output-image USD, input/output-text USD per million tokens.
+IMAGE_RATES = {
+    "gemini-3.1-flash-lite-image": (Decimal("0.0336"), Decimal("0.25"), Decimal("1.50")),
+    "gemini-3.1-flash-image": (Decimal("0.067"), Decimal("0.50"), Decimal("3")),
+    "gemini-3-pro-image": (Decimal("0.134"), Decimal("2"), Decimal("12")),
+    "gemini-2.5-flash-image": (Decimal("0.039"), Decimal("0.30"), Decimal("2.50")),
+    "gemini-nano-banana-2.1": (Decimal("0.0336"), Decimal("1.50"), Decimal("7.50")),
+}
+
+
+def paid_images():
+    return os.environ.get("HAYTILE_PAID_IMAGES") == "1"
+
+
+def image_quote(model_id, prompt="", params=None):
+    if model_id not in IMAGE_RATES:
+        raise HTTPException(409, detail="PRICING_NOT_VERIFIED")
+    image, inp, out = IMAGE_RATES[model_id]
+    # Conservative UTF-8 byte budget, output cap and explicit operation reserve.
+    input_budget = (
+        1000
+        + len(prompt.encode("utf-8"))
+        + (40000 if (params or {}).get("reference_asset_id") else 0)
+    )
+    cost = image + (inp * input_budget + out * 2048) / Decimal("1000000") + Decimal("0.002")
+    # Lower image-specific markup; not a Google fee or a guaranteed retail profit.
+    return int((cost * 2 / CREDIT_USD).to_integral_value(rounding=ROUND_CEILING))
+
+
 def base_credits(studio, model_id, operator_credits=0):
-    if studio in ("image", "text"):
+    if studio == "text" or (studio == "image" and not paid_images()):
         return 0
+    if studio == "image" and verified():
+        return max(operator_credits, image_quote(model_id))
     if not verified():
         return operator_credits
     if studio == "minidrama":
@@ -80,14 +112,14 @@ def quote(
     unit = base_credits(studio, model_id, operator_credits)
     clip_count = 0
     voice_tokens = 0
-    if studio in ("image", "text"):
+    if studio == "text" or (studio == "image" and not paid_images()):
         total = 0
+    elif studio == "image" and verified():
+        total = max(operator_credits, image_quote(model_id, prompt, params))
     elif studio == "video":
         clip_count = math.ceil(params.get("duration", 8) / CLIP_SECONDS)
         total = (
-            unit * clip_count
-            if verified()
-            else unit * math.ceil(params.get("duration", 8) / 10)
+            unit * clip_count if verified() else unit * math.ceil(params.get("duration", 8) / 10)
         )
     elif studio == "voice" and verified():
         units = max(1, math.ceil(len(prompt) / 1000))
@@ -99,9 +131,7 @@ def quote(
             if not render_config:
                 raise HTTPException(409, detail="PROVIDER_SETUP_REQUIRED")
             per_clip = base_credits("video", render_config["video"], video_credits)
-            total = clip_count * per_clip + credits_for(
-                DRAMA_PLAN_AND_REFERENCES_RESERVE
-            )
+            total = clip_count * per_clip + credits_for(DRAMA_PLAN_AND_REFERENCES_RESERVE)
         else:
             total = unit + clip_count * video_credits
     else:
@@ -111,6 +141,7 @@ def quote(
         "free": total == 0,
         "clip_count": clip_count,
         "voice_token_limit": voice_tokens,
+        "image_size": "1K" if studio == "image" and paid_images() else None,
         "pricing_version": VERSION if verified() else "operator-configured",
         "reference_unit_usd": str(CREDIT_USD),
         "reference_total_usd": str(CREDIT_USD * total),

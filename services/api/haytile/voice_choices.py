@@ -41,3 +41,38 @@ VOCALS = {
     "duet": "Use two complementary singers as a duet.",
     "instrumental": "Create instrumental music only, without vocals.",
 }
+
+# Perceived presentation verified with the read-only Google Voice Library catalog.
+# GET /v1beta/voices?type=prebuilt&search=<name>, 2026-11-03.
+VOICE_OPTIONS = (
+    {"name": "Zephyr", "gender": "female"},
+    {"name": "Puck", "gender": "male"},
+    {"name": "Charon", "gender": "male"},
+    {"name": "Kore", "gender": "female"},
+    {"name": "Fenrir", "gender": "male"},
+    {"name": "Leda", "gender": "female"},
+    {"name": "Orus", "gender": "male"},
+    {"name": "Aoede", "gender": "female"},
+    {"name": "Callirrhoe", "gender": "female"},
+    {"name": "Autonoe", "gender": "female"},
+    {"name": "Enceladus", "gender": "male"},
+    {"name": "Iapetus", "gender": "male"},
+    {"name": "Umbriel", "gender": "male"},
+    {"name": "Algieba", "gender": "male"},
+    {"name": "Despina", "gender": "female"},
+    {"name": "Erinome", "gender": "female"},
+    {"name": "Algenib", "gender": "male"},
+    {"name": "Rasalgethi", "gender": "male"},
+    {"name": "Laomedeia", "gender": "female"},
+    {"name": "Achernar", "gender": "female"},
+    {"name": "Alnilam", "gender": "male"},
+    {"name": "Schedar", "gender": "male"},
+    {"name": "Gacrux", "gender": "female"},
+    {"name": "Pulcherrima", "gender": "neutral"},
+    {"name": "Achird", "gender": "male"},
+    {"name": "Zubenelgenubi", "gender": "male"},
+    {"name": "Vindemiatrix", "gender": "female"},
+    {"name": "Sadachbia", "gender": "male"},
+    {"name": "Sadaltager", "gender": "male"},
+    {"name": "Sulafat", "gender": "female"},
+)

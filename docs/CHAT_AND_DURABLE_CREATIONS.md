@@ -1,5 +1,9 @@
 # Conversational chat and durable creative jobs
 
+Current policy update: see [SIDEBAR_VOICE_AND_IMAGE_BILLING.md](SIDEBAR_VOICE_AND_IMAGE_BILLING.md).
+Plain text remains free; images now have positive quotes with the paid-image flag.
+The initial rollout receipt below records the earlier image-free release.
+
 The web workspace opens HAYTILE Chat: a composer, user messages, assistant replies,
 conversation history, a model selector, copy and text download. The initial greeting
 identifies HAYTILE AI as an AI assistant. The provider receives a server-owned system
@@ -33,9 +37,9 @@ instead of blind submission. Namespace `main` is used for production claims;
 Firebase fixture probes must use a unique separate namespace.
 
 Jobs survive local SQL loss and returning owners hydrate their own metadata. Media
-is private object storage with short-lived authorized download URLs. Basic image
-and text generation always cost zero Haytile credits, regardless of an old model
-row. Other studios use an exact server quote before consent. The UI opens My
+is private object storage with short-lived authorized download URLs. Plain text generation always costs zero Haytile credits. Images require positive
+quotes with `HAYTILE_PAID_IMAGES=1`; earlier free jobs retain their original price.
+Other studios use an exact server quote before consent. The UI opens My
 Creations after acceptance, polls actual stages, permits title edits during/after
 work, and exposes only completed paid results.
 

@@ -18,13 +18,13 @@ export default function Studio() {
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
-  const [voice, setVoice] = useState('Kore'), [voices, setVoices] = useState<string[]>([]), [vocal, setVocal] = useState('auto');
+  const [voice, setVoice] = useState('Kore'), [voices, setVoices] = useState<string[]>([]), [voiceDetails, setVoiceDetails] = useState<{ name: string; gender: string }[]>([]), [voiceGender, setVoiceGender] = useState('all'), [vocal, setVocal] = useState('auto');
   const suggested = suggestTitle(prompt, t(studio));
   useEffect(() => {
     SecureStore.getItemAsync('haytile-model-' + studio).then(value => setSelectedModel(value || '')).catch(() => {});
   }, [studio]);
   useEffect(() => {
-    api<{ voices: string[] }>('/voices').then(data => setVoices(data.voices)).catch(() => {});
+    api<{ voices: string[]; voice_options?: { name: string; gender: string }[] }>('/voices').then(data => { setVoices(data.voices); setVoiceDetails(data.voice_options || []); }).catch(() => {});
     api<Model[]>('/models')
       .then(setModels)
       .catch(() => {});
@@ -112,7 +112,7 @@ export default function Studio() {
           maxLength={12000}
           placeholder={t('promptHint')}
         />
-        {studio === 'voice' && <><Copy>{t('chooseVoice')}</Copy><Chips items={Object.fromEntries((voices.length ? voices : ['Kore']).map(v => [v,v]))} value={voice} onChange={setVoice}/></>}
+        {studio === 'voice' && <><Copy>{t('voiceType')}</Copy><Chips items={{all:t('allVoices'),male:t('maleVoices'),female:t('femaleVoices')}} value={voiceGender} onChange={gender => { setVoiceGender(gender); const first = voiceDetails.find(v => gender === 'all' || v.gender === gender); if (first) setVoice(first.name); }}/><Copy>{t('chooseVoice')}</Copy><Chips items={Object.fromEntries((voices.length ? voices : ['Kore']).filter(name => voiceGender === 'all' || voiceDetails.some(v => v.name === name && v.gender === voiceGender)).map(name => { const gender = voiceDetails.find(v => v.name === name)?.gender; return [name, name + (gender ? ' · ' + t(gender === 'male' ? 'maleVoiceLabel' : gender === 'female' ? 'femaleVoiceLabel' : 'otherVoices') : '')]; }))} value={voice} onChange={setVoice}/></>}
         {studio === 'music' && <><Copy>{t('vocalStyle')}</Copy><Chips items={{auto:t('autoVocal'),male:t('maleVocal'),female:t('femaleVocal'),duet:t('duetVocal'),instrumental:t('instrumentalVocal')}} value={vocal} onChange={setVocal}/></>}
         <Copy>{t('language')}</Copy>
         <Chips items={languages} value={language} onChange={setLanguage} />

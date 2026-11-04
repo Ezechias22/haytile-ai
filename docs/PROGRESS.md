@@ -1,5 +1,16 @@
 # HAYTILE AI — estati livrezon
 
+## Istwa chat sou bò gòch, vwa, logo ak nouvo tarif imaj
+
+Istwa chat yo nan meni prensipal la, Text Studio retire nan UI web, epi chat/odyo
+chat pa antre otomatikman nan Mes créations. Enstriksyon AI yo gen enfòmasyon
+pwopriyetè a ak lyen ofisyèl haytiles.com / app.haytiles.com / Google Play.
+Chat tèks toujou gratis dapre dènye koreksyon itilizatè a. Imaj peye ak quote
+obligatwa; ansyen travay zewo-kredi pa chaje apre. Mikwo navigatè + repons TTS
+peye ak konfimasyon ajoute. Logo nouvo sou web ak nan sous mobil.
+96 tès backend ak 6 workflow navigatè lokal pase san jenerasyon Google peye.
+Deplwaman ap vini apre dènye kontwòl. Gade [SIDEBAR_VOICE_AND_IMAGE_BILLING.md](SIDEBAR_VOICE_AND_IMAGE_BILLING.md).
+
 ## Nouvo chat ak kreyasyon dirab — deplwaye sou web
 
 Chat HAYTILE ajoute ak istwa, kontèks, prezantasyon AI, chwa modèl ak repons

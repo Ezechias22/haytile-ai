@@ -231,7 +231,7 @@ export default function Creations() {
             <VideoPreview url={url} />
           )}{' '}
           {preview?.text &&
-            ['image', 'music', 'video', 'minidrama', 'voice', 'text'].map((studio) => (
+            ['image', 'music', 'video', 'minidrama', 'voice'].map((studio) => (
               <Button
                 key={studio}
                 title={t('sendTo') + ' ' + t(studio)}

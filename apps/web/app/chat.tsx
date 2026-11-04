@@ -1,10 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUp, Check, Copy, Download, LoaderCircle, MessageCircle, Plus, RotateCcw, Sparkles } from 'lucide-react';
+import { ArrowUp, Check, Copy, Download, Mic, MicOff, LoaderCircle, RotateCcw, Sparkles } from 'lucide-react';
+import ChatAudio from './chat-audio';
+import { useSpeechInput } from './speech-input';
 import { suggestTitle } from '../../../packages/creation-titles';
 
-type Turn = { id: string; prompt: string; reply?: string | null; status: string; error?: string | null; title: string };
+type Turn = { audio?: { id: string; status: string; params: { result_asset_id?: string } }; id: string; prompt: string; reply?: string | null; status: string; error?: string | null; title: string };
 type Thread = { id: string; title: string };
 type Choice = { model_id: string; label: string; available: boolean; unavailable_reason?: string | null };
 type Props = {
@@ -13,34 +15,32 @@ type Props = {
   userId?: string;
   locale: string;
   models: Choice[];
+  voiceModels: Choice[];
+  voiceOptions: { name: string; gender: string }[];
+  onWalletChange: () => void;
   available: boolean;
+  conversation: string;
+  setConversation: (id: string) => void;
+  onThread: (thread: Thread) => void;
   onAuth: () => void;
   onError: (error: unknown) => void;
 };
 
-export default function HaytileChat({ request, t, userId, locale, models, available, onAuth, onError }: Props) {
-  const [conversation, setConversation] = useState('');
-  const [threads, setThreads] = useState<Thread[]>([]);
+export default function HaytileChat({ request, t, userId, locale, models, voiceModels, voiceOptions, onWalletChange, available, conversation, setConversation, onThread, onAuth, onError }: Props) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [message, setMessage] = useState('');
   const [model, setModel] = useState('');
+  const [chatVoice, setChatVoice] = useState('Puck');
+  const speech = useSpeechInput(locale, text => setMessage(previous => previous ? previous + ' ' + text : text), () => onError(new Error('VOICE_INPUT_UNAVAILABLE')));
+  const voiceModel = voiceModels.find(m => m.available && !m.unavailable_reason)?.model_id || '';
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(false);
   const [syncError, setSyncError] = useState(false);
   const [copied, setCopied] = useState('');
   const bottom = useRef<HTMLDivElement>(null);
   const pending = useRef<{ fingerprint: string; id: string } | null>(null);
-  const generation = useRef(0);
   const chosen = models.find(m => m.model_id === model) || models.find(m => m.available && !m.unavailable_reason);
   const active = turns.some(turn => ['queued', 'processing', 'quality_check'].includes(turn.status));
-
-  useEffect(() => {
-    const token = ++generation.current;
-    setTurns([]); setThreads([]); setMessage(''); setSyncError(false);
-    setConversation(userId ? localStorage.getItem('haytile-chat-' + userId) || '' : '');
-    if (!userId) return;
-    request<Thread[]>('/chat/conversations').then(rows => { if (token === generation.current) setThreads(rows); }).catch(() => setSyncError(true));
-  }, [userId, request]);
 
   const load = useCallback(async (id: string) => {
     const rows = await request<Turn[]>('/chat/conversations/' + encodeURIComponent(id));
@@ -74,10 +74,6 @@ export default function HaytileChat({ request, t, userId, locale, models, availa
 
   useEffect(() => { bottom.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, [turns.length, turns.map(turn => turn.status).join(',')]);
 
-  const fresh = () => {
-    setConversation(''); setTurns([]); setMessage(''); pending.current = null;
-    if (userId) localStorage.removeItem('haytile-chat-' + userId);
-  };
   const send = async () => {
     if (!userId) { onAuth(); return; }
     if (!message.trim() || sending || active || !chosen || !available) return;
@@ -91,7 +87,7 @@ export default function HaytileChat({ request, t, userId, locale, models, availa
       const turn = await request<Turn>('/jobs', { method: 'POST', body: JSON.stringify({ ...draft, idempotency_key: pending.current.id }) });
       if (!conversation) { setConversation(cid); localStorage.setItem('haytile-chat-' + userId, cid); }
       setTurns(rows => rows.some(row => row.id === turn.id) ? rows : [...rows, turn]);
-      setThreads(rows => [{ id: cid, title: draft.title }, ...rows.filter(row => row.id !== cid)]);
+      onThread({ id: cid, title: draft.title });
       setMessage(''); pending.current = null;
     } catch (error) { onError(error); }
     finally { setSending(false); }
@@ -112,18 +108,14 @@ export default function HaytileChat({ request, t, userId, locale, models, availa
   };
 
   return <section className="haytile-chat" aria-label="HAYTILE AI Chat">
-    <aside className="chat-history">
-      <button className="button secondary" onClick={fresh} disabled={sending}><Plus size={17} />{t('newChat')}</button>
-      <p className="eyebrow">{t('chatHistory')}</p>
-      {threads.map(thread => <button key={thread.id} className={'chat-thread ' + (thread.id === conversation ? 'selected' : '')} onClick={() => setConversation(thread.id)} disabled={sending}><MessageCircle size={15} /><span>{thread.title}</span></button>)}
-    </aside>
     <div className="chat-main">
       <header className="chat-toolbar"><div><Sparkles size={20} /><strong>HAYTILE AI</strong><span className="subtle-badge">{t('freeGeneration')}</span></div><label className="chat-model-label"><span className="sr-only">{t('chooseModel')}</span><select aria-label={t('chooseModel')} value={chosen?.model_id || ''} onChange={event => setModel(event.target.value)} disabled={active || sending}>{models.map(choice => <option key={choice.model_id} value={choice.model_id} disabled={!choice.available || !!choice.unavailable_reason}>{choice.label}</option>)}</select></label></header>
+      <div className="chat-voice-settings"><label>{t('chatVoice')}<select aria-label={t('chatVoice')} value={chatVoice} onChange={event => setChatVoice(event.target.value)}>{voiceOptions.map(v => <option key={v.name} value={v.name}>{v.name} · {t(v.gender === 'male' ? 'maleVoiceLabel' : v.gender === 'female' ? 'femaleVoiceLabel' : 'otherVoices')}</option>)}</select></label><small>{t('chatVoicePriceNotice')}</small></div>
       <div className="chat-transcript" role="log" aria-label={t('chatMessages')} aria-live="polite" aria-relevant="additions text">
-        <article className="chat-message assistant chat-introduction"><div className="chat-avatar"><Sparkles size={20} /></div><div><strong>HAYTILE AI</strong><h1>{t('chatHello')}</h1><p>{t('chatIntroduction')}</p></div></article>
+        <article className="chat-message assistant chat-introduction"><div className="chat-avatar"><img src="/mark.png" width={36} height={36} alt="" /></div><div><strong>HAYTILE AI</strong><h1>{t('chatHello')}</h1><p>{t('chatIntroduction')}</p></div></article>
         {!turns.length && !loading && <div className="chat-suggestions">{['chatIdeaStory', 'chatIdeaLyrics', 'chatIdeaExplain'].map(key => <button key={key} onClick={() => setMessage(t(key))}>{t(key)}<ArrowUp size={15} /></button>)}</div>}
         {loading && <p role="status"><LoaderCircle className="spin" size={16} /> {t('loading')}</p>}
-        {turns.map(turn => <div key={turn.id} className="chat-turn"><article className="chat-message user"><div className="chat-user-bubble">{turn.prompt}</div></article><article className="chat-message assistant"><div className="chat-avatar"><Sparkles size={18} /></div><div className="chat-answer"><strong>HAYTILE AI</strong>{turn.status === 'completed' && turn.reply ? <><div className="chat-response">{turn.reply.split(/(```[\s\S]*?```)/g).map((part, index) => part.startsWith('```') ? <pre key={index}><code>{part.slice(3, -3).replace(/^\w+\n/, '')}</code></pre> : <span key={index}>{part}</span>)}</div><div className="chat-answer-actions"><button onClick={() => copy(turn)} aria-label={t('copy')}>{copied === turn.id ? <Check size={15} /> : <Copy size={15} />}{t('copy')}</button><button onClick={() => download(turn)}><Download size={15} />{t('download')}</button></div></> : turn.status === 'failed' ? <div className="chat-failure"><p>{t('chatFailed')} <small>{turn.error}</small></p><button className="button secondary" onClick={() => retry(turn)} disabled={sending}><RotateCcw size={15} />{t('retry')}</button></div> : <p className="chat-thinking"><LoaderCircle className="spin" size={16} />{turn.status === 'queued' ? t('queued') : t('chatThinking')}</p>}</div></article></div>)}
+        {turns.map(turn => <div key={turn.id} className="chat-turn"><article className="chat-message user"><div className="chat-user-bubble">{turn.prompt}</div></article><article className="chat-message assistant"><div className="chat-avatar"><img src="/mark.png" width={36} height={36} alt="" /></div><div className="chat-answer"><strong>HAYTILE AI</strong>{turn.status === 'completed' && turn.reply ? <><div className="chat-response">{turn.reply.split(/(```[\s\S]*?```)/g).map((part, index) => part.startsWith('```') ? <pre key={index}><code>{part.slice(3, -3).replace(/^\w+\n/, '')}</code></pre> : <span key={index}>{part}</span>)}</div><div className="chat-answer-actions"><button onClick={() => copy(turn)} aria-label={t('copy')}>{copied === turn.id ? <Check size={15} /> : <Copy size={15} />}{t('copy')}</button><button onClick={() => download(turn)}><Download size={15} />{t('download')}</button></div><ChatAudio request={request} t={t} reply={turn.reply} initialJob={turn.audio} messageId={turn.id} conversation={conversation} locale={locale} voice={chatVoice} model={voiceModel} onWalletChange={onWalletChange} onError={onError} /></> : turn.status === 'failed' ? <div className="chat-failure"><p>{t('chatFailed')} <small>{turn.error}</small></p><button className="button secondary" onClick={() => retry(turn)} disabled={sending}><RotateCcw size={15} />{t('retry')}</button></div> : <p className="chat-thinking"><LoaderCircle className="spin" size={16} />{turn.status === 'queued' ? t('queued') : t('chatThinking')}</p>}</div></article></div>)}
         <div ref={bottom} />
       </div>
       <footer className="chat-footer">
@@ -131,9 +123,9 @@ export default function HaytileChat({ request, t, userId, locale, models, availa
         {!available && <p role="status">{t('servicePausedBody')}</p>}
         <form className="chat-input-box" onSubmit={event => { event.preventDefault(); send(); }}>
           <textarea aria-label={t('chatMessage')} placeholder={t('chatPlaceholder')} value={message} maxLength={12000} rows={3} onChange={event => setMessage(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); send(); } }} />
-          <div className="chat-input-actions"><small>{t('chatEnterHint')}</small><button className="chat-send" type="submit" aria-label={t('chatSend')} disabled={sending || active || !message.trim() || (!!userId && (!chosen || !available))}>{sending ? <LoaderCircle className="spin" size={19} /> : <ArrowUp size={20} />}</button></div>
+          <div className="chat-input-actions"><button type="button" className="chat-mic" onClick={speech.toggle} disabled={!speech.supported || sending || active} aria-label={t(speech.listening ? 'stopRecording' : 'chatSpeak')} aria-pressed={speech.listening}>{speech.listening ? <MicOff size={19} /> : <Mic size={19} />}</button><small>{t('chatEnterHint')}</small><button className="chat-send" type="submit" aria-label={t('chatSend')} disabled={sending || active || !message.trim() || (!!userId && (!chosen || !available))}>{sending ? <LoaderCircle className="spin" size={19} /> : <ArrowUp size={20} />}</button></div>
         </form>
-        <p className="chat-disclaimer">{t('chatDisclaimer')}</p>
+        <p className="chat-disclaimer">{t('chatDisclaimer')} {t(speech.supported ? 'voiceInputNotice' : 'voiceInputUnsupported')}</p>
       </footer>
     </div>
   </section>;

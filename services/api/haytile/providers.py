@@ -278,6 +278,8 @@ def generate(studio, model, prompt, params):
             "responseModalities": ["AUDIO"],
             "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}},
         }
+    if studio == "image" and params.get("_image_size") and not model.startswith("gemini-2.5-"):
+        config["imageConfig"]["imageSize"] = params["_image_size"]
     parts = [{"text": prompt}]
     if params.get("_reference_data"):
         parts.append(
