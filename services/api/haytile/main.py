@@ -266,7 +266,7 @@ def runtime_settings():
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
     return {
-        "api_release": "personal-chat-v8",
+        "api_release": "personal-chat-v9",
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
         "metadata_store": "firestore" if records.enabled() else "sql",
@@ -887,7 +887,7 @@ def chat_welcome(user=Depends(current)):
                 accounts.commit(
                     [
                         accounts.update_write(
-                            "accounts", user.id, {**data, "chat_introduced": True}, version=version
+                            "accounts", user.id, {**data, "chat_introduced": 1}, version=version
                         )
                     ]
                 )

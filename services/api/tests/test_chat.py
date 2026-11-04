@@ -258,7 +258,13 @@ def test_firebase_welcome_claim_retries_and_keeps_account_fields(client, monkeyp
     writes = []
     monkeypatch.setattr(accounts, "enabled", lambda: True)
     monkeypatch.setattr(accounts, "read", lambda collection, key: (dict(stored), "v1"))
-    monkeypatch.setattr(accounts, "update_write", lambda collection, key, data, **kw: data)
+
+    def checked_write(collection, key, data, **kw):
+        encoded = accounts.encode(data)
+        assert encoded["chat_introduced"] == {"integerValue": "1"}
+        return data
+
+    monkeypatch.setattr(accounts, "update_write", checked_write)
 
     def commit(rows):
         writes.append(rows)
