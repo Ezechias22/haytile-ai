@@ -763,21 +763,6 @@ export default function App() {
               {t('admin')}
             </button>
           )}
-          </div>}
-        </nav>
-        <div className="sidebar-bottom">
-          {navigationPane === 'tools' && <>
-          <div className="free-note">
-            <div>
-              <Sparkles size={16} />
-              <strong>{t('free')}</strong>
-            </div>
-            <p>{t('freeNote')}</p>
-            <button onClick={() => navigate('image')}>
-              {t('start')}
-              <ArrowRight size={14} />
-            </button>
-          </div>
           {(['settings', 'help'] as Page[]).map((p) => {
             const Icon = icons[p];
             return (
@@ -791,7 +776,9 @@ export default function App() {
               </button>
             );
           })}
-          </>}
+          </div>}
+        </nav>
+        <div className="sidebar-bottom">
           <div className="user-line">
             <span className="user-avatar">{user?.name[0]?.toUpperCase() || 'H'}</span>
             <div>

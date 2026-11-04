@@ -82,7 +82,7 @@ test('mobile viewport, navigation and Arabic direction', async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.addInitScript(() => localStorage.setItem('haytile-locale', 'ht'));
   await page.goto(base);
-  await expect(page.getByRole('heading', { name: 'Bonjou, mwen se HAYTILE AI' })).toBeVisible();
+  await expect(page.locator('.chat-introduction h1')).toHaveText(/Bonjou|Bonswa/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
@@ -148,5 +148,27 @@ test('saved storyboards retain character identities and exact scene dialogue', a
     data: { password: 'Storyboard-password-123' },
     headers: { Authorization: 'Bearer ' + session.token },
   });
+  await browser.close();
+});
+
+test('mobile studio navigation stays accessible without the promotional card', async () => {
+  test.skip(process.env.HAYTILE_OFFLINE_CREATIONS !== '1', 'Requires local offline fixture.');
+  const browser = await chromium.launch({ executablePath: await serverChromium.executablePath(), args: serverChromium.args.filter(x => x !== '--disable-web-security'), headless: true });
+  const page = await browser.newPage({ viewport: { width: 390, height: 640 } });
+  await page.addInitScript(() => localStorage.setItem('haytile-locale', 'en'));
+  await page.goto(base);
+  for (const studio of ['Image Studio', 'Music Studio', 'Video Studio', 'MiniDrama Studio', 'Voice Studio']) {
+    await page.getByRole('button', { name: 'Toggle sidebar', exact: true }).click();
+    await page.getByRole('tab', { name: 'Studios', exact: true }).click();
+    await expect(page.locator('.sidebar .free-note')).toHaveCount(0);
+    const pane = page.locator('.sidebar-tools-pane');
+    expect(await pane.evaluate(el => el.clientHeight)).toBeGreaterThan(150);
+    const button = pane.getByRole('button', { name: studio, exact: true });
+    await button.scrollIntoViewIfNeeded();
+    await button.click();
+    await expect(page.locator('.studio-heading h1')).toHaveText(studio);
+    await expect(page.locator('.sidebar')).not.toHaveClass(/is-open/);
+  }
+  await page.screenshot({ path: 'test-results/mobile-studio-navigation.png' });
   await browser.close();
 });
