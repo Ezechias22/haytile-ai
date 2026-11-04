@@ -2,7 +2,7 @@
 
 A free Render instance is not a free AI provider. Operator model approval and a
 working server-side provider key are still mandatory. Paid user-credit operations
-continue to require PostgreSQL.
+require durable Firestore settlement or PostgreSQL.
 """
 
 import os
@@ -24,19 +24,23 @@ def lock_sqlite_write(db):
 
 def trial_limit_code(db, user_id, studio, params, credits):
     temporary = db.get_bind().dialect.name == "sqlite"
-    if credits:
+    if credits and os.environ.get("HAYTILE_ACCOUNT_PROVIDER") != "firestore":
         return "PERSISTENT_POSTGRES_REQUIRED" if temporary else None
     if not trial_enabled():
         return "FREE_BETA_AI_DISABLED" if temporary else None
     if studio == "video":
-        maximum = int(os.environ.get("HAYTILE_TRIAL_MAX_VIDEO_SECONDS", "8"))
+        maximum = int(os.environ.get("HAYTILE_TRIAL_MAX_VIDEO_SECONDS", "180"))
         if params.get("duration", 8) > maximum:
             return "TRIAL_VIDEO_DURATION_LIMIT"
     if studio == "minidrama" and params.get("mode") == "episode":
-        maximum = int(os.environ.get("HAYTILE_TRIAL_MAX_EPISODE_SECONDS", "16"))
+        maximum = int(os.environ.get("HAYTILE_TRIAL_MAX_EPISODE_SECONDS", "180"))
         if params.get("duration", 16) > maximum:
             return "TRIAL_VIDEO_DURATION_LIMIT"
-    daily = int(os.environ.get("HAYTILE_TRIAL_PER_STUDIO_PER_DAY", "2"))
+    daily = (
+        int(os.environ.get("HAYTILE_CHAT_PER_DAY", "20"))
+        if studio == "text" and params.get("chat") is True
+        else int(os.environ.get("HAYTILE_TRIAL_PER_STUDIO_PER_DAY", "2"))
+    )
     attempts = db.scalar(
         select(func.coalesce(func.sum(Job.attempt), 0)).where(
             Job.user_id == user_id,

@@ -1,5 +1,20 @@
 # HAYTILE AI — estati livrezon
 
+## Nouvo chat ak kreyasyon dirab — verifikasyon anvan deplwaman
+
+Chat HAYTILE ajoute ak istwa, kontèks, prezantasyon AI, chwa modèl ak repons
+nan menm fil la. Metadata travay/bibliyotèk/pwojè ak debi jenerasyon deplase sou
+Firestore atomik; imaj ak tèks gratis. Nouvo quotes pwoteje depans modèl chè yo;
+UI montre etap reyèl, tit otomatik modifyab, 30 vwa TTS ak dire 8–180s.
+93 tès backend, 2 workflow navigatè chat/jenerasyon lokal, build web,
+TypeScript mobil, tradiksyon ak limit proxy pase. Vrè Firestore verifye
+rezèvasyon/debi + retou travay/rezilta/pwojè apre SQL efase sou kont jetab.
+Pa gen jenerasyon Google peye.
+Deplwaman ak resi vèsyon piblik ap vini apre achiv legacy verifye.
+Gade [CHAT_AND_DURABLE_CREATIONS.md](CHAT_AND_DURABLE_CREATIONS.md).
+
+Seksyon ki anba yo se resi istorik; limit ansyen vèsyon yo pa estati nouvo sous la.
+
 ## Balans ak plan Firestore, jenerasyon reaktive
 
 Ajout kredi ak plan manyèl deplase sou Firestore (wallet + event + audit atomik,

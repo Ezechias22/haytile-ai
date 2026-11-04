@@ -28,6 +28,7 @@ def test_production_checks_reject_insecure_storage_and_implicit_signing_key():
 
 def test_durable_database_does_not_remove_operator_trial_spend_limits(client, monkeypatch):
     monkeypatch.setenv("HAYTILE_TRIAL_AI", "1")
+    monkeypatch.setenv("HAYTILE_TRIAL_MAX_VIDEO_SECONDS", "8")
     monkeypatch.setenv("HAYTILE_GEMINI_API_KEY", "fixture")
     with Session.begin() as db:
         db.add(

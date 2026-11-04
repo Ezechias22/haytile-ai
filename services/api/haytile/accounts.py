@@ -1,7 +1,7 @@
 """Durable account authority in Firestore; SQL is an expendable identity projection.
 
 No ADC, plaintext passwords, raw session tokens, or silent local-auth fallback.
-Wallets, jobs and project metadata are deliberately not mirrored by this adapter.
+Wallet settlement and creative metadata are managed by wallets.py and records.py.
 """
 
 import os
@@ -46,6 +46,10 @@ def name(collection, key):
         "accounts",
         "wallets",
         "wallet_events",
+        "jobs",
+        "assets",
+        "projects",
+        "job_keys",
         "account_emails",
         "sessions",
         "password_resets",
@@ -129,7 +133,7 @@ def delete_write(collection, key, version=None):
 def commit(writes):
     response = request("POST", "/documents:commit", json={"writes": writes})
     if response.status_code == 200:
-        return
+        return response.json()
     try:
         conflict = response.json().get("error", {}).get("status") in (
             "ABORTED",

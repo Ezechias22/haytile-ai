@@ -1,4 +1,4 @@
-# Free, temporary test deployment only. Never automatically upgrade this service.
+# Existing free Render service. Persistent authority is Firebase; never auto-upgrade.
 services:
   - type: web
     name: haytile-ai

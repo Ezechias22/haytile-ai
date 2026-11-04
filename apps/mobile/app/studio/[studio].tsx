@@ -3,6 +3,7 @@ import { Text, Alert, Linking } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { router, useLocalSearchParams } from 'expo-router';
 import { api, useApp, languages, type Model } from '../../src/client';
+import { suggestTitle } from '../../../../packages/creation-titles';
 import { Screen, Heading, Copy, Card, Input, Button, Chips, s } from '../../src/ui';
 export default function Studio() {
   const params = useLocalSearchParams<{ studio: string; prompt?: string; title?: string }>();
@@ -17,10 +18,13 @@ export default function Studio() {
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
+  const [voice, setVoice] = useState('Kore'), [voices, setVoices] = useState<string[]>([]), [vocal, setVocal] = useState('auto');
+  const suggested = suggestTitle(prompt, t(studio));
   useEffect(() => {
     SecureStore.getItemAsync('haytile-model-' + studio).then(value => setSelectedModel(value || '')).catch(() => {});
   }, [studio]);
   useEffect(() => {
+    api<{ voices: string[] }>('/voices').then(data => setVoices(data.voices)).catch(() => {});
     api<Model[]>('/models')
       .then(setModels)
       .catch(() => {});
@@ -40,7 +44,7 @@ export default function Studio() {
     try {
       await api('/assets/text', {
         method: 'POST',
-        body: JSON.stringify({ title: title || t(studio), text: prompt }),
+        body: JSON.stringify({ title: title.trim() || suggested, text: prompt }),
       });
       setMessage(t('saved'));
     } catch (e) {
@@ -49,7 +53,7 @@ export default function Studio() {
       setBusy(false);
     }
   }
-  async function submit() {
+  async function submit(approvedCredits: number) {
     setBusy(true);
     try {
       await api('/jobs', {
@@ -57,33 +61,34 @@ export default function Studio() {
         body: JSON.stringify({
           studio,
           model_id: choice?.model_id,
-          title: title || t(studio),
+          title: title.trim() || suggested,
           prompt,
           idempotency_key: Math.random().toString(36).slice(2) + Date.now(),
-          confirmed_credits: credits,
+          confirmed_credits: approvedCredits,
           params: {
             aspect,
             language,
+            ...(studio === 'voice' ? { voice_name: voice } : {}),
+            ...(studio === 'music' ? { vocal_style: vocal } : {}),
             ...(studio === 'video' ? { duration: Number(duration) } : {}),
           },
         }),
       });
-      setMessage(t('queued'));
+      router.replace('/creations');
     } catch (e) {
       setMessage(t('error') + ' (' + (e as Error).message + ')');
     } finally {
       setBusy(false);
     }
   }
-  function generate() {
-    if (!user) {
-      router.push('/auth');
-      return;
-    }
-    Alert.alert(t('confirmCost'), (choice?.label || '') + '\n' + credits + ' ' + t('credits') + '\n' + t('modelPricingNotice'), [
-      { text: t('cancel'), style: 'cancel' },
-      { text: t('confirm'), onPress: submit },
-    ]);
+  async function generate() {
+    if (!user) { router.push('/auth'); return; }
+    setBusy(true);
+    try {
+      const result = await api<{ credits: number }>('/quotes', { method: 'POST', body: JSON.stringify({ studio, model_id: choice?.model_id, prompt, params: { language, aspect, ...(studio === 'voice' ? { voice_name: voice } : {}), ...(studio === 'music' ? { vocal_style: vocal } : {}), ...(studio === 'video' ? { duration: Number(duration) } : {}) } }) });
+      Alert.alert(t('confirmCost'), (choice?.label || '') + '\n' + (result.credits ? result.credits + ' ' + t('credits') : t('freeGeneration')) + '\n' + t('reservationNotice'), [{ text: t('cancel'), style: 'cancel' }, { text: t('confirm'), onPress: () => submit(result.credits) }]);
+    } catch (error) { setMessage(t('quoteUnavailable')); }
+    finally { setBusy(false); }
   }
   return (
     <Screen>
@@ -98,7 +103,7 @@ export default function Studio() {
         <Copy>{t('modelPricingNotice')}</Copy>
         <Button title={t('providerPricing')} onPress={() => Linking.openURL(choice?.pricing_url || 'https://ai.google.dev/gemini-api/docs/pricing')} />
         {studio === 'minidrama' && <Copy>{t('miniModelChoiceNote')}</Copy>}
-        <Input label={t('title')} value={title} onChangeText={setTitle} maxLength={120} />
+        <Input label={t('title')} value={title || suggested} onChangeText={setTitle} maxLength={120} />
         <Input
           label={t('prompt')}
           value={prompt}
@@ -107,6 +112,8 @@ export default function Studio() {
           maxLength={12000}
           placeholder={t('promptHint')}
         />
+        {studio === 'voice' && <><Copy>{t('chooseVoice')}</Copy><Chips items={Object.fromEntries((voices.length ? voices : ['Kore']).map(v => [v,v]))} value={voice} onChange={setVoice}/></>}
+        {studio === 'music' && <><Copy>{t('vocalStyle')}</Copy><Chips items={{auto:t('autoVocal'),male:t('maleVocal'),female:t('femaleVocal'),duet:t('duetVocal'),instrumental:t('instrumentalVocal')}} value={vocal} onChange={setVocal}/></>}
         <Copy>{t('language')}</Copy>
         <Chips items={languages} value={language} onChange={setLanguage} />
         {['image', 'video'].includes(studio) && (
@@ -134,7 +141,7 @@ export default function Studio() {
         {message && <Text style={s.copy}>{message}</Text>}
         <Button title={t('saveDraft')} onPress={save} disabled={busy || !prompt.trim()} />
         <Button
-          title={t('generate') + ' · ' + credits + ' ' + t('credits')}
+          title={t('generate') + ' · ' + (['image','text'].includes(studio) ? t('freeGeneration') : t('quoteRequired'))}
           onPress={generate}
           disabled={
             busy ||

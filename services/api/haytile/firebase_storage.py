@@ -179,3 +179,9 @@ if __name__ == "__main__":
             )
         )
         raise SystemExit(1) from None
+
+
+def put_file(key, path, mime):
+    remote = blob(key)
+    remote.cache_control = "private, max-age=0, no-store"
+    remote.upload_from_filename(str(path), content_type=mime, timeout=300)

@@ -5,6 +5,9 @@ import os
 import re
 from dataclasses import dataclass
 
+from fastapi import HTTPException
+
+from . import pricing
 from .db import Model
 
 STUDIOS = {"image", "text", "voice", "music", "video", "minidrama"}
@@ -22,6 +25,7 @@ class Choice:
     catalog_check: bool = True
     provider: str = "google"
     terms_url: str = TERMS
+    unavailable_reason: str | None = None
 
 
 def configured_choices(db, studio):
@@ -36,7 +40,10 @@ def configured_choices(db, studio):
                 or not re.fullmatch(r"[A-Za-z0-9._-]{1,120}", entry.get("model_id", ""))
                 or type(entry.get("credits", 0)) is not int
                 or not 0 <= entry.get("credits", 0) <= 100000
-                or (entry["studio"] == "image" and entry.get("credits", 0) != 0)
+                or (
+                    entry["studio"] in ("image", "text")
+                    and entry.get("credits", 0) != 0
+                )
                 or not isinstance(entry.get("label", entry["model_id"]), str)
             ):
                 raise ValueError()
@@ -59,7 +66,7 @@ def configured_choices(db, studio):
                 studio,
                 row.model_id,
                 label,
-                0 if studio == "image" else row.credits,
+                0 if studio in ("image", "text") else row.credits,
                 row.enabled,
                 False,
                 row.provider,
@@ -68,6 +75,14 @@ def configured_choices(db, studio):
             if not row.enabled:
                 for choice in result.values():
                     choice.enabled = False
+        for choice in result.values():
+            try:
+                choice.credits = pricing.base_credits(
+                    studio, choice.model_id, choice.credits
+                )
+            except HTTPException:
+                choice.enabled = False
+                choice.unavailable_reason = "PRICING_NOT_VERIFIED"
         return list(result.values())
     except (ValueError, TypeError, AttributeError, KeyError):
         raise RuntimeError("MODEL_CHOICES_CONFIGURATION_INVALID") from None

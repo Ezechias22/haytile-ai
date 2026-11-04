@@ -12,11 +12,11 @@ from pathlib import Path
 
 from sqlalchemy import select
 
-from . import providers, storage, wallets
+from . import accounts, providers, records, storage, wallets
 from .availability import generation_enabled, worker_enabled
 from .db import Asset, Job, Ledger, Project, Session, User, now
 from .downloads import chunks
-from .media import inspect_media
+from .media import inspect_media, inspect_media_path
 from .trials import lock_sqlite_write
 
 log = logging.getLogger("haytile.worker")
@@ -39,6 +39,9 @@ def finalize_failure(job_id, code):
         if not job or job.status in ("completed", "failed"):
             return
         if owner and job.credits:
+            if records.enabled():
+                bank = wallets.snapshot(owner.id)
+                owner.balance, owner.reserved = bank["balance"], bank["reserved"]
             owner.reserved -= job.credits
         job.status = "failed"
         job.error = code
@@ -58,10 +61,12 @@ def finalize_failure(job_id, code):
 def run_once():
     if not worker_enabled():
         return False
+    candidates = records.pull_work() if records.enabled() else None
     with Session() as db:
         expired = list(
             db.scalars(
                 select(Job.id).where(
+                    Job.id.in_(candidates) if candidates is not None else True,
                     Job.status.in_(["processing", "quality_check"]),
                     Job.lease_until < now(),
                 )
@@ -74,7 +79,7 @@ def run_once():
         job = db.scalar(
             select(Job)
             .where(Job.status == "queued")
-            .where(Job.credits == 0 if wallets.enabled() else True)
+            .where(Job.id.in_(candidates) if candidates is not None else True)
             .where(True if generation_enabled() else Job.studio == "assembly")
             .order_by(Job.created_at)
             .with_for_update(skip_locked=True)
@@ -87,6 +92,8 @@ def run_once():
         job.lease_until = now() + timedelta(hours=2)
         job_id = job.id
         params = dict(job.params.get("input_params", {}))
+        if "chat_contents" in job.params:
+            params["_chat_contents"] = job.params["chat_contents"]
         model = job.params.get("model_id", "")
 
     def record_operation(identifier):
@@ -102,6 +109,8 @@ def run_once():
                     },
                 }
 
+    if job.params.get("pricing_quote", {}).get("voice_token_limit"):
+        params["_max_output_tokens"] = job.params["pricing_quote"]["voice_token_limit"]
     params["_operation_callback"] = record_operation
     if job.params.get("resume_operation_id"):
         params["_resume_operation_id"] = job.params["resume_operation_id"]
@@ -126,7 +135,7 @@ def run_once():
                 + "\n"
                 + prompt
             )
-        elif job.studio == "text":
+        elif job.studio == "text" and not params.get("chat"):
             prompt = "Output language: " + language + "\n" + prompt
         if job.studio == "music":
             prompt = "Requested song language: " + language + "\n" + prompt
@@ -154,6 +163,7 @@ def run_once():
                 params["duration"],
                 params.get("aspect", "16:9"),
                 clip_durations=params.get("clip_durations"),
+                output_path=Path(scratch.name) / "assembled-final.mp4",
             )
             mime = "video/mp4"
         elif job.studio == "video":
@@ -161,12 +171,12 @@ def run_once():
 
             duration = params.get("duration", 8)
             clips = []
-            count = math.ceil(duration / 10)
+            count = math.ceil(duration / 8)
             for index in range(count):
                 with Session() as db:
                     if not db.get(User, job.user_id):
                         return True
-                scene = f"{prompt}\nScene {index + 1} of {count}. Generate 10 seconds. Maintain the same characters, clothes, environment, lighting and camera continuity. Include natural synchronized audio. Single continuous shot."
+                scene = f"{prompt}\nScene {index + 1} of {count}. Generate 8 seconds. Maintain the same characters, clothes, environment, lighting and camera continuity. Include natural synchronized audio. Single continuous shot."
                 clip, _ = providers.generate("video", model, scene, params)
                 path = Path(scratch.name) / f"generated-{index}.mp4"
                 path.write_bytes(clip)
@@ -177,7 +187,17 @@ def run_once():
                     if not row or row.status != "processing":
                         return True
                     row.progress = 15 + int(55 * (index + 1) / count)
-            data = assemble(clips, duration, params.get("aspect", "16:9"))
+                    row.params = {
+                        **row.params,
+                        "completed_scenes": index + 1,
+                        "total_scenes": count,
+                    }
+            data = assemble(
+                clips,
+                duration,
+                params.get("aspect", "16:9"),
+                output_path=Path(scratch.name) / "video-final.mp4",
+            )
             mime = "video/mp4"
         else:
             data, mime = providers.generate(job.studio, model, prompt, params)
@@ -198,8 +218,14 @@ def run_once():
         }[job.studio]
         if not mime.startswith(expected):
             raise providers.ProviderError("PROVIDER_MEDIA_TYPE_MISMATCH")
-        mime, text = inspect_media(data, mime, max_bytes=256 * 1024 * 1024)
-        key = storage.put(data, mime)
+        if isinstance(data, Path):
+            mime, text = inspect_media_path(data, mime, max_bytes=256 * 1024 * 1024)
+            output_size = data.stat().st_size
+            key = storage.put_file(data, mime)
+        else:
+            mime, text = inspect_media(data, mime, max_bytes=256 * 1024 * 1024)
+            output_size = len(data)
+            key = storage.put(data, mime)
         with Session.begin() as db:
             owner = db.scalar(
                 select(User).where(User.id == job.user_id).with_for_update()
@@ -211,14 +237,15 @@ def run_once():
             output_asset = Asset(
                 user_id=job.user_id,
                 job_id=job_id,
-                title=job.title,
+                title=row.title,
                 mime=mime,
                 key=key,
-                size=len(data),
+                size=output_size,
                 text=text,
             )
             db.add(output_asset)
             db.flush()
+            row.params = {**row.params, "result_asset_id": output_asset.id}
             project_id = params.get("project_id") or job.params.get("project_id")
             if project_id and params.get("scene_id"):
                 project = db.scalar(
@@ -248,6 +275,9 @@ def run_once():
                     }
                     project.version += 1
             if row.credits:
+                if records.enabled():
+                    bank = wallets.snapshot(owner.id)
+                    owner.balance, owner.reserved = bank["balance"], bank["reserved"]
                 owner.reserved -= row.credits
                 owner.balance -= row.credits
                 db.add(
@@ -262,6 +292,10 @@ def run_once():
             row.status = "completed"
             row.progress = 100
             row.lease_until = None
+    except accounts.Unavailable:
+        # A remote commit may already have published this file. Keep it private,
+        # leave the durable lease for reconciliation, and never blindly resubmit.
+        log.warning("job_remote_commit_unavailable id=%s", job_id)
     except Exception as exc:
         if key:
             storage.delete(key)

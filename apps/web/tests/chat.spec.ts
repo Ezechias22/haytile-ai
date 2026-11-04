@@ -1,0 +1,38 @@
+import { test, expect, chromium } from '@playwright/test';
+import serverChromium from '@sparticuz/chromium';
+
+test('offline chat: identity, replies in place, context and persisted history', async () => {
+  test.skip(process.env.HAYTILE_OFFLINE_CREATIONS !== '1', 'Requires explicit offline provider.');
+  const browser = await chromium.launch({ executablePath: await serverChromium.executablePath(), args: serverChromium.args.filter(x => x !== '--disable-web-security'), headless: true });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
+  const failures: string[] = [];
+  page.on('pageerror', error => failures.push(error.message));
+  await page.addInitScript(() => localStorage.setItem('haytile-locale', 'en'));
+  await page.goto(process.env.HAYTILE_TEST_URL || 'http://127.0.0.1:3010');
+  await expect(page.getByRole('heading', { name: 'Hello, I’m HAYTILE AI' })).toBeVisible();
+  await page.getByRole('button', { name: 'Sign in', exact: true }).first().click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Email', { exact: true }).fill('creative-browser@example.test');
+  await dialog.getByLabel('Password', { exact: true }).fill('Offline-browser-password-123');
+  await dialog.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(dialog).not.toBeVisible();
+  await page.getByRole('button', { name: 'HAYTILE Chat', exact: true }).click();
+  await page.getByRole('button', { name: 'New chat', exact: true }).click();
+  const composer = page.getByRole('textbox', { name: 'Your message', exact: true });
+  await composer.fill('Who are you? Remember the word mango.');
+  await page.getByRole('button', { name: 'Send message', exact: true }).click();
+  const log = page.getByRole('log', { name: 'Conversation' });
+  await expect(log).toContainText('I am HAYTILE AI. Offline reply:', { timeout: 20000 });
+  await expect(log).toContainText('Previous messages: 0');
+  await composer.fill('What word did I ask you to remember?');
+  await composer.press('Enter');
+  await expect(log).toContainText('Previous messages: 2', { timeout: 20000 });
+  await page.reload();
+  await expect(page.getByRole('log')).toContainText('Previous messages: 2');
+  await page.screenshot({ path: 'test-results/chat-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/chat-mobile.png', fullPage: true });
+  expect(failures).toEqual([]);
+  await browser.close();
+});

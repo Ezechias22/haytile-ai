@@ -14,7 +14,7 @@ def options(monkeypatch):
         json.dumps(
             [
                 {
-                    "studio": "text",
+                    "studio": "minidrama",
                     "model_id": "alternate-fixture",
                     "label": "Alternate fixture",
                     "credits": 7,
@@ -85,7 +85,7 @@ def test_unknown_and_cross_studio_model_choices_never_call_provider(
 def test_choices_can_be_browsed_while_generation_is_paused(client, monkeypatch):
     options(monkeypatch)
     monkeypatch.setenv("HAYTILE_GENERATION_ENABLED", "0")
-    result = next(m for m in client.get("/v1/models").json() if m["studio"] == "text")
+    result = next(m for m in client.get("/v1/models").json() if m["studio"] == "minidrama")
     assert result["options"][0]["model_id"] == "alternate-fixture"
     assert not result["options"][0]["available"]
     assert result["options"][0]["credits"] == 7
@@ -95,7 +95,7 @@ def test_disabling_studio_also_disables_its_alternative_models(client, monkeypat
     options(monkeypatch)
     configure(monkeypatch)
     with Session.begin() as db:
-        db.get(Model, "text").enabled = False
+        db.get(Model, "minidrama").enabled = False
     _, headers = register(client)
     body = {**job_request(credits=7), "model_id": "alternate-fixture"}
     result = client.post("/v1/jobs", headers=headers, json=body)

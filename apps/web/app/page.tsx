@@ -9,6 +9,7 @@ import {
 } from 'react';
 import {
   Home,
+  MessageCircle,
   Image as ImageIcon,
   Music2,
   Clapperboard,
@@ -48,8 +49,11 @@ import {
 import { dictionaries, languages } from './i18n';
 import Storyboard from './storyboard';
 import AdminPeople from './admin-people';
+import CreationProgress from './creation-progress';
+import HaytileChat from './chat';
+import { suggestTitle } from '../../../packages/creation-titles';
 type Studio = 'image' | 'music' | 'video' | 'minidrama' | 'voice' | 'text';
-type Page = Studio | 'home' | 'library' | 'pricing' | 'settings' | 'help' | 'admin';
+type Page = Studio | 'chat' | 'home' | 'library' | 'pricing' | 'settings' | 'help' | 'admin';
 type User = {
   id: string;
   name: string;
@@ -73,7 +77,7 @@ type Job = {
   title: string;
   studio: Studio;
   prompt: string;
-  params: { input_params: Record<string, unknown> };
+  params: { input_params: Record<string, unknown>; completed_scenes?: number; total_scenes?: number };
   status: string;
   progress: number;
   error: string | null;
@@ -87,11 +91,12 @@ type Model = {
   model_id: string | null;
   credits: number;
   reason: string | null;
-  options?: { model_id: string; label: string; credits: number; available: boolean; episode_available?: boolean; pricing_url: string }[];
+  options?: { model_id: string; label: string; credits: number; available: boolean; episode_available?: boolean; pricing_url: string; unavailable_reason?: string | null }[];
 };
 const studios: Studio[] = ['image', 'music', 'video', 'minidrama', 'voice', 'text'];
 const icons = {
   home: Home,
+  chat: MessageCircle,
   image: ImageIcon,
   music: Music2,
   video: Clapperboard,
@@ -237,7 +242,7 @@ export default function App() {
       })
       .catch(() => {});
   }, []);
-  const [page, setPage] = useState<Page>('home'),
+  const [page, setPage] = useState<Page>('chat'),
     [locale, setLocale] = useState('ht'),
     [user, setUser] = useState<User | null>(null),
     [assets, setAssets] = useState<Asset[]>([]),
@@ -251,6 +256,10 @@ export default function App() {
     [preview, setPreview] = useState<Asset | null>(null),
     [previewUrl, setPreviewUrl] = useState(''),
     [rename, setRename] = useState<Asset | null>(null),
+    [renameJob, setRenameJob] = useState<Job | null>(null),
+    [focusedJob, setFocusedJob] = useState<string | null>(null),
+    [syncIssue, setSyncIssue] = useState(false),
+    [lastSynced, setLastSynced] = useState<number | null>(null),
     [confirmDelete, setConfirmDelete] = useState<Asset | null>(null),
     [costConfirm, setCostConfirm] = useState(false),
     [search, setSearch] = useState(''),
@@ -261,6 +270,13 @@ export default function App() {
     [duration, setDuration] = useState(8),
     [reference, setReference] = useState(''),
     [outputLanguage, setOutputLanguage] = useState('ht'),
+    [voiceName, setVoiceName] = useState('Kore'),
+    [voiceOptions, setVoiceOptions] = useState<string[]>([]),
+    [vocalStyle, setVocalStyle] = useState('auto'),
+    [dramaVideoModel, setDramaVideoModel] = useState(''),
+    [generationQuote, setGenerationQuote] = useState<{ key: string; credits: number; clip_count: number; free: boolean } | null>(null),
+    [quotePending, setQuotePending] = useState(false),
+    [quoteError, setQuoteError] = useState(false),
     [wallet, setWallet] = useState<{
       balance: number;
       reserved: number;
@@ -341,6 +357,7 @@ export default function App() {
             ? detected.split('-')[0]
             : 'ht',
     );
+    api<{ voices: string[] }>('/voices').then(data => setVoiceOptions(data.voices)).catch(() => {});
     api<Model[]>('/models')
       .then(setModels)
       .catch(() => {});
@@ -363,13 +380,27 @@ export default function App() {
     window.addEventListener('focus', focused);
     return () => window.removeEventListener('focus', focused);
   }, [user, refresh]);
+  const hasActiveJobs = jobs.some(j => ['queued', 'processing', 'quality_check'].includes(j.status));
   useEffect(() => {
-    if (!user || !backgroundProcessing || !jobs.some((j) => ['queued', 'processing', 'quality_check'].includes(j.status))) return;
-    const id = setInterval(() => {
-      if (document.visibilityState === 'visible') refresh().catch(() => {});
-    }, 10000);
-    return () => clearInterval(id);
-  }, [user, jobs, backgroundProcessing, refresh]);
+    if (!user || !backgroundProcessing || !hasActiveJobs) return;
+    let cancelled = false, polling = false;
+    const seenTerminal = new Set(jobs.filter(j => ['completed', 'failed'].includes(j.status)).map(j => j.id));
+    const poll = async () => {
+      if (polling || document.visibilityState !== 'visible') return;
+      polling = true;
+      try {
+        const next = await api<Job[]>('/jobs');
+        if (cancelled) return;
+        setJobs(next); setLastSynced(Date.now()); setSyncIssue(false);
+        const finished = next.filter(j => ['completed', 'failed'].includes(j.status) && !seenTerminal.has(j.id));
+        finished.forEach(j => seenTerminal.add(j.id));
+        if (finished.length) await refresh();
+      } catch { if (!cancelled) setSyncIssue(true); }
+      finally { polling = false; }
+    };
+    const id = setInterval(poll, 3000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [user?.id, hasActiveJobs, backgroundProcessing, refresh]);
   useEffect(() => {
     if (!toast) return;
     const id = setTimeout(() => setToast(''), 4500);
@@ -413,11 +444,38 @@ export default function App() {
     modelOptions = studioModel?.options || (studioModel?.model_id ? [{ ...studioModel, model_id: studioModel.model_id, label: studioModel.model_id, pricing_url: 'https://ai.google.dev/gemini-api/docs/pricing' }] : []),
     activeChoice = modelOptions.find((option) => option.model_id === selectedModels[studio || '']) || modelOptions.find((option) => option.model_id === studioModel?.model_id) || modelOptions[0],
     activeModel = studioModel ? { ...studioModel, ...activeChoice } : undefined;
+  const automaticTitle = suggestTitle(prompt, studio ? t(studio) : t('new'));
+  const effectiveTitle = title.trim() || automaticTitle;
   const canGenerate =
     !!activeModel?.available &&
     (studio !== 'minidrama' || miniMode !== 'episode' || !!activeModel?.episode_available);
-  const quoteCredits =
-    (activeModel?.credits || 0) * (studio === 'video' ? Math.ceil(duration / 10) : 1);
+  const quoteParams = {
+    aspect: studio === 'video' || (studio === 'minidrama' && miniMode === 'episode') ? aspect === '9:16' ? '9:16' : '16:9' : aspect,
+    language: outputLanguage,
+    ...(studio === 'voice' ? { voice_name: voiceName } : {}),
+    ...(studio === 'music' ? { vocal_style: vocalStyle } : {}),
+    ...(studio === 'video' || (studio === 'minidrama' && miniMode === 'episode') ? { duration } : {}),
+    ...(studio === 'minidrama' ? { mode: miniMode, ...(dramaVideoModel ? { video_model_id: dramaVideoModel } : {}) } : {}),
+    ...(reference ? { reference_asset_id: reference } : {}),
+  };
+  const quoteRequest = { studio, model_id: activeChoice?.model_id, prompt, params: quoteParams };
+  const quoteKey = JSON.stringify(quoteRequest);
+  const freeStudio = studio === 'image' || studio === 'text';
+  const quoteReady = freeStudio || generationQuote?.key === quoteKey;
+  const quoteCredits = freeStudio ? 0 : quoteReady ? generationQuote?.credits || 0 : activeModel?.credits || 0;
+  const costLabel = freeStudio ? t('freeGeneration') : quotePending ? t('calculatingPrice') : generationQuote?.key === quoteKey ? generationQuote.credits ? generationQuote.credits + ' ' + t('credits') : t('freeGeneration') : activeModel?.credits ? t('priceFrom') + ' ' + activeModel.credits + ' ' + t('credits') : t('quoteRequired');
+  useEffect(() => {
+    if (!user || !studio || !prompt.trim() || !canGenerate || freeStudio) { setQuotePending(false); return; }
+    let cancelled = false;
+    setQuotePending(true); setQuoteError(false);
+    const timer = setTimeout(() => {
+      api<{ credits: number; clip_count: number; free: boolean }>('/quotes', { method: 'POST', body: quoteKey })
+        .then(data => { if (!cancelled) setGenerationQuote({ ...data, key: quoteKey }); })
+        .catch(() => { if (!cancelled) setQuoteError(true); })
+        .finally(() => { if (!cancelled) setQuotePending(false); });
+    }, 600);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [quoteKey, user?.id, canGenerate, freeStudio, studio]);
   const requireUser = () => {
     if (user) return true;
     setAuth('login');
@@ -428,7 +486,7 @@ export default function App() {
     run(async () => {
       await api('/assets/text', {
         method: 'POST',
-        body: JSON.stringify({ title: title || t(page), text: prompt }),
+        body: JSON.stringify({ title: effectiveTitle, text: prompt }),
       });
       setToast(t('saved'));
       await refresh();
@@ -436,40 +494,31 @@ export default function App() {
   };
   const generate = () => {
     if (!requireUser()) return;
+    if (!quoteReady || quotePending || quoteError) return;
     setCostConfirm(true);
   };
   const submitGeneration = () =>
     run(async () => {
       if (!pendingKey.current) pendingKey.current = crypto.randomUUID();
-      await api('/jobs', {
+      const created = await api<Job>('/jobs', {
         method: 'POST',
         body: JSON.stringify({
           studio,
           model_id: activeChoice?.model_id,
-          title: title || t(page),
+          title: effectiveTitle,
           prompt,
           idempotency_key: pendingKey.current,
-          params: {
-            aspect:
-              studio === 'video' || (studio === 'minidrama' && miniMode === 'episode')
-                ? aspect === '9:16'
-                  ? '9:16'
-                  : '16:9'
-                : aspect,
-            language: outputLanguage,
-            ...(studio === 'video' || (studio === 'minidrama' && miniMode === 'episode')
-              ? { duration }
-              : {}),
-            ...(studio === 'minidrama' ? { mode: miniMode } : {}),
-            ...(reference ? { reference_asset_id: reference } : {}),
-          },
+          params: quoteParams,
           confirmed_credits: quoteCredits,
         }),
       });
       pendingKey.current = null;
       setCostConfirm(false);
-      setToast(t('queued'));
-      await refresh();
+      setJobs(previous => [created, ...previous.filter(j => j.id !== created.id)]);
+      setFocusedJob(created.id); setLastSynced(Date.now()); setSyncIssue(false);
+      navigate('library');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      refresh().catch(() => setSyncIssue(true));
     });
   const upload = async (file: File) => {
     if (!requireUser()) return;
@@ -514,7 +563,7 @@ export default function App() {
   };
   const visibleAssets = assets.filter(
     (a) =>
-      a.title.toLowerCase().includes(search.toLowerCase()) &&
+      !a.title.startsWith('[Reference] ') && !a.title.startsWith('[Scene] ') && a.title.toLowerCase().includes(search.toLowerCase()) &&
       (filter === 'all' || a.mime.startsWith(filter)),
   );
   const pending = jobs.filter((j) => !['completed', 'failed'].includes(j.status));
@@ -615,6 +664,7 @@ export default function App() {
             <Home size={18} />
             {t('home')}
           </button>
+          <button className={'nav-item ' + (page === 'chat' ? 'active' : '')} onClick={() => navigate('chat')}><MessageCircle size={18} />HAYTILE Chat</button>
           <p className="nav-label">{t('studios')}</p>
           {studios.map((s) => {
             const Icon = icons[s];
@@ -903,9 +953,10 @@ export default function App() {
               </section>
             </>
           )}
+          {page === 'chat' && <HaytileChat request={api} t={t} userId={user?.id} locale={locale} models={models.find(m => m.studio === 'text')?.options || []} available={!generationPaused && backgroundProcessing && !!models.find(m => m.studio === 'text')?.available} onAuth={() => setAuth('login')} onError={err => setError(describeError(err))} />}
           {studio && (
             <>
-              <div className="page-heading">
+              <div className="page-heading studio-heading">
                 <div className="eyebrow">
                   <Sparkles size={14} />
                   {t('studios')}
@@ -925,7 +976,7 @@ export default function App() {
                     <h2>{t('new')}</h2>
                     <span className="subtle-badge">
                       {studio === 'image'
-                        ? '0 ' + t('credits')
+                        ? t('freeGeneration')
                         : activeModel?.model_id || t('notConfigured')}
                     </span>
                   </div>
@@ -949,7 +1000,7 @@ export default function App() {
                         }}
                       >
                         {!modelOptions.length && <option value="">{t('notConfigured')}</option>}
-                        {modelOptions.map((option) => <option key={option.model_id} value={option.model_id}>{option.label}</option>)}
+                        {modelOptions.map((option) => <option key={option.model_id} value={option.model_id} disabled={!!option.unavailable_reason}>{option.label}{option.unavailable_reason ? ' — ' + t('pricingPending') : studio === 'minidrama' ? '' : ' · ' + (option.credits ? option.credits + ' ' + t('credits') : t('freeGeneration'))}</option>)}
                       </select>
                     </label>
                     <p className="fine-print">{t('modelPricingNotice')} <a href={activeChoice?.pricing_url || 'https://ai.google.dev/gemini-api/docs/pricing'} target="_blank" rel="noreferrer">{t('providerPricing')}</a></p>
@@ -958,11 +1009,13 @@ export default function App() {
                       {t('title')}
                       <input
                         name="title"
-                        value={title}
+                        aria-label={t('title')}
+                        value={title || automaticTitle}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder={t('title')}
                         maxLength={120}
                       />
+                      <span className="title-assist">{t('autoTitleHint')}<button type="button" className="text-button" onClick={() => setTitle('')}>{t('automaticTitle')}</button></span>
                     </label>
                     <label>
                       {t('prompt')}
@@ -980,6 +1033,9 @@ export default function App() {
                         required
                       />
                     </label>
+                    {studio === 'minidrama' && miniMode === 'episode' && <label>{t('sceneVideoModel')}<select aria-label={t('sceneVideoModel')} value={dramaVideoModel || models.find(m => m.studio === 'video')?.model_id || ''} onChange={e => { setDramaVideoModel(e.target.value); pendingKey.current = null; }}>{(models.find(m => m.studio === 'video')?.options || []).map(option => <option key={option.model_id} value={option.model_id} disabled={!!option.unavailable_reason}>{option.label}{option.unavailable_reason ? ' — ' + t('pricingPending') : ''}</option>)}</select></label>}
+                    {studio === 'voice' && <label>{t('chooseVoice')}<select aria-label={t('chooseVoice')} value={voiceName} onChange={e => { setVoiceName(e.target.value); pendingKey.current = null; }}>{(voiceOptions.length ? voiceOptions : ['Kore']).map(voice => <option key={voice} value={voice}>{voice}</option>)}</select></label>}
+                    {studio === 'music' && <label>{t('vocalStyle')}<select aria-label={t('vocalStyle')} value={vocalStyle} onChange={e => { setVocalStyle(e.target.value); pendingKey.current = null; }}>{[['auto','autoVocal'],['male','maleVocal'],['female','femaleVocal'],['duet','duetVocal'],['instrumental','instrumentalVocal']].map(([key,label]) => <option key={key} value={key}>{t(label)}</option>)}</select></label>}
                     <div className="field-row">
                       <label>
                         {t('language')}
@@ -1023,7 +1079,7 @@ export default function App() {
                           onChange={(e) => {
                             setMiniMode(e.target.value);
                             setDuration(
-                              e.target.value === 'episode' ? Math.min(16, episodeMaximum) : 8,
+                              e.target.value === 'episode' ? Math.min(60, episodeMaximum) : 8,
                             );
                           }}
                         >
@@ -1059,6 +1115,8 @@ export default function App() {
                         />
                       </label>
                     )}
+                    {(studio === 'video' || (studio === 'minidrama' && miniMode === 'episode')) && <div className="duration-presets" role="group" aria-label={t('duration')}>{[30,60,120,180].filter(seconds => seconds <= (studio === 'minidrama' ? episodeMaximum : videoMaximum)).map(seconds => <button type="button" key={seconds} aria-pressed={duration === seconds} className={'button small ' + (duration === seconds ? 'selected' : '')} onClick={() => { setDuration(seconds); pendingKey.current = null; }}>{seconds < 60 ? seconds + ' s' : seconds / 60 + ' min'}</button>)}</div>}
+                    {quoteError && <p className="alert error" role="alert">{t('quoteUnavailable')}</p>}
                     {!canGenerate && (
                       <div className="alert info">
                         <AlertCircle size={18} />
@@ -1085,11 +1143,11 @@ export default function App() {
                       <button
                         type="submit"
                         className="button primary"
-                        disabled={busy || !canGenerate || !prompt.trim()}
+                        disabled={busy || !canGenerate || !prompt.trim() || (!!user && !freeStudio && (!quoteReady || quotePending || quoteError))}
                       >
                         <Sparkles size={16} />
                         {t('generate')}
-                        <span className="button-price">{quoteCredits} ◈</span>
+                        <span className="button-price">{costLabel}</span>
                       </button>
                     </div>
                   </form>
@@ -1112,6 +1170,7 @@ export default function App() {
                     <JobList
                       jobs={jobs.filter((j) => j.studio === studio).slice(0, 5)}
                       t={t}
+                      rename={setRenameJob}
                       retry={(j) =>
                         run(async () => {
                           await api('/jobs/' + j.id + '/retry', { method: 'POST' });
@@ -1133,11 +1192,12 @@ export default function App() {
               videoCredits={models.find((m) => m.studio === 'video')?.credits || 0}
               videoAvailable={models.find((m) => m.studio === 'video')?.available || false}
               backgroundProcessing={backgroundProcessing}
+              onQueued={id => { setFocusedJob(id); navigate('library'); refresh().catch(() => setSyncIssue(true)); }}
             />
           )}
           {page === 'library' && (
             <>
-              <div className="page-heading heading-row">
+              <div className="page-heading heading-row library-heading">
                 <div>
                   <div className="eyebrow">
                     <FolderHeart size={14} />
@@ -1155,7 +1215,13 @@ export default function App() {
                   {t('upload')}
                 </button>
               </div>
-              <p className="fine-print">{t('uploadHint')}</p>
+              <div className="creation-overview" aria-label={t('library')}>
+                <div><span>{t('inProgress')}</span><strong>{pending.length}</strong></div>
+                <div><span>{t('completed')}</span><strong>{jobs.filter(j => j.status === 'completed').length}</strong></div>
+                <div><span>{t('savedFiles')}</span><strong>{assets.length}</strong></div>
+              </div>
+              <CreationProgress jobs={jobs} assets={assets} focused={focusedJob} issue={syncIssue} synced={lastSynced} t={t} rename={job => setRenameJob(jobs.find(j => j.id === job.id) || null)} open={id => setPreview(assets.find(a => a.id === id) || null)} retry={job => run(async () => { const next = await api<Job>('/jobs/' + job.id + '/retry', { method: 'POST' }); setJobs(previous => previous.map(j => j.id === next.id ? next : j)); setFocusedJob(next.id); })} />
+              <div className="collection-heading"><div><h2>{t('savedFiles')}</h2><p className="fine-print">{t('uploadHint')}</p></div></div>
               <div className="library-toolbar">
                 <div className="filter-tabs">
                   {['all', 'image', 'audio', 'video', 'text'].map((f) => (
@@ -1179,6 +1245,8 @@ export default function App() {
               </div>
               {visibleAssets.length ? (
                 <div className="asset-grid">{visibleAssets.map(assetCard)}</div>
+              ) : pending.length ? (
+                <p className="library-waiting">{t('resultsWillAppear')}</p>
               ) : (
                 <div className="empty-state">
                   <FolderHeart size={34} />
@@ -1199,6 +1267,7 @@ export default function App() {
                 <JobList
                   jobs={jobs}
                   t={t}
+                  rename={setRenameJob}
                   retry={(j) =>
                     run(async () => {
                       await api('/jobs/' + j.id + '/retry', { method: 'POST' });
@@ -1760,6 +1829,7 @@ export default function App() {
           </>,
           () => setPreview(null),
         )}
+      {renameJob && modal(t('rename'), <form onSubmit={e => { e.preventDefault(); const value = new FormData(e.currentTarget).get('title'); run(async () => { await api('/jobs/' + renameJob.id, { method: 'PATCH', body: JSON.stringify({ title: value }) }); setRenameJob(null); await refresh(); }); }}><input name="title" defaultValue={renameJob.title} maxLength={120} required aria-label={t('title')}/><button className="button primary full" disabled={busy}>{t('save')}</button></form>, () => setRenameJob(null))}
       {rename &&
         modal(
           t('rename'),
@@ -1823,17 +1893,18 @@ export default function App() {
           <>
             <div className="cost-display">
               <Sparkles size={24} />
-              <strong>{quoteCredits}</strong>
-              <span>{t('credits')}</span>
+              <strong className="cost-label">{costLabel}</strong>
             </div>
             <p className="muted">{activeModel?.model_id}</p>
+            {(studio === 'video' || (studio === 'minidrama' && miniMode === 'episode')) && <p>{duration} s · {generationQuote?.clip_count || Math.ceil(duration / 8)} {t('plannedScenes')}</p>}
+            {quoteCredits > 0 && <p className="fine-print">{t('reservationNotice')}</p>}
             <p className="fine-print">{t('privacy')}</p>
             <p className="fine-print">{t('providerBillingNotice')}</p>
             <div className="modal-actions">
               <button className="button" onClick={() => setCostConfirm(false)}>
                 {t('cancel')}
               </button>
-              <button className="button primary" disabled={busy} onClick={submitGeneration}>
+              <button className="button primary" disabled={busy || !quoteReady || quotePending} onClick={submitGeneration}>
                 {t('confirm')}
               </button>
             </div>
@@ -1882,9 +1953,9 @@ function AssetImage({ asset }: { asset: Asset }) {
   const [url, setUrl] = useState('');
   useEffect(() => {
     let live = true;
-    api<{ path: string }>('/assets/' + asset.id + '/link')
+    api<{ path: string; media_url?: string }>('/assets/' + asset.id + '/link')
       .then((x) => {
-        if (live) setUrl('/api' + x.path);
+        if (live) setUrl(x.media_url || '/api' + x.path);
       })
       .catch(() => {});
     return () => {
@@ -1897,10 +1968,12 @@ function JobList({
   jobs,
   t,
   retry,
+  rename,
 }: {
   jobs: Job[];
   t: (key: string) => string;
   retry: (j: Job) => void;
+  rename?: (j: Job) => void;
 }) {
   return jobs.length ? (
     <div className="job-list">
@@ -1908,6 +1981,7 @@ function JobList({
         <div className="job-row" key={j.id}>
           <div className="job-title">
             <strong>{j.title}</strong>
+            {rename && <button className="icon-button" aria-label={t('rename') + ' ' + j.title} onClick={() => rename(j)}><Pencil size={14}/></button>}
             <span className={'status status-' + j.status}>{t(j.status)}</span>
           </div>
           {!['failed', 'completed'].includes(j.status) && (

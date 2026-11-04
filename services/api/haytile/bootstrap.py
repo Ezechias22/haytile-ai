@@ -35,8 +35,8 @@ def configure_models():
         credits = item.get("credits", 0)
         if type(credits) is not int or not 0 <= credits <= 100000:
             raise RuntimeError("Invalid model credit configuration.")
-        if credits != 0 and item["studio"] == "image":
-            raise RuntimeError("Basic images must remain zero-credit.")
+        if credits != 0 and item["studio"] in ("image", "text"):
+            raise RuntimeError("Basic images and text must remain zero-credit.")
     try:
         names = {m["name"] for m in providers.discover()}
     except providers.ProviderError:

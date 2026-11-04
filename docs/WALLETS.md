@@ -1,5 +1,9 @@
 # Firestore manual credits and plans
 
+Current source now includes durable job reservations and settlement; see
+[CHAT_AND_DURABLE_CREATIONS.md](CHAT_AND_DURABLE_CREATIONS.md).
+The following records the earlier 09ec380 release and its former gates.
+
 With `HAYTILE_ACCOUNT_PROVIDER=firestore`, Firestore is now authoritative for account identity **and** manual wallets/memberships. No SQL balance is copied into or used as a fallback for these wallets. The free Render deployment previously rejected all manual financial mutations, so its new wallet defaults are zero; this is not an automatic migration of a separate funded PostgreSQL wallet.
 
 Admin credit grants and manual Free/Creator/Pro assignments are available on the existing free Render service. Each mutation atomically writes a version-checked wallet, an immutable event with an actor-scoped idempotency fingerprint, a private administrator audit and a precondition on the still-active recipient account. A duplicate request returns the existing result; changing its target, amount or plan payload under the same key is rejected. Concurrent independent gifts use bounded CAS retries, not a read/increment/write that can lose updates. Amounts remain validated server-side. No customer payments or recurring subscriptions are created.

@@ -8,7 +8,16 @@ from sqlalchemy import func, select
 
 from .availability import worker_enabled
 from .db import Asset, Job, Project, Session, User
-from .main import Generate, current, fail, generate, job_json, limit, wake_worker
+from .main import (
+    Generate,
+    asset_ready,
+    current,
+    fail,
+    generate,
+    job_json,
+    limit,
+    wake_worker,
+)
 
 router = APIRouter()
 
@@ -39,7 +48,7 @@ class Document(BaseModel):
     aspect: Literal["16:9", "9:16"] = "16:9"
     characters: list[CharacterInput] = Field(default_factory=list, max_length=20)
     final_asset_id: str | None = None
-    scenes: list[SceneInput] = Field(default_factory=list, max_length=22)
+    scenes: list[SceneInput] = Field(default_factory=list, max_length=23)
 
 
 class ProjectInput(BaseModel):
@@ -224,6 +233,7 @@ def assemble_project(project_id: str, body: Assembly, user=Depends(current)):
                 not asset
                 or asset.user_id != user.id
                 or not asset.mime.startswith("video/")
+                or not asset_ready(db, asset)
             ):
                 fail("SCENE_MEDIA_NOT_READY", 409)
         pending = db.scalar(

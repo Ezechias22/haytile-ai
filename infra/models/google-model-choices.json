@@ -1,0 +1,254 @@
+[
+  {
+    "studio": "image",
+    "model_id": "gemini-3.1-flash-lite-image",
+    "label": "Nano Banana 2 Lite",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "image",
+    "model_id": "gemini-3.1-flash-image",
+    "label": "Nano Banana 2",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "image",
+    "model_id": "gemini-3-pro-image",
+    "label": "Nano Banana Pro",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "image",
+    "model_id": "gemini-2.5-flash-image",
+    "label": "Nano Banana",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "image",
+    "model_id": "gemini-nano-banana-2.1",
+    "label": "Nano Banana 2.1",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "image",
+    "model_id": "gemini-3-pro-image-preview",
+    "label": "Nano Banana Pro",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "text",
+    "model_id": "gemini-3.5-flash-lite",
+    "label": "Gemini 3.5 Flash Lite",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "text",
+    "model_id": "gemini-3.8-flash",
+    "label": "Gemini 3.8 Flash",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "text",
+    "model_id": "gemini-3.7-flash",
+    "label": "Gemini 3.7 Flash",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "text",
+    "model_id": "gemini-3.6-flash",
+    "label": "Gemini 3.6 Flash",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "text",
+    "model_id": "gemini-3.5-flash",
+    "label": "Gemini 3.5 Flash",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "text",
+    "model_id": "gemini-3.1-flash-lite",
+    "label": "Gemini 3.1 Flash Lite",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "text",
+    "model_id": "gemini-2.5-flash-lite",
+    "label": "Gemini 2.5 Flash-Lite",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "text",
+    "model_id": "gemini-2.5-flash",
+    "label": "Gemini 2.5 Flash",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "text",
+    "model_id": "gemini-2.5-pro",
+    "label": "Gemini 2.5 Pro",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "text",
+    "model_id": "gemini-3.1-pro-preview",
+    "label": "Gemini 3.1 Pro Preview",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "voice",
+    "model_id": "gemini-3.8-flash-lite-tts",
+    "label": "Gemini 3.8 Flash Lite TTS",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "voice",
+    "model_id": "gemini-3.8-flash-tts",
+    "label": "Gemini 3.8 Flash TTS",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "voice",
+    "model_id": "gemini-3.1-flash-tts-preview",
+    "label": "Gemini 3.1 Flash TTS Preview",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "voice",
+    "model_id": "gemini-2.5-flash-preview-tts",
+    "label": "Gemini 2.5 Flash Preview TTS",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "voice",
+    "model_id": "gemini-2.5-pro-preview-tts",
+    "label": "Gemini 2.5 Pro Preview TTS",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "music",
+    "model_id": "lyria-3.5",
+    "label": "Lyria 3.5",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "music",
+    "model_id": "lyria-3-clip-preview",
+    "label": "Lyria 3 Clip Preview",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "music",
+    "model_id": "lyria-3-pro-preview",
+    "label": "Lyria 3 Pro Preview",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "video",
+    "model_id": "gemini-omni-1.1-flash",
+    "label": "Gemini Omni 1.1 Flash",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "video",
+    "model_id": "gemini-omni-flash-preview",
+    "label": "Gemini Omni Flash Preview",
+    "credits": 0,
+    "enabled": false
+  },
+  {
+    "studio": "minidrama",
+    "model_id": "gemini-3.5-flash-lite",
+    "label": "Gemini 3.5 Flash Lite",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "minidrama",
+    "model_id": "gemini-3.8-flash",
+    "label": "Gemini 3.8 Flash",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "minidrama",
+    "model_id": "gemini-3.7-flash",
+    "label": "Gemini 3.7 Flash",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "minidrama",
+    "model_id": "gemini-3.6-flash",
+    "label": "Gemini 3.6 Flash",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "minidrama",
+    "model_id": "gemini-3.5-flash",
+    "label": "Gemini 3.5 Flash",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "minidrama",
+    "model_id": "gemini-3.1-flash-lite",
+    "label": "Gemini 3.1 Flash Lite",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "minidrama",
+    "model_id": "gemini-2.5-flash-lite",
+    "label": "Gemini 2.5 Flash-Lite",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "minidrama",
+    "model_id": "gemini-2.5-flash",
+    "label": "Gemini 2.5 Flash",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "minidrama",
+    "model_id": "gemini-2.5-pro",
+    "label": "Gemini 2.5 Pro",
+    "credits": 0,
+    "enabled": true
+  },
+  {
+    "studio": "minidrama",
+    "model_id": "gemini-3.1-pro-preview",
+    "label": "Gemini 3.1 Pro Preview",
+    "credits": 0,
+    "enabled": true
+  }
+]

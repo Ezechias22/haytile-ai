@@ -28,7 +28,14 @@ def probe(path):
     return json.loads(r.stdout)
 
 
-def assemble(clips, duration, aspect="16:9", audio_required=True, clip_durations=None):
+def assemble(
+    clips,
+    duration,
+    aspect="16:9",
+    audio_required=True,
+    clip_durations=None,
+    output_path=None,
+):
     if not 8 <= duration <= 180:
         raise ProviderError("VIDEO_DURATION_INVALID")
     if aspect not in ("16:9", "9:16"):
@@ -140,7 +147,7 @@ def assemble(clips, duration, aspect="16:9", audio_required=True, clip_durations
             raise ProviderError("VIDEO_TOO_SHORT_NO_STRETCH")
         manifest = root / "clips.txt"
         manifest.write_text("".join(f"file '{p.name}'\n" for p in normalized))
-        output = root / "final.mp4"
+        output = Path(output_path) if output_path else root / "final.mp4"
         result = subprocess.run(
             [
                 "ffmpeg",
@@ -172,4 +179,4 @@ def assemble(clips, duration, aspect="16:9", audio_required=True, clip_durations
         videos = [s for s in final["streams"] if s["codec_type"] == "video"]
         if not videos or (videos[0]["width"], videos[0]["height"]) != (width, height):
             raise ProviderError("VIDEO_FINAL_RESOLUTION_FAILED")
-        return output.read_bytes()
+        return output if output_path else output.read_bytes()

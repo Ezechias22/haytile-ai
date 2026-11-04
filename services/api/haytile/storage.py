@@ -108,3 +108,27 @@ def delete(key):
         client().delete_object(Bucket=BUCKET, Key=key)
     else:
         (DIRECTORY / Path(key).name).unlink(missing_ok=True)
+
+
+def put_file(path, mime):
+    """Upload a validated media file without loading a full movie into memory."""
+    import shutil
+
+    key = uid()
+    if backend() == "firebase":
+        from . import firebase_storage
+
+        firebase_storage.put_file(key, path, mime)
+    elif backend() == "s3":
+        encryption = os.environ.get("STORAGE_SERVER_SIDE_ENCRYPTION", "AES256")
+        if encryption not in ("AES256", "provider-managed"):
+            raise ValueError("STORAGE_ENCRYPTION_MODE_INVALID")
+        extra = {"ContentType": mime}
+        if encryption == "AES256":
+            extra["ServerSideEncryption"] = "AES256"
+        client().upload_file(str(path), BUCKET, key, ExtraArgs=extra)
+    else:
+        target = DIRECTORY / key
+        shutil.copyfile(path, target)
+        target.chmod(0o600)
+    return key

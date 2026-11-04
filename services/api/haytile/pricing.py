@@ -1,0 +1,118 @@
+"""Server quotes from dated official rates plus an explicit Haytile reserve/margin.
+
+1 reference credit = US$0.01. This is an app policy, not a Google price or an
+implemented credit purchase. Free images/text still cost the operator money.
+"""
+
+import math
+import os
+from decimal import ROUND_CEILING, Decimal
+
+from fastapi import HTTPException
+
+SOURCE = "https://ai.google.dev/gemini-api/docs/pricing"
+VERSION = "google-2026-11-03-regular-rates-v1"
+# USD per generated request, as listed on the official Standard pricing page.
+MUSIC_USD = {
+    "lyria-3-clip-preview": Decimal("0.04"),
+    "lyria-3-pro-preview": Decimal("0.08"),
+    "lyria-3.5": Decimal("0.08"),
+}
+# Use announced regular (post-introductory-discount) rates as the reserve basis.
+# Tuples are input-text/output-audio USD per million tokens.
+VOICE_RATES = {
+    "gemini-3.8-flash-lite-tts": (Decimal("1"), Decimal("12")),
+    "gemini-3.8-flash-tts": (Decimal("1"), Decimal("18")),
+    "gemini-3.1-flash-tts-preview": (Decimal("1"), Decimal("20")),
+    "gemini-2.5-flash-preview-tts": (Decimal("0.5"), Decimal("10")),
+    "gemini-2.5-pro-preview-tts": (Decimal("1"), Decimal("20")),
+}
+VIDEO = "gemini-omni-1.1-flash"
+CLIP_SECONDS = 8
+# Official 720p output: 5,792 tokens/second at $17.50 per million tokens.
+VIDEO_SECOND_USD = Decimal("5792") * Decimal("17.50") / Decimal("1000000")
+# App reserves, not claims about a separate Google fee:
+INPUT_AND_OPERATION_RESERVE = Decimal("0.10")
+DRAMA_PLAN_AND_REFERENCES_RESERVE = Decimal("2.25")
+MARKUP = Decimal("4")
+CREDIT_USD = Decimal("0.01")
+
+
+def verified():
+    return os.environ.get("HAYTILE_PRICING_POLICY", "operator") == "verified"
+
+
+def credits_for(cost):
+    return int((cost * MARKUP / CREDIT_USD).to_integral_value(rounding=ROUND_CEILING))
+
+
+def base_credits(studio, model_id, operator_credits=0):
+    if studio in ("image", "text"):
+        return 0
+    if not verified():
+        return operator_credits
+    if studio == "minidrama":
+        return operator_credits
+    if studio == "music" and model_id in MUSIC_USD:
+        return max(operator_credits, credits_for(MUSIC_USD[model_id]))
+    if studio == "video" and model_id == VIDEO:
+        # Reserve up to 10 native seconds per request although planning uses 8s.
+        return max(
+            operator_credits,
+            credits_for(VIDEO_SECOND_USD * 10 + INPUT_AND_OPERATION_RESERVE),
+        )
+    if studio == "voice" and model_id in VOICE_RATES:
+        inp, out = VOICE_RATES[model_id]
+        cost = (inp * 4000 + out * 4096) / Decimal("1000000") + Decimal("0.01")
+        return max(operator_credits, credits_for(cost))
+    raise HTTPException(409, detail="PRICING_NOT_VERIFIED")
+
+
+def quote(
+    studio,
+    model_id,
+    prompt,
+    params,
+    operator_credits=0,
+    render_config=None,
+    video_credits=0,
+):
+    unit = base_credits(studio, model_id, operator_credits)
+    clip_count = 0
+    voice_tokens = 0
+    if studio in ("image", "text"):
+        total = 0
+    elif studio == "video":
+        clip_count = math.ceil(params.get("duration", 8) / CLIP_SECONDS)
+        total = (
+            unit * clip_count
+            if verified()
+            else unit * math.ceil(params.get("duration", 8) / 10)
+        )
+    elif studio == "voice" and verified():
+        units = max(1, math.ceil(len(prompt) / 1000))
+        total = unit * units
+        voice_tokens = min(32768, 4096 * units)
+    elif studio == "minidrama" and params.get("mode") == "episode":
+        clip_count = math.ceil(params.get("duration", 16) / CLIP_SECONDS)
+        if verified():
+            if not render_config:
+                raise HTTPException(409, detail="PROVIDER_SETUP_REQUIRED")
+            per_clip = base_credits("video", render_config["video"], video_credits)
+            total = clip_count * per_clip + credits_for(
+                DRAMA_PLAN_AND_REFERENCES_RESERVE
+            )
+        else:
+            total = unit + clip_count * video_credits
+    else:
+        total = unit
+    return {
+        "credits": total,
+        "free": total == 0,
+        "clip_count": clip_count,
+        "voice_token_limit": voice_tokens,
+        "pricing_version": VERSION if verified() else "operator-configured",
+        "reference_unit_usd": str(CREDIT_USD),
+        "reference_total_usd": str(CREDIT_USD * total),
+        "pricing_source": SOURCE,
+    }

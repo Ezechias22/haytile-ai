@@ -1,0 +1,112 @@
+# Conversational chat and durable creative jobs
+
+The web workspace opens HAYTILE Chat: a composer, user messages, assistant replies,
+conversation history, a model selector, copy and text download. The initial greeting
+identifies HAYTILE AI as an AI assistant. The provider receives a server-owned system
+instruction with that identity and explicit limits: it must not invent completed
+media, tools, files or downloads. Replies arrive from real queued text jobs; the UI
+shows actual pending states rather than simulated token streaming. No live Google
+generation was used to validate this release.
+
+The backend reconstructs context from this owner's completed jobs and output assets,
+checks the conversation/parent relationship, and caps it at 12 previous turns and
+16,000 characters. A new prompt can contain up to 12,000 characters. Only the recent
+bounded context is sent upstream. Clients cannot inject system or assistant roles.
+Failed jobs have an explicit retry button; transport retries reuse the submission's
+idempotency key. Chat uses the free text credit policy and still consumes the
+operator's provider quota/budget. Admission defaults to 20 chat submissions per
+user/day and 50 globally/day, separate from expensive creative-job limits;
+these can be adjusted with `HAYTILE_CHAT_PER_DAY` and `HAYTILE_DAILY_CHAT_LIMIT`. No attachments, browsing or media generation tools
+are attached to this text chat. The native applications have not been republished;
+the new conversational interface is currently a web change.
+
+## Persistence and credit settlement
+
+With `HAYTILE_ACCOUNT_PROVIDER=firestore`, jobs, output metadata and storyboards are
+canonical Firestore records; local SQL is a projection. Migration 0005 adds remote
+versions. SQL before-commit hooks atomically write remote metadata, wallet reserve,
+debit/release events and an account-active precondition using compare-and-swap.
+The worker commits its claim before any paid provider request. Completion publishes
+asset metadata and the single debit in one remote commit. Failed jobs release the
+reservation. Ambiguous commits retain uploaded files and require reconciliation
+instead of blind submission. Namespace `main` is used for production claims;
+Firebase fixture probes must use a unique separate namespace.
+
+Jobs survive local SQL loss and returning owners hydrate their own metadata. Media
+is private object storage with short-lived authorized download URLs. Basic image
+and text generation always cost zero Haytile credits, regardless of an old model
+row. Other studios use an exact server quote before consent. The UI opens My
+Creations after acceptance, polls actual stages, permits title edits during/after
+work, and exposes only completed paid results.
+
+Before replacement of a legacy Render instance, run
+`scripts/migrate_render_metadata.py` with explicit Firebase credentials supplied
+securely in the process environment. It uses owner-scoped exports, archives stable
+IDs, verifies private object metadata, removes its temporary sessions, and aborts
+if a job is active. It never generates AI. Do not infer recovery of metadata that
+was already lost on the old temporary server. Unmapped private files must not be
+assigned arbitrarily to users.
+
+A free Render instance can sleep and has limited CPU/RAM. Firebase persistence
+does not make a sleeping worker run, nor provide unlimited video compute. Interrupted
+paid requests with uncertain upstream outcomes require reconciliation; no automatic
+paid resubmission is promised. Long video assembly uses files and streaming storage
+uploads rather than loading a complete three-minute movie into RAM. Video/episodes
+accept 8–180 seconds and use at most 23 planned clips, actual scene counters,
+FFmpeg assembly and file integrity inspection. Visual continuity and lip-sync are
+not guaranteed or exhaustively checked.
+
+## Verified pricing policy
+
+`HAYTILE_PRICING_POLICY=verified` uses official Google rates archived on 2026-11-03,
+with the source at https://ai.google.dev/gemini-api/docs/pricing. The internal
+reference credit is USD 0.01. It is not a Google billing unit or an implemented
+retail purchase price. Costs include explicit app input/operation reserves, then
+are multiplied by 4 and rounded up to whole credits. Rates are snapshots and must
+be reviewed as upstream terms change; unknown paid models remain unavailable.
+
+| Work | Haytile quote basis |
+| --- | --- |
+| Basic images and text/chat | 0 credits; operator pays actual provider costs |
+| Lyria 3 clip | USD 0.04 official request basis → 16 credits |
+| Lyria 3.5 / 3 Pro | USD 0.08 official request basis → 32 credits |
+| Omni 1.1 Flash video | 5,792 output tokens/sec at USD 17.50/million; reserve 10 native seconds plus USD 0.10 per planned 8s clip → 446 credits/clip |
+| 180s video | 23 clips → 10,258 credits |
+| 180s MiniDrama episode | 23 clips plus USD 2.25 planning/reference reserve → 11,158 credits |
+| Voice | Model-specific regular announced input/audio token rates, 4,000 input-token reserve and 4,096 output audio tokens per 1,000 characters, plus USD 0.01 operation reserve; actual upstream output is capped |
+
+The reserves are app policy, not invented Google fees. Multiplying by four leaves
+room for retries and operations but cannot guarantee profit. Free generations,
+manual gifts, taxes, FX changes, infrastructure and provider failures still cost
+money. Payment collection, recurring subscriptions and store billing are not
+implemented by this change; giving credits is not revenue. Keep provider budget
+caps and admission limits enabled. Google credit and Haytile wallet balances are
+independent.
+
+The curated manifest has 36 per-studio entries, drawn from a previously read
+60-model account catalog: image 6, text 10, voice 5, music 3, video 2, MiniDrama
+planners 10. Some models appear in multiple studios. One video preview is visible
+but disabled because its price is not verified. A catalog entry is not proof a
+paid generation will succeed with the current account, region, quota or input.
+The application offers only supported configured choices, not invented alternative
+video providers. TTS has 30 selectable prebuilt voices; music has vocal direction
+(auto/male/female/duet/instrumental), not guaranteed singer identity or voice cloning.
+
+## Validation
+
+Backend tests cover owner privacy, chat identity/context, title changes during
+work, quotes, real local 180s portrait assembly, wallet CAS/idempotency, metadata
+rehydration after SQL loss and ambiguous remote commits. Browser tests use a
+separate disposable PostgreSQL database and explicit offline provider stubs to
+verify chat replies/context/reload and the creation/consent/progress/rename/playback
+workflow. No Google generation endpoint is used in tests. Web production build,
+web/mobile TypeScript, locale coverage and upload proxy limits are checked.
+
+Publishing Expo OTA or native builds remains a separate release operation requiring
+real Expo project/token/signing access. This web rollout does not claim an AAB/IPA,
+App Store release, complete payment integration or a fully finished product.
+
+A real Firestore-only disposable probe additionally verified one reserve, one
+debit (100 → 93, reserved 0), and Job/Asset/Project restoration after complete
+in-memory SQL loss. Its isolated queue namespace prevented production claims;
+no provider was invoked, fixture records were cleaned, and real users were untouched.

@@ -30,7 +30,7 @@ def temporary_trial(monkeypatch, tmp_path):
     with sessions.begin() as db:
         db.add(
             Model(
-                studio="text",
+                studio="minidrama",
                 model_id="fixture-text",
                 enabled=True,
                 credits=0,
@@ -103,7 +103,7 @@ def test_sqlite_trial_limits_and_paid_credit_model_refusal(client, temporary_tri
     )
     assert r.status_code == 429 and r.json()["detail"] == "TRIAL_STUDIO_LIMIT"
     with temporary_trial.begin() as db:
-        db.get(Model, "text").credits = 1
+        db.get(Model, "minidrama").credits = 1
     r = client.post(
         "/v1/jobs", json=job_request(credits=1, key="trial-paid-model"), headers=h
     )

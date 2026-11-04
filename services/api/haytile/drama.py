@@ -11,7 +11,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field, ValidationError
 
-from . import providers, storage
+from . import accounts, providers, storage
 from .db import Asset, Job, Project, Session, uid
 from .media import inspect_media
 from .video import assemble
@@ -35,7 +35,7 @@ class Plan(BaseModel):
     title: str = Field(min_length=1, max_length=120)
     continuity: str = Field(default="", max_length=1500)
     characters: list[CharacterPlan] = Field(min_length=1, max_length=2)
-    scenes: list[ScenePlan] = Field(min_length=1, max_length=18)
+    scenes: list[ScenePlan] = Field(min_length=1, max_length=23)
 
 
 def save_intermediate(job_id, user_id, title, data, mime):
@@ -58,6 +58,8 @@ def save_intermediate(job_id, user_id, title, data, mime):
             db.add(asset)
             db.flush()
             return asset.id
+    except accounts.Unavailable:
+        raise
     except Exception:
         storage.delete(key)
         raise
@@ -65,7 +67,7 @@ def save_intermediate(job_id, user_id, title, data, mime):
 
 def render_episode(job, params, model_config):
     duration = params.get("duration", 16)
-    count = math.ceil(duration / 10)
+    count = math.ceil(duration / 8)
     language = params.get("language", "ht")
     aspect = params.get("aspect", "16:9")
     prompt = f"""Create a production plan for a short drama in language {language} based on this idea:
@@ -73,7 +75,7 @@ def render_episode(job, params, model_config):
 Return ONLY valid JSON with this structure:
 {{"title":"...","continuity":"shared setting, lighting, camera and story continuity","characters":[{{"name":"...","appearance":"stable appearance and personality","wardrobe":"exact clothes and accessories","voice":"voice description"}}],"scenes":[{{"title":"...","description":"action, camera and setting","dialogue":"exact spoken dialogue","characters":["character name"]}}]}}
 Use one or two characters and exactly {count} scenes, for a final total of {duration} seconds.
-Each scene lasts at most 10 seconds. Keep dialogue short enough to fit naturally.
+Each scene lasts at most 8 seconds. Keep dialogue short enough to fit naturally.
 Use only character names declared in characters. Preserve any dialogue the user supplied; never translate it without permission.
 """
     plan_params = {**params, "_max_output_tokens": 8192}
@@ -133,6 +135,7 @@ Use only character names declared in characters. Preserve any dialogue the user 
         row = db.get(Job, job.id)
         row.params = {**row.params, "project_id": project_id}
         row.progress = 20
+        row.params = {**row.params, "total_scenes": count, "completed_scenes": 0}
     params["project_id"] = project_id
 
     def checkpoint(progress):
@@ -145,6 +148,11 @@ Use only character names declared in characters. Preserve any dialogue the user 
             project.document = json.loads(json.dumps(document))
             project.version += 1
             row.progress = progress
+            row.params = {
+                **row.params,
+                "completed_scenes": sum(bool(s["asset_id"]) for s in scenes),
+                "total_scenes": count,
+            }
 
     references = {}
     for index, character in enumerate(characters):
@@ -170,7 +178,7 @@ Use only character names declared in characters. Preserve any dialogue the user 
             f"{c['name']}: {c['appearance']}; clothes: {c['wardrobe']}; voice: {c['voice']}; language: {c['language']}"
             for c in selected
         )
-        scene_prompt = f"""Create a natural cinematic scene with synchronized sound and spoken dialogue. Native clip length up to 10 seconds, at least {scene["duration"]} seconds of usable motion.
+        scene_prompt = f"""Create a natural cinematic scene with synchronized sound and spoken dialogue. Native clip length up to 8 seconds, at least {scene["duration"]} seconds of usable motion.
 Shared continuity: {plan.continuity}
 Stable characters (match supplied reference images): {identity}
 Scene direction: {scene["description"]}
@@ -196,5 +204,9 @@ Maintain clothing, faces, objects and setting. No captions or titles. This is sc
         clips.append(path)
         checkpoint(35 + int(40 * (index + 1) / count))
     return assemble(
-        clips, duration, aspect, clip_durations=[s["duration"] for s in scenes]
+        clips,
+        duration,
+        aspect,
+        clip_durations=[s["duration"] for s in scenes],
+        output_path=Path(params["_scratch_dir"]) / "episode-final.mp4",
     ), "video/mp4"

@@ -89,6 +89,7 @@ class FirestoreFixture:
                         if field in r["fields"]
                         and {
                             "GREATER_THAN_OR_EQUAL": lambda x: x >= value,
+                            "GREATER_THAN": lambda x: x > value,
                             "LESS_THAN": lambda x: x < value,
                             "EQUAL": lambda x: x == value,
                         }[op](r["fields"][field]["stringValue"])
@@ -133,6 +134,9 @@ def remote(monkeypatch):
 
 
 def wipe_local():
+    from haytile import records
+
+    records._cursors.clear()
     with Session.begin() as db:
         for table in reversed(Base.metadata.sorted_tables):
             db.execute(delete(table))

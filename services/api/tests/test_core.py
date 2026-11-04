@@ -10,7 +10,7 @@ from haytile import providers, storage
 from haytile.worker import run_once
 
 
-def configure(monkeypatch, studio="text", credits=4):
+def configure(monkeypatch, studio="minidrama", credits=4):
     monkeypatch.setenv("HAYTILE_GEMINI_API_KEY", "fixture-not-a-real-key")
     with Session.begin() as db:
         db.add(
@@ -25,7 +25,7 @@ def configure(monkeypatch, studio="text", credits=4):
 
 
 def job_request(
-    studio="text", credits=4, key="test-key-0001", prompt="Write a test story"
+    studio="minidrama", credits=4, key="test-key-0001", prompt="Write a test story"
 ):
     return {
         "studio": studio,

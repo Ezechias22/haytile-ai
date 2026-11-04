@@ -1,7 +1,8 @@
 """Supervise the web, API and queue worker in one persistent Render instance.
 
-This initial deployment intentionally uses a single instance: private disk files
-cannot be shared between Render instances. PostgreSQL remains the durable queue.
+The free service uses one instance. Firebase stores private media and canonical
+creative records when configured; SQL is then a disposable projection. Free
+Render can sleep and is not a continuously available background compute service.
 """
 
 import os

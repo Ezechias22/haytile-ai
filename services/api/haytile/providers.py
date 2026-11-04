@@ -10,6 +10,8 @@ from urllib.parse import quote, urlsplit
 
 import httpx
 
+from .voice_choices import VOCALS, VOICES
+
 BASE = "https://generativelanguage.googleapis.com/v1beta"
 MAX_MEDIA_BYTES = 256 * 1024 * 1024
 
@@ -186,6 +188,15 @@ def wait_interaction(result, params):
 def generate(studio, model, prompt, params):
     if not re.fullmatch(r"[A-Za-z0-9._-]{1,120}", model):
         raise ProviderError("MODEL_INVALID")
+    voice = params.get("voice_name", "Kore")
+    if studio == "voice" and voice not in VOICES:
+        raise ProviderError("VOICE_INVALID")
+    if studio == "music":
+        direction = params.get("vocal_style", "auto")
+        if direction not in VOCALS:
+            raise ProviderError("VOCAL_STYLE_INVALID")
+        if VOCALS[direction]:
+            prompt = VOCALS[direction] + " Preserve the requested language and lyrics.\n\n" + prompt
     interaction_voice = studio == "voice" and model.startswith("gemini-3.8-")
     if studio in ("video", "music") or interaction_voice:
         resume = params.get("_resume_operation_id")
@@ -202,11 +213,17 @@ def generate(studio, model, prompt, params):
             }
             if interaction_voice:
                 payload["input"] = [
-                    {"type": "user_input", "content": [{"type": "text", "text": prompt}]}
+                    {
+                        "type": "user_input",
+                        "content": [{"type": "text", "text": prompt}],
+                    }
                 ]
                 payload["response_format"] = {"type": "audio"}
-                payload["generation_config"] = {"speech_config": [{"voice": "Kore"}]}
+                payload["generation_config"] = {"speech_config": [{"voice": voice}]}
+                if params.get("_max_output_tokens"):
+                    payload["generation_config"]["max_output_tokens"] = params["_max_output_tokens"]
             if studio == "video":
+                payload["generation_config"] = {"max_output_tokens": 57920}
                 payload["response_format"] = {
                     "type": "video",
                     "aspect_ratio": params.get("aspect", "16:9"),
@@ -216,7 +233,11 @@ def generate(studio, model, prompt, params):
                 references = params.get("_reference_images", [])
                 if references:
                     payload["input"] = [
-                        {"type": "image", "mime_type": ref["mime_type"], "data": ref["data"]}
+                        {
+                            "type": "image",
+                            "mime_type": ref["mime_type"],
+                            "data": ref["data"],
+                        }
                         for ref in references
                     ] + [{"type": "text", "text": prompt}]
                 elif params.get("_reference_data"):
@@ -253,8 +274,9 @@ def generate(studio, model, prompt, params):
         )
     elif studio == "voice":
         config = {
+            "maxOutputTokens": min(int(params.get("_max_output_tokens", 32768)), 32768),
             "responseModalities": ["AUDIO"],
-            "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": "Kore"}}},
+            "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}},
         }
     parts = [{"text": prompt}]
     if params.get("_reference_data"):
@@ -266,11 +288,13 @@ def generate(studio, model, prompt, params):
                 }
             }
         )
-    response = request(
-        "POST",
-        f"/models/{model}:generateContent",
-        {"contents": [{"role": "user", "parts": parts}], "generationConfig": config},
-    )
+    payload = {"contents": [{"role": "user", "parts": parts}], "generationConfig": config}
+    if studio == "text" and "_chat_contents" in params:
+        from .chat import SYSTEM
+
+        payload["systemInstruction"] = {"parts": [{"text": SYSTEM}]}
+        payload["contents"] = params["_chat_contents"] + payload["contents"]
+    response = request("POST", f"/models/{model}:generateContent", payload)
     candidates = response.get("candidates", [])
     if not candidates or candidates[0].get("finishReason") in (
         "SAFETY",

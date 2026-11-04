@@ -99,6 +99,7 @@ class LoginSession(Base):
 
 
 class Job(Base):
+    remote_version: Mapped[str | None] = mapped_column(String(80), nullable=True)
     __tablename__ = "jobs"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     user_id: Mapped[str] = mapped_column(
@@ -125,6 +126,7 @@ class Job(Base):
 
 
 class Asset(Base):
+    remote_version: Mapped[str | None] = mapped_column(String(80), nullable=True)
     __tablename__ = "assets"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     user_id: Mapped[str] = mapped_column(
@@ -196,6 +198,7 @@ class PasswordReset(Base):
 
 
 class Project(Base):
+    remote_version: Mapped[str | None] = mapped_column(String(80), nullable=True)
     __tablename__ = "projects"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uid)
     user_id: Mapped[str] = mapped_column(

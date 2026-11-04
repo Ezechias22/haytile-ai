@@ -56,6 +56,7 @@ export default function Storyboard({
   videoCredits,
   videoAvailable,
   backgroundProcessing = true,
+  onQueued,
 }: {
   t: (s: string) => string;
   authenticated: boolean;
@@ -64,6 +65,7 @@ export default function Storyboard({
   videoCredits: number;
   videoAvailable: boolean;
   backgroundProcessing?: boolean;
+  onQueued?: (id: string) => void;
 }) {
   const [projects, setProjects] = useState<Project[]>([]),
     [current, setCurrent] = useState<Project | null>(null),
@@ -456,20 +458,20 @@ export default function Storyboard({
                 className="button small"
                 disabled={busy || dirty || !videoAvailable}
                 onClick={() => {
-                  if (!window.confirm(t('confirmCost') + ': ' + videoCredits + ' ' + t('credits')))
-                    return;
                   act(async () => {
-                    await request(
+                    const quote = await request<{ credits: number }>('/quotes', 'POST', { studio: 'video', prompt: scene.description || 'Scene', params: { duration: Math.max(8, scene.duration), aspect: current.document.aspect } });
+                    if (!window.confirm(t('confirmCost') + ': ' + quote.credits + ' ' + t('credits') + '\n' + t('reservationNotice'))) return;
+                    const job = await request<{ id: string }>(
                       '/projects/' + current.id + '/scenes/' + scene.id + '/generate',
                       'POST',
-                      { idempotency_key: crypto.randomUUID(), confirmed_credits: videoCredits },
+                      { idempotency_key: crypto.randomUUID(), confirmed_credits: quote.credits },
                     );
-                    setMessage(t('queued'));
+                    setMessage(t('queued')); onQueued?.(job.id);
                   });
                 }}
               >
                 <Clapperboard size={14} />
-                {t('generateScene')} · {videoCredits} ◈
+                {t('generateScene')} · {videoCredits * Math.ceil(Math.max(8, scene.duration) / 8)} ◈
               </button>
             </div>
           ))}
@@ -500,10 +502,10 @@ export default function Storyboard({
               }
               onClick={() =>
                 act(async () => {
-                  await request('/projects/' + current.id + '/assemble', 'POST', {
+                  const job = await request<{ id: string }>('/projects/' + current.id + '/assemble', 'POST', {
                     idempotency_key: crypto.randomUUID(),
                   });
-                  setMessage(t('queued'));
+                  setMessage(t('queued')); onQueued?.(job.id);
                 })
               }
             >

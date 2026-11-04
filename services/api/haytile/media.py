@@ -31,61 +31,72 @@ def inspect_media(data, requested_mime, max_bytes=MAX_BYTES):
     with tempfile.NamedTemporaryFile() as tmp:
         tmp.write(data)
         tmp.flush()
-        proc = subprocess.run(
-            [
-                "ffprobe",
-                "-v",
-                "error",
-                "-show_format",
-                "-show_streams",
-                "-of",
-                "json",
-                tmp.name,
-            ],
-            capture_output=True,
-            timeout=20,
-        )
-        if proc.returncode:
-            raise ValueError("MEDIA_INVALID")
-        decode = subprocess.run(
-            [
-                "ffmpeg",
-                "-v",
-                "error",
-                "-xerror",
-                "-threads",
-                "2",
-                "-i",
-                tmp.name,
-                "-map",
-                "0:v?",
-                "-map",
-                "0:a?",
-                "-f",
-                "null",
-                "-",
-            ],
-            capture_output=True,
-            timeout=90,
-        )
-        if decode.returncode:
-            raise ValueError("MEDIA_CORRUPT")
-        info = json.loads(proc.stdout)
-        duration = float(info.get("format", {}).get("duration", 0))
-        if not 0 < duration <= 600:
-            raise ValueError("MEDIA_DURATION")
-        types = {s.get("codec_type") for s in info.get("streams", [])}
-        fmt = info.get("format", {}).get("format_name", "")
-        if "video" in types:
-            if "mp4" not in fmt:
-                raise ValueError("VIDEO_FORMAT_USE_MP4")
-            return "video/mp4", None
-        if "audio" not in types:
-            raise ValueError("MEDIA_INVALID")
-        if fmt == "wav":
-            return "audio/wav", None
-        if fmt == "mp3":
-            return "audio/mpeg", None
-        if "ogg" in fmt:
-            return "audio/ogg", None
-        raise ValueError("AUDIO_FORMAT_USE_WAV_MP3_OGG")
+        return inspect_media_path(tmp.name, requested_mime, max_bytes=max_bytes)
+
+
+def inspect_media_path(path, requested_mime, max_bytes=MAX_BYTES):
+    from pathlib import Path
+
+    path = Path(path)
+    if not path.is_file() or not 0 < path.stat().st_size <= max_bytes:
+        raise ValueError("FILE_SIZE")
+    if not requested_mime.startswith(("audio/", "video/")):
+        raise ValueError("FILE_TYPE")
+    proc = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_format",
+            "-show_streams",
+            "-of",
+            "json",
+            str(path),
+        ],
+        capture_output=True,
+        timeout=20,
+    )
+    if proc.returncode:
+        raise ValueError("MEDIA_INVALID")
+    info = json.loads(proc.stdout)
+    duration = float(info.get("format", {}).get("duration", 0))
+    if not 0 < duration <= 600:
+        raise ValueError("MEDIA_DURATION")
+    decode = subprocess.run(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-xerror",
+            "-threads",
+            "2",
+            "-i",
+            str(path),
+            "-map",
+            "0:v?",
+            "-map",
+            "0:a?",
+            "-f",
+            "null",
+            "-",
+        ],
+        capture_output=True,
+        timeout=min(1200, max(90, int(duration * 4))),
+    )
+    if decode.returncode:
+        raise ValueError("MEDIA_CORRUPT")
+    types = {s.get("codec_type") for s in info.get("streams", [])}
+    fmt = info.get("format", {}).get("format_name", "")
+    if "video" in types:
+        if "mp4" not in fmt:
+            raise ValueError("VIDEO_FORMAT_USE_MP4")
+        return "video/mp4", None
+    if "audio" not in types:
+        raise ValueError("MEDIA_INVALID")
+    if fmt == "wav":
+        return "audio/wav", None
+    if fmt == "mp3":
+        return "audio/mpeg", None
+    if "ogg" in fmt:
+        return "audio/ogg", None
+    raise ValueError("AUDIO_FORMAT_USE_WAV_MP3_OGG")
