@@ -292,5 +292,13 @@
   "deleteChat": "删除对话",
   "deleteChatWarning": "删除此对话及其中音频？此操作无法撤销。",
   "chatProcessingDelete": "仍有任务正在处理。请结束语音模式，等待已接受的任务完成后再删除。",
-  "voiceConversationAudio": "语音对话音频"
+  "voiceConversationAudio": "语音对话音频",
+  "liveVoiceModel": "实时语音模型",
+  "liveVoiceNotice": "您可以打断我。麦克风保持连接，不生成文字消息或音频文件。",
+  "liveMute": "静音麦克风",
+  "liveUnmute": "取消麦克风静音",
+  "liveVoiceUnavailable": "实时语音不可用。文字聊天仍可使用。",
+  "liveConnectionFailed": "语音连接失败。请检查麦克风权限并重试。",
+  "liveSessionLimit": "此语音会话已结束。请开启新会话以继续。",
+  "livePriceUnit": "每次会话，最长"
 }

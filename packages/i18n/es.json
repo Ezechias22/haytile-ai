@@ -292,5 +292,13 @@
   "deleteChat": "Eliminar conversación",
   "deleteChatWarning": "¿Eliminar esta conversación y sus audios? No se puede deshacer.",
   "chatProcessingDelete": "Todavía hay trabajos en curso. Finaliza el modo de voz y espera a que terminen antes de eliminar.",
-  "voiceConversationAudio": "Audio de la conversación de voz"
+  "voiceConversationAudio": "Audio de la conversación de voz",
+  "liveVoiceModel": "Modelo de voz en directo",
+  "liveVoiceNotice": "Puedes interrumpirme. El micrófono sigue conectado; no se genera ningún mensaje de texto ni archivo de audio.",
+  "liveMute": "Silenciar micrófono",
+  "liveUnmute": "Activar micrófono",
+  "liveVoiceUnavailable": "La voz en directo no está disponible. El chat de texto sigue funcionando.",
+  "liveConnectionFailed": "Falló la conexión de voz. Revisa el acceso al micrófono e inténtalo de nuevo.",
+  "liveSessionLimit": "Esta sesión ha terminado. Inicia otra para continuar.",
+  "livePriceUnit": "por sesión, hasta"
 }

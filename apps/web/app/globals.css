@@ -2382,3 +2382,32 @@ textarea {
 .chat-voice-preferences .chat-voice-settings { padding: 12px 0; }
 
 .chat-voice-cost { font-size: 11px; color: #a99bb8; margin: 10px 0 0; }
+/* Keep application chrome and the composer outside the conversation scroll area. */
+html, body { height: 100%; overflow: hidden; }
+.app-shell { height: 100dvh; overflow: hidden; }
+.main-shell { height: 100%; min-height: 0; display: flex; flex-direction: column; }
+.main-shell > .topbar { flex-shrink: 0; }
+.main-shell > main { flex: 1; min-height: 0; width: 100%; overflow-y: auto; overscroll-behavior: contain; }
+.chat-page .main-shell > main { display: flex; flex-direction: column; overflow: hidden; padding: 12px 20px; max-width: none; }
+.chat-page .main-shell > main > footer { display: none; }
+.chat-page .haytile-chat { flex: 1; min-height: 0; height: 0; }
+.chat-page .chat-main { flex: 1; min-height: 0; overflow: hidden; }
+.chat-page .chat-toolbar { flex-shrink: 0; }
+.chat-page .chat-transcript { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.chat-page .chat-footer { position: relative; flex-shrink: 0; background: #101019; padding-top: 10px; }
+.chat-page .chat-input-box textarea { min-height: 34px; height: 48px; max-height: 120px; }
+.chat-page .chat-voice-preferences .chat-voice-settings { position: absolute; z-index: 20; inset-inline: 10px; bottom: 65px; max-height: 45dvh; overflow-y: auto; padding: 15px; border: 1px solid #514361; border-radius: 14px; background: #181421; box-shadow: 0 8px 30px #0008; }
+.sidebar-chat-pane, .sidebar-tools-pane { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.live-call-overlay { position: fixed; inset: 0; z-index: 100; background: #0b0b14f7; display: grid; place-items: center; padding: 24px; }
+.live-call-card { text-align: center; width: min(100%, 520px); }
+.live-voice-orb { width: 190px; height: 190px; margin: 0 auto 32px; display: grid; place-items: center; color: white; border-radius: 50%; background: radial-gradient(circle at 35% 30%,#859dff,#7149cf 55%,#30104c); box-shadow: 0 0 80px #7861db50; }
+.live-voice-orb.speaking { animation: live-voice-pulse 1s infinite alternate; }
+.live-call-card p { color: #c3b9d3; line-height: 1.7; }
+.live-call-actions { display: flex; gap: 12px; justify-content: center; margin-top: 30px; }
+@keyframes live-voice-pulse { to { transform: scale(1.07); box-shadow: 0 0 110px #7861db90; } }
+@media(prefers-reduced-motion:reduce) { .live-voice-orb { animation: none !important; } }
+@media(max-width:700px) { .chat-page .main-shell > main { padding: 0; } .chat-page .haytile-chat { border-radius: 0; border-inline: 0; } .chat-page .chat-footer { padding: 10px 12px; } .chat-disclaimer { font-size: 9px; } .chat-input-actions small { max-width: 150px; } .live-voice-orb { width: 150px; height: 150px; } }
+.sidebar { overflow: hidden; }
+.sidebar nav { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+.sidebar nav > button, .sidebar-nav-tabs { flex-shrink: 0; }
+.sidebar-chat-pane, .sidebar-tools-pane { flex: 1; min-height: 0; }

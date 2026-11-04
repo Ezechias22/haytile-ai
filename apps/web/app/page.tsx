@@ -324,6 +324,9 @@ export default function App() {
     if (/CHAT_STILL_PROCESSING/.test(code)) return t('chatProcessingDelete');
     if (/VOICE_SESSION_BUDGET_REACHED|VOICE_BUDGET_TOO_SMALL/.test(code)) return t('voiceBudgetReached');
     if (/VOICE_REPLY_TOO_LONG/.test(code)) return t('voiceReplyTooLong');
+    if (/LIVE_VOICE_UNAVAILABLE/.test(code)) return t('liveVoiceUnavailable');
+    if (/LIVE_CONNECTION_FAILED/.test(code)) return t('liveConnectionFailed');
+    if (/LIVE_SESSION_LIMIT/.test(code)) return t('liveSessionLimit');
     if (/VOICE_SESSION_ENDED|VOICE_SESSION_SETTINGS_CHANGED/.test(code)) return t('voiceSessionEnded');
     if (/VOICE_INPUT_UNAVAILABLE/.test(code)) return t('voiceInputUnsupported');
     if (/LOGIN_INVALID/.test(code)) return t('authError');
@@ -670,7 +673,7 @@ export default function App() {
     </div>
   );
   return (
-    <div className={'app-shell ' + (sidebarCollapsed ? 'sidebar-collapsed' : '')}>
+    <div className={'app-shell ' + (sidebarCollapsed ? 'sidebar-collapsed ' : '') + (page === 'chat' ? 'chat-page' : '')}>
       <input
         hidden
         ref={uploadRef}

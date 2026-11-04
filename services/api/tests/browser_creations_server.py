@@ -12,7 +12,8 @@ os.environ["HAYTILE_PAID_IMAGES"] = "1"
 os.environ["HAYTILE_GENERATION_ENABLED"] = "1"
 os.environ["HAYTILE_WORKER_ENABLED"] = "1"
 os.environ["HAYTILE_ENV"] = "development"
-os.environ["HAYTILE_PUBLIC_ORIGIN"] = "http://127.0.0.1:3010"
+os.environ.setdefault("HAYTILE_PUBLIC_ORIGIN", "http://127.0.0.1:3010")
+os.environ["HAYTILE_LIVE_VOICE_ENABLED"] = "1"
 
 import subprocess
 import tempfile
@@ -35,7 +36,7 @@ with Session.begin() as db:
             password=password_hash("Offline-browser-password-123"),
             name="Creative browser fixture",
             locale="en",
-            balance=50,
+            balance=200,
         )
     )
     db.add(
@@ -115,3 +116,40 @@ def loop():
 
 
 threading.Thread(target=loop, daemon=True).start()
+
+# Native Live test transport: real local WebSocket/PCM path, no Google connection.
+import asyncio
+import base64
+import json
+import math
+import struct
+from haytile import live_voice
+live_observed = {"frames": 0, "setups": []}
+class OfflineLive:
+    def __init__(self):
+        self.queue = asyncio.Queue()
+        self.queue.put_nowait(json.dumps({"setupComplete": {}}))
+        self.frames = 0
+    async def __aenter__(self): return self
+    async def __aexit__(self, *args): pass
+    async def send(self, raw):
+        message = json.loads(raw)
+        if "setup" in message:
+            live_observed["setups"].append(message["setup"])
+        if "audio" in message.get("realtimeInput", {}):
+            self.frames += 1
+            live_observed["frames"] += 1
+            if self.frames in (1, 7):
+                pcm = b"".join(struct.pack("<h", int(4000*math.sin(i*440*2*math.pi/24000))) for i in range(19200))
+                self.queue.put_nowait(json.dumps({"serverContent": {"modelTurn": {"parts": [{"inlineData": {"mimeType": "audio/pcm;rate=24000", "data": base64.b64encode(pcm).decode()}}]}}}))
+            if self.frames == 5:
+                self.queue.put_nowait(json.dumps({"serverContent": {"interrupted": True}}))
+    async def recv(self): return await self.queue.get()
+    def __aiter__(self): return self
+    async def __anext__(self): return await self.recv()
+live_voice.connect = lambda *args, **kwargs: OfflineLive()
+@app.get("/v1/offline/live-observed")
+def offline_live_observed(): return live_observed
+
+# The production catch-all is installed before test-only routes.
+app.router.routes.insert(0, app.router.routes.pop())

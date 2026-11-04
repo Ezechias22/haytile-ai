@@ -292,5 +292,13 @@
   "deleteChat": "Futa mazungumzo",
   "deleteChatWarning": "Futa mazungumzo na sauti zake? Huwezi kutengua hatua hii.",
   "chatProcessingDelete": "Kuna kazi zinazoendelea. Maliza hali ya sauti na subiri kazi zilizokubaliwa zikamilike kabla ya kufuta.",
-  "voiceConversationAudio": "Sauti ya mazungumzo"
+  "voiceConversationAudio": "Sauti ya mazungumzo",
+  "liveVoiceModel": "Modeli ya sauti ya moja kwa moja",
+  "liveVoiceNotice": "Unaweza kunikatiza. Maikrofoni inaendelea kuunganishwa; hakuna ujumbe wa maandishi au faili ya sauti inayotengenezwa.",
+  "liveMute": "Zima maikrofoni",
+  "liveUnmute": "Washa maikrofoni",
+  "liveVoiceUnavailable": "Sauti ya moja kwa moja haipatikani. Gumzo la maandishi bado linapatikana.",
+  "liveConnectionFailed": "Muunganisho wa sauti umeshindwa. Angalia ruhusa ya maikrofoni na ujaribu tena.",
+  "liveSessionLimit": "Kipindi hiki kimeisha. Anza kingine ili kuendelea.",
+  "livePriceUnit": "kwa kipindi, hadi"
 }

@@ -292,5 +292,13 @@
   "deleteChat": "Delete conversation",
   "deleteChatWarning": "Delete this conversation and its attached audio? This cannot be undone.",
   "chatProcessingDelete": "This conversation still has work in progress. End voice mode and wait for accepted work to finish before deleting.",
-  "voiceConversationAudio": "Voice conversation audio"
+  "voiceConversationAudio": "Voice conversation audio",
+  "liveVoiceModel": "Live voice model",
+  "liveVoiceNotice": "You can interrupt me. Your microphone stays connected; no text message or audio file is generated.",
+  "liveMute": "Mute microphone",
+  "liveUnmute": "Unmute microphone",
+  "liveVoiceUnavailable": "Live voice is unavailable. Text chat still works.",
+  "liveConnectionFailed": "Voice connection failed. Check microphone access and try again.",
+  "liveSessionLimit": "This live session has ended. Start another to continue.",
+  "livePriceUnit": "per session, up to"
 }

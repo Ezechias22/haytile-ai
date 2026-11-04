@@ -292,5 +292,13 @@
   "deleteChat": "Supprimer la conversation",
   "deleteChatWarning": "Supprimer cette conversation et ses fichiers audio ? Cette action est irréversible.",
   "chatProcessingDelete": "Des travaux sont encore en cours. Terminez le mode vocal et attendez la fin des travaux acceptés avant de supprimer.",
-  "voiceConversationAudio": "Audio de la conversation vocale"
+  "voiceConversationAudio": "Audio de la conversation vocale",
+  "liveVoiceModel": "Modèle vocal en direct",
+  "liveVoiceNotice": "Vous pouvez m’interrompre. Le micro reste connecté ; aucun message texte ni fichier audio n’est généré.",
+  "liveMute": "Couper le micro",
+  "liveUnmute": "Activer le micro",
+  "liveVoiceUnavailable": "La voix en direct est indisponible. Le chat texte reste disponible.",
+  "liveConnectionFailed": "Connexion vocale échouée. Vérifiez l’accès au micro et réessayez.",
+  "liveSessionLimit": "Cette session vocale est terminée. Démarrez-en une autre pour continuer.",
+  "livePriceUnit": "par session, jusqu’à"
 }

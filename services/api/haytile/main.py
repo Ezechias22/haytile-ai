@@ -266,7 +266,7 @@ def runtime_settings():
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
     return {
-        "api_release": "composer-voice-v4",
+        "api_release": "native-live-voice-v5",
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
         "metadata_store": "firestore" if records.enabled() else "sql",
@@ -645,6 +645,8 @@ def generate(body: Generate, user=Depends(current)):
             fail("VIDEO_DURATION_INVALID")
         if body.params.get("aspect", "16:9") not in ("16:9", "9:16"):
             fail("VIDEO_ASPECT_INVALID")
+    if body.params.get("live_voice") is not None:
+        fail("LIVE_PROTOCOL")
     if body.studio == "voice" and body.params.get("voice_name", "Kore") not in VOICES:
         fail("VOICE_INVALID")
     if body.studio == "music" and body.params.get("vocal_style", "auto") not in VOCALS:
@@ -1566,3 +1568,11 @@ def activate_admin(body: AdminActivation, request: Request, user=Depends(current
                 )
             )
     return {"ok": True}
+
+from .live_voice import router as live_voice_router  # noqa: E402
+
+app.include_router(live_voice_router)
+
+from .web_gateway import install as install_web_gateway  # noqa: E402
+
+install_web_gateway(app)

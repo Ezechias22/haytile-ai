@@ -1,5 +1,14 @@
 # HAYTILE AI — estati livrezon
 
+## Vokal natif an dirèk ak ekran chat fikse
+
+Chemen SpeechRecognition/tèks/TTS ranplase pou bouton konvèsasyon vokal la:
+PCM mikwo ale nan Gemini Live, repons PCM jwe an dirèk, entèripsyon vide ke
+od yo. Pa kreye mesaj tèks oswa fichye odyo pou apèl sa yo. Dikte yon mesaj
+ak lekti odyo yon repons tèks rete fonksyon apa. Tèt app, lateral ak bwat
+mesaj rete an plas; konvèsasyon/istorik sèlman defile.
+Gade [NATIVE_LIVE_VOICE.md](NATIVE_LIVE_VOICE.md) pou modèl, tarif, limit ak tès.
+
 ## Vokal nan bwat mesaj la, san fòm bidjè
 
 Bouton vokal toupre mikwo ak voye mesaj, kòmanse ak yon sèl klik, kanpe ak menm

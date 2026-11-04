@@ -292,5 +292,13 @@
   "deleteChat": "Efase konvèsasyon",
   "deleteChatWarning": "Efase konvèsasyon sa a ak odyo ki ladan l? Ou pap ka defèt sa.",
   "chatProcessingDelete": "Konvèsasyon an toujou gen travay k ap trete. Fini mòd vokal la epi tann travay ki deja aksepte yo fini anvan ou efase li.",
-  "voiceConversationAudio": "Odyo konvèsasyon vokal"
+  "voiceConversationAudio": "Odyo konvèsasyon vokal",
+  "liveVoiceModel": "Modèl vwa an dirèk",
+  "liveVoiceNotice": "Ou ka entèwonp mwen. Mikwo a rete konekte; li pa kreye mesaj tèks oswa fichye odyo.",
+  "liveMute": "Fèmen mikwo",
+  "liveUnmute": "Louvri mikwo",
+  "liveVoiceUnavailable": "Vwa an dirèk pa disponib. Chat tèks la toujou mache.",
+  "liveConnectionFailed": "Koneksyon vokal la echwe. Verifye aksè mikwo a epi eseye ankò.",
+  "liveSessionLimit": "Sesyon vokal sa a fini. Kòmanse yon lòt pou kontinye.",
+  "livePriceUnit": "pou chak sesyon, jiska"
 }

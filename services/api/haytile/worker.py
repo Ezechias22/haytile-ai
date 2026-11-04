@@ -10,7 +10,7 @@ import time
 from datetime import timedelta
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 
 from . import accounts, providers, records, storage, wallets
 from .availability import generation_enabled, worker_enabled
@@ -77,7 +77,7 @@ def run_once():
             db.scalars(
                 select(Job.id).where(
                     Job.id.in_(candidates) if candidates is not None else True,
-                    Job.status.in_(["processing", "quality_check"]),
+                    or_(Job.status.in_(["processing", "quality_check"]), and_(Job.status == "queued", Job.params["input_params"]["live_voice"].as_boolean().is_(True))),
                     Job.lease_until < now(),
                 )
             )
@@ -89,6 +89,7 @@ def run_once():
         job = db.scalar(
             select(Job)
             .where(Job.status == "queued")
+            .where(Job.params["input_params"]["live_voice"].as_boolean().is_not(True))
             .where(Job.id.in_(candidates) if candidates is not None else True)
             .where(True if generation_enabled() else Job.studio == "assembly")
             .order_by(Job.created_at)

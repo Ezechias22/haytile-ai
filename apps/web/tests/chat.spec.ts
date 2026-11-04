@@ -24,6 +24,7 @@ test('offline chat: identity, replies in place, context and persisted history', 
   await dialog.getByLabel('Password', { exact: true }).fill('Offline-browser-password-123');
   await dialog.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(dialog).not.toBeVisible();
+  const originalBalance = (await (await page.request.get((process.env.HAYTILE_TEST_URL || 'http://127.0.0.1:3010') + '/api/v1/wallet')).json()).balance;
   await page.getByRole('button', { name: 'HAYTILE Chat', exact: true }).click();
   await page.getByRole('button', { name: 'New chat', exact: true }).click();
   const composer = page.getByRole('textbox', { name: 'Your message', exact: true });
@@ -44,7 +45,7 @@ test('offline chat: identity, replies in place, context and persisted history', 
   await expect(consent).toContainText('3');
   await consent.getByRole('button', { name: 'Confirm', exact: true }).click();
   await expect(log.locator('audio')).toHaveAttribute('src', /\/api\/v1\/files\//, { timeout: 20000 });
-  await expect(page.locator('.credit-pill')).toContainText('47');
+  await expect(page.locator('.credit-pill')).toContainText(String(originalBalance - 3));
 
   await composer.fill('What word did I ask you to remember?');
   await composer.press('Enter');

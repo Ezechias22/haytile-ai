@@ -292,5 +292,13 @@
   "deleteChat": "Hapus percakapan",
   "deleteChatWarning": "Hapus percakapan dan audionya? Tindakan ini tidak dapat dibatalkan.",
   "chatProcessingDelete": "Masih ada pekerjaan berlangsung. Akhiri mode suara dan tunggu pekerjaan selesai sebelum menghapus.",
-  "voiceConversationAudio": "Audio percakapan suara"
+  "voiceConversationAudio": "Audio percakapan suara",
+  "liveVoiceModel": "Model suara langsung",
+  "liveVoiceNotice": "Anda dapat menyela saya. Mikrofon tetap terhubung; tidak ada pesan teks atau berkas audio yang dibuat.",
+  "liveMute": "Bisukan mikrofon",
+  "liveUnmute": "Aktifkan mikrofon",
+  "liveVoiceUnavailable": "Suara langsung tidak tersedia. Percakapan teks tetap berfungsi.",
+  "liveConnectionFailed": "Koneksi suara gagal. Periksa izin mikrofon dan coba lagi.",
+  "liveSessionLimit": "Sesi ini telah berakhir. Mulai sesi lain untuk melanjutkan.",
+  "livePriceUnit": "per sesi, hingga"
 }

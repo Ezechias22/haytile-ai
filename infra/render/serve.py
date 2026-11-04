@@ -20,7 +20,8 @@ DATA = Path(os.environ.get("HAYTILE_DATA_DIR", "/var/data/haytile"))
 def prepare_environment():
     env = os.environ.copy()
     env.setdefault("HAYTILE_DATA_DIR", str(DATA))
-    env.setdefault("HAYTILE_API_URL", "http://127.0.0.1:8000")
+    env["HAYTILE_API_URL"] = "http://127.0.0.1:" + str(int(env.get("PORT", "10000")))
+    env["HAYTILE_WEB_UPSTREAM"] = "http://127.0.0.1:3000"
     env.setdefault("PYTHONPATH", str(APP / "services/api"))
     if not env.get("HAYTILE_PUBLIC_ORIGIN"):
         external = env.get("RENDER_EXTERNAL_URL", "")
@@ -99,28 +100,29 @@ def main():
                 "uvicorn",
                 "haytile.main:app",
                 "--host",
-                "127.0.0.1",
+                "0.0.0.0",
                 "--port",
-                "8000",
+                str(int(env.get("PORT", "10000"))),
+                "--ws-max-size", "8192", "--ws-max-queue", "8",
             ],
             cwd=APP / "services/api",
             env=env,
         )
         processes.append(api)
-        ready("http://127.0.0.1:8000/v1/health", api)
+        ready(env["HAYTILE_API_URL"] + "/v1/health", api)
         if env.get("HAYTILE_WORKER_ENABLED", "1") == "1":
             worker = subprocess.Popen(
                 ["python", "-m", "haytile.worker"], cwd=APP / "services/api", env=env
             )
             processes.append(worker)
-        port = str(int(env.get("PORT", "10000")))
+        port = "3000"
         web = subprocess.Popen(
             [
                 "node",
                 "node_modules/next/dist/bin/next",
                 "start",
                 "--hostname",
-                "0.0.0.0",
+                "127.0.0.1",
                 "--port",
                 port,
             ],
