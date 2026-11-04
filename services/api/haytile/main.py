@@ -266,7 +266,7 @@ def runtime_settings():
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
     return {
-        "api_release": "studio-navigation-v10",
+        "api_release": "official-domain-v11",
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
         "metadata_store": "firestore" if records.enabled() else "sql",

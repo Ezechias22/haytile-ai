@@ -1,10 +1,11 @@
 """Same-origin HTTP forwarding; the existing API process terminates live sockets."""
 
 import os
+from urllib.parse import urlsplit
 
 import httpx
 from fastapi import Request
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import RedirectResponse, Response, StreamingResponse
 from starlette.background import BackgroundTask
 
 HOP = {
@@ -27,6 +28,21 @@ def install(app):
         include_in_schema=False,
     )
     async def website(request: Request, web_path: str):
+        canonical = os.environ.get("HAYTILE_PUBLIC_ORIGIN", "").rstrip("/")
+        origin = urlsplit(canonical)
+        host = request.url.hostname or ""
+        if (
+            request.method in ("GET", "HEAD")
+            and host.endswith(".onrender.com")
+            and origin.scheme == "https"
+            and origin.hostname != host
+            and not web_path.startswith(("api/", "v1/", "_next/"))
+            and (not web_path or "text/html" in request.headers.get("accept", ""))
+        ):
+            target = canonical + request.url.path
+            if request.url.query:
+                target += "?" + request.url.query
+            return RedirectResponse(target, status_code=307)
         upstream = os.environ.get("HAYTILE_WEB_UPSTREAM")
         if not upstream or web_path == "v1" or web_path.startswith("v1/"):
             return Response(status_code=404)

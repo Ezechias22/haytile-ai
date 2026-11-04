@@ -43,3 +43,29 @@ def test_web_gateway_is_disabled_without_internal_upstream(client, monkeypatch):
     monkeypatch.delenv("HAYTILE_WEB_UPSTREAM", raising=False)
     assert client.get("/not-an-api-route").status_code == 404
     assert client.get("/v1/health").status_code == 200
+
+
+def test_old_render_html_redirects_to_canonical_without_redirecting_api(client, monkeypatch):
+    monkeypatch.setenv("HAYTILE_PUBLIC_ORIGIN", "https://ai.haytiles.com")
+    response = client.get(
+        "https://haytile-ai.onrender.com/?billing=success&purchase=owned", follow_redirects=False
+    )
+    assert response.status_code == 307
+    assert response.headers["location"] == "https://ai.haytiles.com/?billing=success&purchase=owned"
+    assert (
+        client.get("https://haytile-ai.onrender.com/v1/health", follow_redirects=False).status_code
+        == 200
+    )
+    assert (
+        client.get(
+            "https://haytile-ai.onrender.com/api/v1/not-found", follow_redirects=False
+        ).status_code
+        != 307
+    )
+    assert (
+        client.post(
+            "https://haytile-ai.onrender.com/api/v1/billing/webhook", follow_redirects=False
+        ).status_code
+        != 307
+    )
+    assert client.get("https://ai.haytiles.com/", follow_redirects=False).status_code != 307
