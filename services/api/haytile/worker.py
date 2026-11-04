@@ -20,6 +20,7 @@ from .media import inspect_media, inspect_media_path
 from .trials import lock_sqlite_write
 
 log = logging.getLogger("haytile.worker")
+_next_cleanup = 0.0
 
 
 def finalize_failure(job_id, code):
@@ -41,6 +42,10 @@ def finalize_failure(job_id, code):
                 bank = wallets.snapshot(owner.id)
                 owner.balance, owner.reserved = bank["balance"], bank["reserved"]
             owner.reserved -= job.credits
+        if job.params.get("input_params", {}).get("voice_session_id"):
+            from .voice_budget import release
+
+            release(db, job)
         job.status = "failed"
         job.error = code
         job.lease_until = None
@@ -57,6 +62,13 @@ def finalize_failure(job_id, code):
 
 
 def run_once():
+    global _next_cleanup
+    if time.monotonic() >= _next_cleanup:
+        _next_cleanup = time.monotonic() + 30
+        from . import chat_cleanup
+
+        if chat_cleanup.run_once():
+            return True
     if not worker_enabled():
         return False
     candidates = records.pull_work() if records.enabled() else None

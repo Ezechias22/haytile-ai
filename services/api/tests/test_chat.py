@@ -216,8 +216,9 @@ def test_chat_voice_is_owned_paid_preserved_in_chat_and_hidden_from_creations(cl
     turns = client.get("/v1/chat/conversations/" + cid, headers=auth).json()
     assert turns[0]["audio"]["id"] == jid and turns[0]["audio"]["status"] == "completed"
     assert client.get("/v1/wallet", headers=auth).json()["balance"] == 17
-    from haytile.chat import SYSTEM
+    from haytile.chat import SYSTEM, system_for
 
     assert "Ezechias Toussaint" in SYSTEM and "Haitian" in SYSTEM
-    assert "https://app.haytiles.com" in SYSTEM and "https://haytiles.com" in SYSTEM
+    commerce_policy = system_for("Ki aplikasyon pou rechaj mobil ak gift card?")
+    assert "https://app.haytiles.com" in commerce_policy and "https://haytiles.com" in commerce_policy
     assert "haytiletopup.onrender.com" not in SYSTEM

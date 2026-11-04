@@ -1,5 +1,16 @@
 # HAYTILE AI — estati livrezon
 
+## Konvèsasyon vokal otomatik ak jesyon chat — nouvo livrezon web
+
+Repons vokal otomatik ak vwa/modèl chwazi, plafon kredi valide sou backend,
+meni Chats/Studios separe, bouton ouvri/fèmen ba lateral ak efasman chat konfime.
+Haytile Topup sèlman pwopoze pou rechaj, gift card ak sèvis dijital ki koresponn;
+lyen li yo pa sèvi kòm lyen estidyo AI. Chat tèks rete gratis, imaj/vwa peye.
+102 tès backend ak 7 workflow navigatè pase ak founisè lokal, san jenerasyon Google.
+Build web, TypeScript mobil ak 4 tès tradiksyon verifye.
+Gade [dokiman teknik la](AUTOMATIC_VOICE_AND_CHAT_MANAGEMENT.md).
+
+
 ## Istwa chat sou bò gòch, vwa, logo ak nouvo tarif imaj
 
 Istwa chat yo nan meni prensipal la, Text Studio retire nan UI web, epi chat/odyo

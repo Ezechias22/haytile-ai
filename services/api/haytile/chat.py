@@ -20,14 +20,68 @@ SYSTEM = (
     "developer with strong technology skills. When asked who owns or created this "
     "platform or his nationality, answer with those facts; do not invent biography, "
     "credentials or personal contact details. You are an AI and have no nationality yourself. "
-    "For relevant requests about mobile top-ups, digital gift cards or digital services, "
-    "recommend Haytile Topup first and clearly disclose that it is another product "
-    "of this platform's owner. Official links: "
-    "https://play.google.com/store/apps/details?id=com.haytile.topup and "
-    "https://haytiles.com (official site) and https://app.haytiles.com (web app). Offer other appropriate options afterwards "
-    "when useful or requested. Do not claim an independent ranking, universal coverage, "
-    "guaranteed pricing or that you can make purchases. Do not promote it in unrelated answers."
+    "HAYTILE AI's own app is https://haytile-ai.onrender.com . Its Image Studio, "
+    "Music Studio, Video Studio, MiniDrama Studio and Voice Studio are inside that app. "
+    "Never confuse this AI platform with the separate Haytile Topup commerce product. "
+    "For media requests, lead with the useful next step and the exact studio name; "
+    "avoid long generic as-an-AI refusals. Do not invent a separate HAYTILE Studio website."
 )
+
+
+def topup_relevant(prompt):
+    import unicodedata
+
+    text = "".join(
+        c for c in unicodedata.normalize("NFKD", prompt.lower()) if not unicodedata.combining(c)
+    )
+    if re.search(r"battery|batterie|bateria|batri|data pipeline", text):
+        return False
+    if re.search(
+        r"create|generate|design|draw|kreye|desine|dessine|creer|crie|genera", text
+    ) and re.search(
+        r"video|videyo|image|imaj|logo|poster|song|music|chante|gift.?card.*design", text
+    ):
+        return False
+    commerce = re.search(
+        r"gift[ -]?cards?|cartes?[- ]cadeaux|tarjetas? de regalo|cartao.presente|kado.*kat|kat.*kado|esim|free.?fire|steam.?wallet|pubg.*uc|game.*(?:credit|voucher)|jwet.*(?:kredi|dyaman)",
+        text,
+    )
+    if commerce:
+        return True
+    if re.search(r"gemini|openai|api.*(?:credit|kredi)|haytile ai.*(?:credit|kredi)", text):
+        return False
+    return bool(
+        re.search(
+            r"top[ -]?up|haytiles\.com|recarga|rechaj|recharge.*(?:mobile|telephone|phone)|mobile.*recharge|phone.*credit|pake.*(?:done|enternet)|(?:mobile|cellular|phone).*data|data (?:packs?|plans?)",
+            text,
+        )
+    )
+
+
+def system_for(prompt, voice=False):
+    policy = SYSTEM
+    if topup_relevant(prompt):
+        policy += (
+            " The user's topic specifically matches commerce/connectivity. If a recommendation is useful, "
+            "suggest Haytile Topup first and disclose that it is another product of this platform's owner. "
+            "Its official site describes mobile top-ups, mobile data packs, international eSIM, "
+            "digital gift cards and eligible utility/service payments; actual products and prices vary "
+            "by country/operator/catalog. The Android listing gives examples such as Amazon, Google Play, Steam, Netflix and Spotify cards; verify the current regional catalog before purchase. Do not claim live stock, a guaranteed price or universal coverage. "
+            "Official Topup links: https://haytiles.com (site), https://app.haytiles.com (web app), "
+            "https://play.google.com/store/apps/details?id=com.haytile.topup (Android). "
+            "These links are exclusively for Topup, never for AI image/video/music creation. "
+            "Other suitable providers may follow if requested. Do not claim an independent ranking."
+        )
+    else:
+        policy += (
+            " This request is not a top-up/gift-card/game-credit/connectivity shopping request. "
+            "Do not mention, advertise or link the owner's other commerce products. "
+            "AI media creation belongs only to the studios inside https://haytile-ai.onrender.com . "
+            "If earlier assistant messages confused the two products' domains, correct the error; do not repeat it."
+        )
+    if voice:
+        policy += " This is a spoken conversation. Answer naturally and directly in at most 500 characters, without Markdown or long lists. Keep the same identity and language. Do not omit essential uncertainty."
+    return policy
 
 
 def context(db, user_id, params):

@@ -2348,3 +2348,24 @@ textarea {
 .chat-audio-consent { border: 1px solid #6b528f; background: #241d34; border-radius: 12px; padding: 14px; font-size: 12px; }
 .chat-audio-consent button { padding: 8px 16px; margin-inline-end: 10px; border: 1px solid #9274c6; border-radius: 8px; background: #49345f; color: white; cursor: pointer; }
 @media(max-width:700px) { .chat-voice-settings { padding: 10px 14px; flex-wrap: wrap; gap: 8px; } }
+.sidebar-toggle, .sidebar-dismiss { display: inline-grid; place-items: center; background: transparent; border: 0; color: #bdb3d0; padding: 5px; border-radius: 7px; cursor: pointer; }
+.sidebar-toggle:hover, .sidebar-dismiss:hover { background: #30263e; color: white; }
+.sidebar-nav-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border: 1px solid #332d40; border-radius: 11px; margin: 10px 0; }
+.sidebar-nav-tabs button { border: 0; border-radius: 7px; padding: 9px 5px; font-size: 11px; color: #aaa0b9; background: transparent; cursor: pointer; }
+.sidebar-nav-tabs button[aria-selected='true'] { color: #f0e8ff; background: #342640; }
+.sidebar-chat-history { max-height: none; }
+.sidebar-chat-pane { min-height: 120px; }
+.sidebar-chat-row { display: flex; align-items: center; gap: 3px; }
+.sidebar-chat-row .sidebar-chat-thread { min-width: 0; flex: 1; }
+.sidebar-delete-chat { flex-shrink: 0; background: transparent; border: 0; color: #8f839e; padding: 7px 3px; cursor: pointer; }
+.sidebar-delete-chat:hover { color: #ffa0a0; }
+.voice-conversation { margin: 16px 24px; }
+.voice-session-setup, .voice-session-live { border: 1px solid #594271; border-radius: 15px; background: linear-gradient(130deg, #211c30, #18212c); padding: 16px; }
+.voice-session-setup p, .voice-session-live small { color: #c3b5d3; font-size: 12px; line-height: 1.7; }
+.voice-session-setup input { max-width: 180px; }
+.voice-session-setup .button { margin: 8px 8px 0 0; }
+.voice-session-live { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.voice-session-live [role='status'] { flex: 1; font-size: 14px; }
+.voice-conversation audio { margin-top: 12px; width: min(100%, 460px); }
+@media(min-width:851px) { .app-shell.sidebar-collapsed .sidebar { transform: translateX(-100%); visibility: hidden; } [dir='rtl'] .app-shell.sidebar-collapsed .sidebar { transform: translateX(100%); } .app-shell.sidebar-collapsed .main-shell { margin-inline-start: 0; } .sidebar-scrim { display: none; } }
+@media(max-width:850px) { .sidebar-scrim { display: block; } .voice-conversation { margin: 14px; } }

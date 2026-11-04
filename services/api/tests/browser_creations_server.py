@@ -83,7 +83,7 @@ def fixture_generate(studio, model, prompt, params):
         assert "_chat_contents" in params
         return ("I am HAYTILE AI. Offline reply: " + prompt + ". Previous messages: " + str(len(params["_chat_contents"]))).encode(), "text/plain"
     if studio == "voice":
-        assert model == "offline-voice-model" and params.get("chat_audio") is True and params["voice_name"] == "Puck"
+        assert model == "offline-voice-model" and params.get("chat_audio") is True and params["voice_name"] in ("Puck", "Charon", "Kore")
         time.sleep(1)
         return media, "audio/mpeg"
     if studio == "image":

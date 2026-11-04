@@ -18,6 +18,7 @@ from .main import (
     limit,
     wake_worker,
 )
+from .voice_budget import INTERNAL_KINDS
 
 router = APIRouter()
 
@@ -95,7 +96,10 @@ def list_projects(user=Depends(current)):
             project_json(p)
             for p in db.scalars(
                 select(Project)
-                .where(Project.user_id == user.id)
+                .where(
+                    Project.user_id == user.id,
+                    func.coalesce(Project.document["kind"].as_string(), "").not_in(INTERNAL_KINDS),
+                )
                 .order_by(Project.created_at.desc())
                 .limit(100)
             )
@@ -107,9 +111,7 @@ def create_project(body: ProjectInput, user=Depends(current)):
     limit("projects:" + user.id, 30, 3600)
     with Session.begin() as db:
         validate_document(db, body.document, user.id)
-        p = Project(
-            user_id=user.id, title=body.title, document=body.document.model_dump()
-        )
+        p = Project(user_id=user.id, title=body.title, document=body.document.model_dump())
         db.add(p)
         db.flush()
         return project_json(p)
@@ -123,7 +125,7 @@ def update_project(project_id: str, body: ProjectInput, user=Depends(current)):
             .where(Project.id == project_id, Project.user_id == user.id)
             .with_for_update()
         )
-        if not p:
+        if not p or p.document.get("kind") in INTERNAL_KINDS:
             fail("NOT_FOUND", 404)
         if p.version != body.version:
             fail("PROJECT_REVISION_CONFLICT", 409)
@@ -142,7 +144,7 @@ def remove_project(project_id: str, user=Depends(current)):
             .where(Project.id == project_id, Project.user_id == user.id)
             .with_for_update()
         )
-        if not p:
+        if not p or p.document.get("kind") in INTERNAL_KINDS:
             fail("NOT_FOUND", 404)
         db.delete(p)
     return {"ok": True}
@@ -154,9 +156,7 @@ class SceneGeneration(BaseModel):
 
 
 @router.post("/v1/projects/{project_id}/scenes/{scene_id}/generate", status_code=202)
-def render_scene(
-    project_id: str, scene_id: str, body: SceneGeneration, user=Depends(current)
-):
+def render_scene(project_id: str, scene_id: str, body: SceneGeneration, user=Depends(current)):
     with Session() as db:
         project = db.scalar(
             select(Project).where(Project.id == project_id, Project.user_id == user.id)
@@ -168,9 +168,7 @@ def render_scene(
         if not scene:
             fail("NOT_FOUND", 404)
         chars = [c for c in doc.characters if c.id in scene.character_ids]
-        prompt = (
-            f"{doc.premise}\nContinuity: {doc.continuity}\nScene: {scene.description}\n"
-        )
+        prompt = f"{doc.premise}\nContinuity: {doc.continuity}\nScene: {scene.description}\n"
         for char in chars:
             prompt += f"Character {char.id} {char.name}: {char.appearance}; wardrobe: {char.wardrobe}; voice: {char.voice}; language: {char.language}\n"
         prompt += (
@@ -209,15 +207,11 @@ def assemble_project(project_id: str, body: Assembly, user=Depends(current)):
     limit("assemble:" + user.id, 10, 3600)
     with Session.begin() as db:
         db.scalar(select(User).where(User.id == user.id).with_for_update())
-        p = db.scalar(
-            select(Project).where(Project.id == project_id, Project.user_id == user.id)
-        )
-        if not p:
+        p = db.scalar(select(Project).where(Project.id == project_id, Project.user_id == user.id))
+        if not p or p.document.get("kind") in INTERNAL_KINDS:
             fail("NOT_FOUND", 404)
         old = db.scalar(
-            select(Job).where(
-                Job.user_id == user.id, Job.idempotency_key == body.idempotency_key
-            )
+            select(Job).where(Job.user_id == user.id, Job.idempotency_key == body.idempotency_key)
         )
         if old:
             if old.studio != "assembly" or old.params.get("project_id") != project_id:

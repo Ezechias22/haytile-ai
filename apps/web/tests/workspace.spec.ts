@@ -28,6 +28,7 @@ test('real backend: account, imported text, private download, handoff, rename, d
   await expect(dialog).not.toBeVisible();
   await page.locator('input[type=file]').setInputFiles({ name: 'My tested story', mimeType: 'text/plain', buffer: Buffer.from('Pawòl mwen rete egzakteman.\nA real saved document.') });
   await expect(page.getByRole('status')).toContainText('Saved to your library.');
+  await page.getByRole('tab', { name: 'Studios', exact: true }).click();
   await page.getByRole('button', { name: 'My Creations', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'My tested story', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Preview My tested story' }).click();
@@ -86,7 +87,8 @@ test('mobile viewport, navigation and Arabic direction', async () => {
     true,
   );
   await page.screenshot({ path: 'test-results/workspace-mobile.png', fullPage: true });
-  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  await page.getByRole('button', { name: 'Ouvri oswa fèmen ba lateral', exact: true }).click();
+  await page.getByRole('tab', { name: 'Estidyo yo', exact: true }).click();
   await page.getByRole('button', { name: 'Sant èd', exact: true }).first().click();
   await expect(
     page.getByRole('heading', { name: 'Yon ti èd pou pwochen kreyasyon ou' }),
@@ -111,6 +113,7 @@ test('saved storyboards retain character identities and exact scene dialogue', a
   expect(registered.status()).toBe(201);
   const session = await registered.json();
   await page.goto(base);
+  await page.getByRole('tab', { name: 'Studios', exact: true }).click();
   await page.getByRole('button', { name: 'MiniDrama Studio', exact: true }).first().click();
   const editor = page.locator('.storyboard');
   await editor.getByRole('button', { name: 'New project', exact: true }).click();

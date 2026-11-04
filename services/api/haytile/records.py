@@ -20,10 +20,7 @@ from .trials import lock_sqlite_write
 
 TYPES = {Job: "jobs", Asset: "assets", Project: "projects"}
 CLASSES = {v: k for k, v in TYPES.items()}
-FIELDS = {
-    cls: [c.key for c in inspect(cls).columns if c.key != "remote_version"]
-    for cls in TYPES
-}
+FIELDS = {cls: [c.key for c in inspect(cls).columns if c.key != "remote_version"] for cls in TYPES}
 DATE_FIELDS = {"created_at", "updated_at", "lease_until"}
 _sync_lock = threading.RLock()
 _cursors = {}
@@ -101,13 +98,17 @@ def document(data, kind, token=""):
         "user_id": data["user_id"],
         "payload": serial(data),
         "sync_key": data["user_id"] + "_" + stamp + "_" + data["id"],
-        "sort_key": data["user_id"]
-        + "_"
-        + data["created_at"].isoformat()
-        + "_"
-        + data["id"],
+        "sort_key": data["user_id"] + "_" + data["created_at"].isoformat() + "_" + data["id"],
         "write_token": token,
     }
+    if kind == "projects" and data.get("document", {}).get("kind") == "chat_cleanup":
+        result["state_key"] = (
+            os.environ.get("HAYTILE_QUEUE_NAMESPACE", "main")
+            + ":cleanup_"
+            + stamp
+            + "_"
+            + data["id"]
+        )
     if kind == "jobs":
         result["state_key"] = (
             os.environ.get("HAYTILE_QUEUE_NAMESPACE", "main")
@@ -117,8 +118,7 @@ def document(data, kind, token=""):
                     "queued_" + stamp
                     if data["status"] == "queued"
                     else "active_" + data["lease_until"].isoformat()
-                    if data["status"] in ("processing", "quality_check")
-                    and data.get("lease_until")
+                    if data["status"] in ("processing", "quality_check") and data.get("lease_until")
                     else "terminal_" + stamp
                 )
                 + "_"
@@ -239,20 +239,14 @@ def pull_work():
 
 
 def capture(db, flush_context, instances):
-    if (
-        not enabled()
-        or db.info.get("remote_projection")
-        or db.info.get("remote_writing")
-    ):
+    if not enabled() or db.info.get("remote_projection") or db.info.get("remote_writing"):
         return
     pending = db.info.setdefault("remote_pending", {})
     for obj in list(db.new) + list(db.dirty) + list(db.deleted):
         if type(obj) not in TYPES:
             continue
         state = inspect(obj)
-        changed = {
-            key for key in FIELDS[type(obj)] if state.attrs[key].history.has_changes()
-        }
+        changed = {key for key in FIELDS[type(obj)] if state.attrs[key].history.has_changes()}
         fresh, deleted = obj in db.new, obj in db.deleted
         if not fresh and not deleted and not changed:
             continue
@@ -264,11 +258,7 @@ def capture(db, flush_context, instances):
 
 
 def before_commit(db):
-    if (
-        not enabled()
-        or db.info.get("remote_projection")
-        or db.info.get("remote_writing")
-    ):
+    if not enabled() or db.info.get("remote_projection") or db.info.get("remote_writing"):
         return
     db.flush()
     pending = list(db.info.pop("remote_pending", {}).values())
@@ -278,22 +268,19 @@ def before_commit(db):
     token = hash_token(str(now().timestamp()) + ":" + str(id(db)))
     try:
         for attempt in range(8):
-            writes, versions, banks = [], [], {}
+            writes, versions, banks, confirmations = [], [], {}, []
             for entry in pending:
                 obj = entry["obj"]
                 kind = TYPES[type(obj)]
                 data = payload(obj)
                 old = store.read(kind, obj.id)
                 previous = unpack(old[0]) if old and not old[0].get("deleted") else None
+                confirmations.append((kind, obj.id))
                 if entry["deleted"]:
                     tombstone = {
                         "user_id": obj.user_id,
                         "deleted": 1,
-                        "sync_key": obj.user_id
-                        + "_"
-                        + now().isoformat()
-                        + "_"
-                        + obj.id,
+                        "sync_key": obj.user_id + "_" + now().isoformat() + "_" + obj.id,
                         "write_token": token,
                     }
                     writes.append(
@@ -383,9 +370,7 @@ def before_commit(db):
                             if debit:
                                 bank["balance"] -= credit
                         bank["updated_at"] = now()
-                        event_kind = (
-                            "reserve" if reserve else "debit" if debit else "release"
-                        )
+                        event_kind = "reserve" if reserve else "debit" if debit else "release"
                         event_id = hash_token(
                             obj.id + ":" + event_kind + ":" + str(data["attempt"])
                         )
@@ -397,16 +382,10 @@ def before_commit(db):
                             "kind": event_kind,
                             "created_at": now(),
                             "fingerprint": fingerprint(data),
-                            "ledger_key": obj.user_id
-                            + "_"
-                            + now().isoformat()
-                            + "_"
-                            + event_id,
+                            "ledger_key": obj.user_id + "_" + now().isoformat() + "_" + event_id,
                         }
                         writes.append(
-                            store.update_write(
-                                "wallet_events", event_id, event_data, create=True
-                            )
+                            store.update_write("wallet_events", event_id, event_data, create=True)
                         )
                 for key, value in data.items():
                     setattr(obj, key, value)
@@ -425,9 +404,7 @@ def before_commit(db):
                 if not account or account[0].get("status") != "active":
                     raise WriteUncertain()
                 writes.append(
-                    store.update_write(
-                        "accounts", user_id, account[0], version=account[1]
-                    )
+                    store.update_write("accounts", user_id, account[0], version=account[1])
                 )
             for user_id, (bank, version) in banks.items():
                 writes.append(
@@ -446,9 +423,9 @@ def before_commit(db):
             except store.Unavailable:
                 try:
                     if not all(
-                        (found := store.read(kind, obj.id))
+                        (found := store.read(kind, record_id))
                         and found[0].get("write_token") == token
-                        for obj, _, kind in versions
+                        for kind, record_id in confirmations
                     ):
                         raise WriteUncertain()
                     result = {}
@@ -487,10 +464,7 @@ def purge_user(user_id):
             if not batch:
                 break
             store.commit(
-                [
-                    store.delete_write(kind, key, version=version)
-                    for key, _, version in batch
-                ]
+                [store.delete_write(kind, key, version=version) for key, _, version in batch]
             )
     for key in list(_cursors):
         if key[0] == user_id:

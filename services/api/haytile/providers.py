@@ -292,9 +292,11 @@ def generate(studio, model, prompt, params):
         )
     payload = {"contents": [{"role": "user", "parts": parts}], "generationConfig": config}
     if studio == "text" and "_chat_contents" in params:
-        from .chat import SYSTEM
+        from .chat import system_for
 
-        payload["systemInstruction"] = {"parts": [{"text": SYSTEM}]}
+        payload["systemInstruction"] = {
+            "parts": [{"text": system_for(prompt, params.get("voice_conversation") is True)}]
+        }
         payload["contents"] = params["_chat_contents"] + payload["contents"]
     response = request("POST", f"/models/{model}:generateContent", payload)
     candidates = response.get("candidates", [])

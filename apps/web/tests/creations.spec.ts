@@ -24,6 +24,7 @@ test('offline provider: auto-title, consent, My Creations, live stages, rename a
   await dialog.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(dialog).not.toBeVisible();
   const initialWallet = await (await page.request.get(base + '/api/v1/wallet')).json();
+  await page.getByRole('tab', { name: 'Studios', exact: true }).click();
   await page.getByRole('button', { name: 'Music Studio', exact: true }).first().click();
   await page
     .getByLabel('Describe your idea', { exact: true })

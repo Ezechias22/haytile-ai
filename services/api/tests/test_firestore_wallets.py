@@ -38,9 +38,7 @@ def test_grant_plan_and_history_survive_sql_loss(remote):
             "amount": 100,
             "idempotency_key": "wallet-grant-123",
         }
-        assert (
-            c.post("/v1/admin/credits", headers=ordinary, json=grant).status_code == 403
-        )
+        assert c.post("/v1/admin/credits", headers=ordinary, json=grant).status_code == 403
 
         def post():
             return c.post("/v1/admin/credits", headers=admin, json=grant)
@@ -49,9 +47,7 @@ def test_grant_plan_and_history_survive_sql_loss(remote):
             result = list(pool.map(lambda _: post(), range(2)))
         assert [r.status_code for r in result] == [200, 200]
         assert (
-            c.post(
-                "/v1/admin/credits", headers=admin, json={**grant, "amount": 101}
-            ).status_code
+            c.post("/v1/admin/credits", headers=admin, json={**grant, "amount": 101}).status_code
             == 409
         )
         plan = dict(
@@ -70,18 +66,14 @@ def test_grant_plan_and_history_survive_sql_loss(remote):
         me = c.get("/v1/me", headers=ordinary).json()
         assert (me["balance"], me["reserved"], me["plan"]) == (125, 0, "creator")
         wallet = c.get("/v1/wallet", headers=ordinary).json()
-        assert wallet["balance"] == 125 and sorted(
-            x["amount"] for x in wallet["transactions"]
-        ) == [25, 100]
-        assert c.get("/v1/wallet", headers=admin).json()["transactions"] == []
-        directory = c.get("/v1/admin/users?search=recipient", headers=admin).json()[
-            "users"
+        assert wallet["balance"] == 125 and sorted(x["amount"] for x in wallet["transactions"]) == [
+            25,
+            100,
         ]
+        assert c.get("/v1/wallet", headers=admin).json()["transactions"] == []
+        directory = c.get("/v1/admin/users?search=recipient", headers=admin).json()["users"]
         assert directory[0]["balance"] == 125 and directory[0]["plan"] == "creator"
-        assert (
-            c.get("/v1/admin/overview", headers=admin).json()["durable_finances"]
-            is True
-        )
+        assert c.get("/v1/admin/overview", headers=admin).json()["durable_finances"] is True
         assert len(c.get("/v1/me/export", headers=ordinary).json()["ledger"]) == 2
 
 
@@ -121,9 +113,7 @@ def test_wallet_outage_fails_closed_and_plan_expiration(remote):
         found = accounts.read("wallets", target["id"])
         data, version = found
         data["plan_expires_at"] = now() - timedelta(seconds=1)
-        accounts.commit(
-            [accounts.update_write("wallets", target["id"], data, version=version)]
-        )
+        accounts.commit([accounts.update_write("wallets", target["id"], data, version=version)])
         assert c.get("/v1/me", headers=ordinary).json()["plan"] == "free"
         assert (
             c.post(
@@ -139,9 +129,7 @@ def test_wallet_outage_fails_closed_and_plan_expiration(remote):
             c.post(
                 "/v1/admin/credits",
                 headers=admin,
-                json=dict(
-                    email=target["email"], amount=5, idempotency_key="outage-grant-123"
-                ),
+                json=dict(email=target["email"], amount=5, idempotency_key="outage-grant-123"),
             ).status_code
             == 503
         )
@@ -155,9 +143,7 @@ def test_generation_never_changes_roles_and_uses_actual_job_route(remote, monkey
     monkeypatch.setattr(
         providers,
         "generate",
-        lambda *args: (
-            calls.append(args) or (b"Explicit local fixture output", "text/plain")
-        ),
+        lambda *args: calls.append(args) or (b"Explicit local fixture output", "text/plain"),
     )
     with TestClient(app) as c:
         user, ordinary = register(c)
@@ -185,9 +171,7 @@ def test_paid_generation_reserves_and_settles_durably(remote, monkeypatch):
             c.post(
                 "/v1/admin/credits",
                 headers=admin,
-                json=dict(
-                    email=target["email"], amount=20, idempotency_key="fund-user-123"
-                ),
+                json=dict(email=target["email"], amount=20, idempotency_key="fund-user-123"),
             ).status_code
             == 200
         )
@@ -217,17 +201,13 @@ def test_failure_releases_reservation_and_retry_debits_only_once(remote, monkeyp
         c.post(
             "/v1/admin/credits",
             headers=admin,
-            json=dict(
-                email=target["email"], amount=10, idempotency_key="retry-fund-123"
-            ),
+            json=dict(email=target["email"], amount=10, idempotency_key="retry-fund-123"),
         )
         job = c.post("/v1/jobs", headers=h, json=job_request(credits=5)).json()
         monkeypatch.setattr(
             providers,
             "generate",
-            lambda *a: (_ for _ in ()).throw(
-                providers.ProviderError("PROVIDER_QUOTA_EXCEEDED")
-            ),
+            lambda *a: (_ for _ in ()).throw(providers.ProviderError("PROVIDER_QUOTA_EXCEEDED")),
         )
         assert worker.run_once()
         bank = c.get("/v1/wallet", headers=h).json()
@@ -250,7 +230,6 @@ def test_ambiguous_completed_commit_recovers_without_deleting_the_published_file
 ):
     import httpx
 
-
     monkeypatch.setenv("HAYTILE_GENERATION_ENABLED", "1")
     monkeypatch.setenv("HAYTILE_WORKER_ENABLED", "1")
     configure(monkeypatch, credits=5)
@@ -263,8 +242,7 @@ def test_ambiguous_completed_commit_recovers_without_deleting_the_published_file
             not lost[0]
             and response.status_code == 200
             and any(
-                "/documents/haytile_assets/" in w.get("update", {}).get("name", "")
-                for w in writes
+                "/documents/haytile_assets/" in w.get("update", {}).get("name", "") for w in writes
             )
         ):
             lost[0] = True
@@ -282,9 +260,7 @@ def test_ambiguous_completed_commit_recovers_without_deleting_the_published_file
         c.post(
             "/v1/admin/credits",
             headers=admin,
-            json=dict(
-                email=target["email"], amount=10, idempotency_key="uncertain-fund-123"
-            ),
+            json=dict(email=target["email"], amount=10, idempotency_key="uncertain-fund-123"),
         )
         response = c.post("/v1/jobs", headers=h, json=job_request(credits=5))
         assert response.status_code == 202
@@ -294,33 +270,25 @@ def test_ambiguous_completed_commit_recovers_without_deleting_the_published_file
         assert job["status"] == "completed"
         asset = c.get("/v1/assets", headers=h).json()[0]
         link = c.get("/v1/assets/" + asset["id"] + "/link", headers=h).json()["path"]
-        assert (
-            c.get(link).content == b"Published fixture survives a lost commit response"
-        )
+        assert c.get(link).content == b"Published fixture survives a lost commit response"
         assert c.get("/v1/wallet", headers=h).json()["balance"] == 5
 
 
-def test_durable_reservations_reject_overspend_before_any_provider_call(
-    remote, monkeypatch
-):
+def test_durable_reservations_reject_overspend_before_any_provider_call(remote, monkeypatch):
     monkeypatch.setenv("HAYTILE_GENERATION_ENABLED", "1")
     monkeypatch.setenv("HAYTILE_WORKER_ENABLED", "1")
     configure(monkeypatch, credits=5)
     monkeypatch.setattr(
         providers,
         "generate",
-        lambda *a: (_ for _ in ()).throw(
-            AssertionError("No generation during admission")
-        ),
+        lambda *a: (_ for _ in ()).throw(AssertionError("No generation during admission")),
     )
     with TestClient(app) as c:
         _, admin, target, h = setup(c)
         c.post(
             "/v1/admin/credits",
             headers=admin,
-            json=dict(
-                email=target["email"], amount=6, idempotency_key="overspend-fund-123"
-            ),
+            json=dict(email=target["email"], amount=6, idempotency_key="overspend-fund-123"),
         )
 
         def submit(i):
@@ -336,9 +304,7 @@ def test_durable_reservations_reject_overspend_before_any_provider_call(
         assert c.get("/v1/wallet", headers=h).json()["reserved"] == 5
 
 
-def test_replay_recovers_the_canonical_job_even_if_local_projection_misses_it(
-    remote, monkeypatch
-):
+def test_replay_recovers_the_canonical_job_even_if_local_projection_misses_it(remote, monkeypatch):
     from sqlalchemy import delete
 
     from haytile import records
@@ -351,9 +317,7 @@ def test_replay_recovers_the_canonical_job_even_if_local_projection_misses_it(
         c.post(
             "/v1/admin/credits",
             headers=admin,
-            json=dict(
-                email=target["email"], amount=10, idempotency_key="replay-fund-123"
-            ),
+            json=dict(email=target["email"], amount=10, idempotency_key="replay-fund-123"),
         )
         body = job_request(credits=5)
         first = c.post("/v1/jobs", headers=h, json=body)
@@ -364,7 +328,44 @@ def test_replay_recovers_the_canonical_job_even_if_local_projection_misses_it(
         replay = c.post("/v1/jobs", headers=h, json=body)
         assert replay.status_code == 202 and replay.json()["id"] == first.json()["id"]
         assert wallets.snapshot(target["id"])["reserved"] == 5
-        conflict = c.post(
-            "/v1/jobs", headers=h, json={**body, "prompt": "Different request"}
-        )
+        conflict = c.post("/v1/jobs", headers=h, json={**body, "prompt": "Different request"})
         assert conflict.status_code == 409
+
+
+@pytest.mark.parametrize("response_lost_after_commit", [False, True])
+def test_delete_only_commit_requires_tombstone_confirmation(
+    remote, monkeypatch, response_lost_after_commit
+):
+    import httpx
+
+    with TestClient(app) as c:
+        _, h = register(c, "delete-confirm@example.test")
+        project = c.post(
+            "/v1/projects", headers=h, json={"title": "Delete safely", "document": {}}
+        ).json()
+        lost = [False]
+
+        def transport(method, url, **kwargs):
+            writes = kwargs.get("json", {}).get("writes", [])
+            deleting = any(
+                w.get("update", {}).get("fields", {}).get("deleted", {}).get("integerValue") == "1"
+                for w in writes
+            )
+            if deleting and not lost[0]:
+                lost[0] = True
+                if response_lost_after_commit:
+                    remote(method, url, **kwargs)
+                return httpx.Response(503)
+            return remote(method, url, **kwargs)
+
+        monkeypatch.setattr(accounts.transport, "request", transport)
+        deleted = c.delete("/v1/projects/" + project["id"], headers=h)
+        assert lost[0]
+        if response_lost_after_commit:
+            assert deleted.status_code == 200
+        else:
+            assert deleted.status_code == 503
+            assert c.get("/v1/projects", headers=h).json()[0]["id"] == project["id"]
+            assert c.delete("/v1/projects/" + project["id"], headers=h).status_code == 200
+        wipe_local()
+        assert c.get("/v1/projects", headers=h).json() == []

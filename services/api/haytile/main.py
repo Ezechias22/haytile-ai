@@ -266,7 +266,7 @@ def runtime_settings():
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
     return {
-        "api_release": "sidebar-chat-voices-v2",
+        "api_release": "voice-mode-navigation-v3",
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
         "metadata_store": "firestore" if records.enabled() else "sql",
@@ -419,6 +419,19 @@ class DeleteAccount(BaseModel):
 def delete_account(body: DeleteAccount, response: Response, user=Depends(current)):
     if not verify_password(body.password, user.password):
         fail("LOGIN_INVALID", 401)
+    with Session() as db:
+        cleanup_keys = [
+            key
+            for row in db.scalars(
+                select(Project).where(
+                    Project.user_id == user.id,
+                    Project.document["kind"].as_string() == "chat_cleanup",
+                )
+            )
+            for key in row.document.get("keys", [])
+        ]
+    for key in cleanup_keys:
+        storage.delete(key)
     if accounts.enabled():
         accounts.remove(user.id)
         records.purge_user(user.id)
@@ -757,6 +770,16 @@ def generate(body: Generate, user=Depends(current)):
             ref = db.get(Asset, body.params["reference_asset_id"])
             if not ref or ref.user_id != user.id or not ref.mime.startswith("image/"):
                 fail("REFERENCE_INVALID")
+        if body.params.get("voice_session_id"):
+            if (
+                body.studio != "voice"
+                or body.params.get("chat_audio") is not True
+                or body.model_id != body.params.get("session_model_id")
+            ):
+                fail("VOICE_SESSION_SETTINGS_CHANGED", 409)
+            from .voice_budget import reserve
+
+            reserve(db, user.id, body.params, credits, body.prompt)
         owner.reserved += credits
         job = Job(
             user_id=user.id,
@@ -943,6 +966,10 @@ def retry(job_id: str, user=Depends(current)):
             fail("RETRY_LIMIT", 409)
         if owner.balance - owner.reserved < job.credits:
             fail("INSUFFICIENT_CREDITS", 402)
+        if job.params.get("input_params", {}).get("voice_session_id"):
+            from .voice_budget import reserve
+
+            reserve(db, user.id, job.params["input_params"], job.credits, job.prompt)
         owner.reserved += job.credits
         job.status = "queued"
         job.error = None
@@ -1387,6 +1414,14 @@ app.include_router(reset_router)
 from .projects import router as project_router  # noqa: E402 — shares core auth helpers
 
 app.include_router(project_router)
+
+from .voice_sessions import router as voice_router  # noqa: E402
+
+app.include_router(voice_router)
+
+from .chat_management import router as chat_management_router  # noqa: E402
+
+app.include_router(chat_management_router)
 
 
 @app.get("/v1/admin/users")

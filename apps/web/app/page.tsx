@@ -260,6 +260,10 @@ export default function App() {
     [toast, setToast] = useState(''),
     [error, setError] = useState(''),
     [menu, setMenu] = useState(false),
+    [sidebarCollapsed, setSidebarCollapsed] = useState(false),
+    [mobileNavigation, setMobileNavigation] = useState(false),
+    [navigationPane, setNavigationPane] = useState<'chat' | 'tools'>('chat'),
+    [deleteChat, setDeleteChat] = useState<{ id: string; title: string } | null>(null),
     [preview, setPreview] = useState<Asset | null>(null),
     [previewUrl, setPreviewUrl] = useState(''),
     [rename, setRename] = useState<Asset | null>(null),
@@ -317,6 +321,10 @@ export default function App() {
       return t('accountNeeded');
     }
     if (/DURABLE_JOB_BILLING_REQUIRED/.test(code)) return t('creditBillingPending');
+    if (/CHAT_STILL_PROCESSING/.test(code)) return t('chatProcessingDelete');
+    if (/VOICE_SESSION_BUDGET_REACHED|VOICE_BUDGET_TOO_SMALL/.test(code)) return t('voiceBudgetReached');
+    if (/VOICE_REPLY_TOO_LONG/.test(code)) return t('voiceReplyTooLong');
+    if (/VOICE_SESSION_ENDED|VOICE_SESSION_SETTINGS_CHANGED/.test(code)) return t('voiceSessionEnded');
     if (/VOICE_INPUT_UNAVAILABLE/.test(code)) return t('voiceInputUnsupported');
     if (/LOGIN_INVALID/.test(code)) return t('authError');
     if (/AI_SERVICE_PAUSED|BACKGROUND_PROCESSING_PAUSED/.test(code)) return t('servicePausedBody');
@@ -442,8 +450,21 @@ export default function App() {
         .then(setAdminData)
         .catch(() => {});
   }, [page, user]);
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 850px)');
+    const changed = () => setMobileNavigation(query.matches);
+    changed(); query.addEventListener('change', changed);
+    setSidebarCollapsed(localStorage.getItem('haytile-sidebar-collapsed') === '1');
+    return () => query.removeEventListener('change', changed);
+  }, []);
+  const toggleSidebar = () => {
+    if (window.matchMedia('(max-width: 850px)').matches) setMenu(value => !value);
+    else setSidebarCollapsed(value => { localStorage.setItem('haytile-sidebar-collapsed', value ? '0' : '1'); return !value; });
+  };
   const navigate = (p: Page) => {
     setPage(p === 'text' ? 'chat' : p);
+    if (p === 'chat' || p === 'text') setNavigationPane('chat');
+    else if (p !== 'home') setNavigationPane('tools');
     setMenu(false);
     setError('');
     setSearch('');
@@ -649,7 +670,7 @@ export default function App() {
     </div>
   );
   return (
-    <div className="app-shell">
+    <div className={'app-shell ' + (sidebarCollapsed ? 'sidebar-collapsed' : '')}>
       <input
         hidden
         ref={uploadRef}
@@ -662,7 +683,7 @@ export default function App() {
         }}
       />
       {menu && <div className="sidebar-scrim" onClick={() => setMenu(false)} />}
-      <aside className={'sidebar ' + (menu ? 'is-open' : '')}>
+      <aside className={'sidebar ' + (menu ? 'is-open' : '')} aria-hidden={mobileNavigation ? !menu : sidebarCollapsed} inert={mobileNavigation ? !menu : sidebarCollapsed}>
         <button className="brand" onClick={() => navigate('home')}>
           <img src="/mark.png" alt="" width={35} height={35} />
           <span>
@@ -674,7 +695,7 @@ export default function App() {
           <div>
             Haytile Workspace<small>{t('ready')}</small>
           </div>
-          <ChevronDown size={14} />
+          <button className="sidebar-dismiss" onClick={toggleSidebar} aria-label={t('closeSidebar')}><X size={16}/></button>
         </div>
         <nav>
           <button
@@ -685,8 +706,12 @@ export default function App() {
             {t('home')}
           </button>
           <button className={'nav-item ' + (page === 'chat' ? 'active' : '')} onClick={() => navigate('chat')}><MessageCircle size={18} />HAYTILE Chat</button>
+          <div className="sidebar-nav-tabs" role="tablist" aria-label={t('navigationSection')}><button role="tab" aria-selected={navigationPane === 'chat'} onClick={() => setNavigationPane('chat')}>{t('navChats')}</button><button role="tab" aria-selected={navigationPane === 'tools'} onClick={() => setNavigationPane('tools')}>{t('navTools')}</button></div>
+          {navigationPane === 'chat' && <div className="sidebar-chat-pane">
           <button className="nav-item" onClick={() => { setChatConversation(''); setChatEpoch(value => value + 1); if (user) localStorage.removeItem('haytile-chat-' + user.id); navigate('chat'); }}><Plus size={18} />{t('newChat')}</button>
-          {user && <section className="sidebar-chat-history" aria-label={t('chatHistory')}><p className="nav-label">{t('chatHistory')}</p>{chatThreads.map(thread => <button key={thread.id} className={'nav-item sidebar-chat-thread ' + (page === 'chat' && chatConversation === thread.id ? 'active' : '')} title={thread.title} onClick={() => { setChatConversation(thread.id); navigate('chat'); }}><MessageCircle size={15} /><span>{thread.title}</span></button>)}</section>}
+          {user && <section className="sidebar-chat-history" aria-label={t('chatHistory')}><p className="nav-label">{t('chatHistory')}</p>{chatThreads.map(thread => <div className="sidebar-chat-row" key={thread.id}><button className={'nav-item sidebar-chat-thread ' + (page === 'chat' && chatConversation === thread.id ? 'active' : '')} title={thread.title} onClick={() => { setChatConversation(thread.id); navigate('chat'); }}><MessageCircle size={15}/><span>{thread.title}</span></button><button className="sidebar-delete-chat" onClick={() => { window.dispatchEvent(new Event('haytile-stop-voice')); setDeleteChat(thread); }} aria-label={t('deleteChat') + ' ' + thread.title}><Trash2 size={14}/></button></div>)}</section>}
+          </div>}
+          {navigationPane === 'tools' && <div className="sidebar-tools-pane">
           <p className="nav-label">{t('studios')}</p>
           {visibleStudios.map((s) => {
             const Icon = icons[s];
@@ -725,8 +750,10 @@ export default function App() {
               {t('admin')}
             </button>
           )}
+          </div>}
         </nav>
         <div className="sidebar-bottom">
+          {navigationPane === 'tools' && <>
           <div className="free-note">
             <div>
               <Sparkles size={16} />
@@ -751,6 +778,7 @@ export default function App() {
               </button>
             );
           })}
+          </>}
           <div className="user-line">
             <span className="user-avatar">{user?.name[0]?.toUpperCase() || 'H'}</span>
             <div>
@@ -780,7 +808,7 @@ export default function App() {
       <div className="main-shell">
         <header className="topbar">
           <div className="breadcrumb">
-            <button className="mobile-menu" onClick={() => setMenu(!menu)} aria-label="Menu">
+            <button className="sidebar-toggle" onClick={toggleSidebar} aria-label={t('toggleSidebar')} aria-expanded={mobileNavigation ? menu : !sidebarCollapsed}>
               <Menu size={21} />
             </button>
             <span>{t('workspace')}</span>
@@ -1851,6 +1879,7 @@ export default function App() {
           </>,
           () => setPreview(null),
         )}
+      {deleteChat && modal(t('deleteChat'), <><p>{t('deleteChatWarning')}</p><p><strong>{deleteChat.title}</strong></p><div className="modal-actions"><button className="button" onClick={() => setDeleteChat(null)} disabled={busy}>{t('cancel')}</button><button className="button danger" disabled={busy} onClick={() => run(async () => { const id = deleteChat.id; await api('/chat/conversations/' + encodeURIComponent(id), { method: 'DELETE' }); setChatThreads(rows => rows.filter(row => row.id !== id)); if (chatConversation === id) { setChatConversation(''); setChatEpoch(value => value + 1); if (user) localStorage.removeItem('haytile-chat-' + user.id); } setDeleteChat(null); })}>{t('delete')}</button></div></>, () => setDeleteChat(null))}
       {renameJob && modal(t('rename'), <form onSubmit={e => { e.preventDefault(); const value = new FormData(e.currentTarget).get('title'); run(async () => { await api('/jobs/' + renameJob.id, { method: 'PATCH', body: JSON.stringify({ title: value }) }); setRenameJob(null); await refresh(); }); }}><input name="title" defaultValue={renameJob.title} maxLength={120} required aria-label={t('title')}/><button className="button primary full" disabled={busy}>{t('save')}</button></form>, () => setRenameJob(null))}
       {rename &&
         modal(

@@ -34,6 +34,7 @@ test('private admin: activate, search user, grant credits and assign expiring pl
   await dialog.getByLabel('Password', { exact: true }).fill(password);
   await dialog.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(dialog).not.toBeVisible();
+  await page.getByRole('tab', { name: 'Studios', exact: true }).click();
   await page.getByRole('button', { name: 'Settings', exact: true }).first().click();
   const activation = page.getByLabel('Private activation code', { exact: true });
   if (await activation.count()) {
