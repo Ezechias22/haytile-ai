@@ -50,3 +50,13 @@ Text/image/default voice quotes: 0/8/26 Haytile credits. No paid generation.
 102 backend tests, 7 offline browser workflows, web build, mobile TypeScript and
 4 locale checks passed. Speech recognition inputs and AI outputs were local
 fixtures; real-provider audio quality has not been tested with the user's credits.
+
+## Composer placement follow-up
+
+Source `568c347de80c3956e37ea35ef81a71075485c42c`, free Render deploy
+`dep-dblggn59el5s73cvvfb0`, is publicly verified as `composer-voice-v4`.
+Five focused backend voice tests and six offline browser workflows passed, along
+with the web production build and locale/configuration checks. The browser test
+starts voice from inside the composer, checks that no budget input or approval
+group exists, plays two selected-voice replies, stops, and deletes the conversation.
+No Google generation was used.

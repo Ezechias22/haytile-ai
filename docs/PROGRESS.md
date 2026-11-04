@@ -8,6 +8,8 @@ bidjè oswa modal konfimasyon sesyon. Vwa toujou sèvi ak kredi; pri modèl la
 verifye sou backend, balans pa ka vin negatif. Tèks toujou gratis.
 5 tès backend vokal, 6 workflow navigatè, build web ak 4 tès konfigirasyon/tradiksyon
 pase san jenerasyon Google AI.
+Source `568c347de80c3956e37ea35ef81a71075485c42c` live sou Render gratis
+(deploy `dep-dblggn59el5s73cvvfb0`), runtime piblik `composer-voice-v4` konfime.
 
 ## Konvèsasyon vokal otomatik ak jesyon chat — nouvo livrezon web
 
