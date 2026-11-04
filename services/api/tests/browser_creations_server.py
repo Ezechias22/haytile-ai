@@ -155,3 +155,13 @@ def offline_live_observed(): return live_observed
 
 # The production catch-all is installed before test-only routes.
 app.router.routes.insert(0, app.router.routes.pop())
+
+# Verify the real HTTP gateway + Next proxy preserve Stripe's signed raw bytes.
+os.environ['STRIPE_WEBHOOK_SECRET']='whsec_offline_transport_fixture'
+from fastapi import Request
+from haytile import billing
+@app.post('/v1/offline/stripe-signature')
+async def offline_stripe_signature(request: Request):
+    raw=await request.body()
+    return {'valid':billing.signature(raw,request.headers.get('stripe-signature',''))}
+app.router.routes.insert(0,app.router.routes.pop())

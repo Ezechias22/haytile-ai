@@ -455,3 +455,78 @@ def test_durable_reservation_rechecks_hold_after_admission_snapshot(
     assert error.value.detail == "BILLING_REVIEW_REQUIRED"
     bank = accounts.read("wallets", user["id"])[0]
     assert bank["balance"] == 100 and bank["reserved"] == 0 and bank["billing_hold"] == 1
+
+
+def test_brl_price_floor_and_verified_currency_fulfillment(client, setup_billing, monkeypatch):
+    _, admin, user, auth, fake, _ = setup_billing
+
+    def transport(method, path, **kwargs):
+        result = fake(method, path, **kwargs)
+        if path.startswith("/prices/"):
+            result = {**result, "currency": "eur" if "euro" in path else "brl", "unit_amount": 3490}
+        return result
+
+    monkeypatch.setattr(billing, "stripe", transport)
+    selected = offer(client, admin)
+    assert client.get("/v1/billing/catalog", headers=auth).json()["offers"][0]["currency"] == "brl"
+    assert (
+        client.post(
+            "/v1/admin/billing/offers", headers=admin, json={**selected, "credits": 600}
+        ).status_code
+        == 409
+    )
+    assert (
+        client.post(
+            "/v1/admin/billing/offers",
+            headers=admin,
+            json={**selected, "price_id": "price_eurofixture"},
+        ).status_code
+        == 409
+    )
+    checkout(client, auth, selected["id"])
+    obj = next(iter(fake.sessions.values()))
+    obj.update(currency="brl", amount_total=3490)
+    assert send(client, event("checkout.session.completed", obj)).status_code == 200
+    assert wallets.snapshot(user["id"])["balance"] == 500
+    obj["currency"] = "usd"
+    assert send(client, event("checkout.session.completed", obj)).status_code == 400
+    assert wallets.snapshot(user["id"])["balance"] == 500
+
+
+def test_brl_recurring_invoice_assigns_paid_plan(client, setup_billing, monkeypatch):
+    _, admin, user, auth, fake, _ = setup_billing
+
+    def transport(method, path, **kwargs):
+        result = fake(method, path, **kwargs)
+        if path.startswith("/prices/"):
+            result = {**result, "currency": "brl", "unit_amount": 6990}
+        return result
+
+    monkeypatch.setattr(billing, "stripe", transport)
+    selected = offer(client, admin, True)
+    checkout(client, auth, selected["id"])
+    purchase = billing.query("billing_purchases")[0]
+    sub = {
+        "id": "sub_brl_fixture",
+        "customer": purchase["customer_id"],
+        "status": "active",
+        "created": int(time.time()),
+        "metadata": {"haytile_purchase_id": purchase["id"]},
+        "items": {"data": [{"quantity": 1, "price": {"id": selected["price_id"]}}]},
+    }
+    fake.subscriptions[sub["id"]] = sub
+    invoice = {
+        "id": "in_brl_fixture",
+        "parent": {"subscription_details": {"subscription": sub["id"]}},
+        "customer": purchase["customer_id"],
+        "billing_reason": "subscription_create",
+        "status": "paid",
+        "amount_paid": 6990,
+        "currency": "brl",
+        "lines": {"data": [{"period": {"end": int((now() + timedelta(days=30)).timestamp())}}]},
+    }
+    assert send(client, event("invoice.paid", invoice)).status_code == 200
+    assert (
+        wallets.snapshot(user["id"])["balance"] == 1000
+        and wallets.snapshot(user["id"])["plan"] == "creator"
+    )

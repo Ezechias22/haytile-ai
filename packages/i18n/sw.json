@@ -321,7 +321,7 @@
   "stripeMonth": "kwa mwezi",
   "stripeSubscribe": "Jisajili",
   "stripeBuy": "Nunua salio",
-  "stripePriceRule": "Tumia bei halali ya USD ya angalau senti moja kwa kila salio. Usajili ni wa kila mwezi au mwaka.",
+  "stripePriceRule": "Tumia bei halali ya USD au BRL. Kiwango cha chini kwa salio: US$0.01 au R$0.06. Usajili wa mwezi au mwaka.",
   "stripeExisting": "Tayari kuna usajili au malipo yanayoendelea. Endelea au dhibiti malipo.",
   "stripeRevokeUnavailable": "Kiasi kinazidi salio lisilohifadhiwa.",
   "stripeFailed": "Huduma ya malipo haipatikani. Jaribu tena.",

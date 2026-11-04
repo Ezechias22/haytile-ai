@@ -26,6 +26,9 @@ from .security import hash_token
 router = APIRouter()
 VERSION = "2025-02-24.acacia"
 API = "https://api.stripe.com/v1"
+# App retail floors. BRL reference: USD/BRL 5.4654 (ECB/Frankfurter, 2026-11-04).
+# One reference credit is USD 0.01; round BRL minor units upward. Not a live FX quote.
+CREDIT_MIN_MINOR = {"usd": 1, "brl": 6}
 
 
 def live():
@@ -142,12 +145,12 @@ def save_offer(body: Offer, user=Depends(admin)):
     if (
         not price.get("active")
         or price.get("livemode") != live()
-        or price.get("currency") != "usd"
+        or price.get("currency") not in CREDIT_MIN_MINOR
         or type(price.get("unit_amount")) is not int
     ):
         fail("STRIPE_PRICE_UNSUPPORTED", 409)
     # 1 Haytile reference credit = 1 US cent. Do not permit below-reference offers.
-    if price["unit_amount"] < max(body.credits, 100):
+    if price["unit_amount"] < max(body.credits, 100) * CREDIT_MIN_MINOR[price["currency"]]:
         fail("STRIPE_PRICE_TOO_LOW", 409)
     if recurring:
         if (
@@ -169,7 +172,7 @@ def save_offer(body: Offer, user=Depends(admin)):
         "mode": "subscription" if recurring else "payment",
         "interval": recurring["interval"] if recurring else "",
         "unit_amount": price["unit_amount"],
-        "currency": "usd",
+        "currency": price["currency"],
         "livemode": int(live()),
         "label": str(label)[:100],
         "actor_id": user.id,
@@ -538,7 +541,7 @@ def apply_event(event):
             session.get("customer") != purchase["customer_id"]
             or session.get("client_reference_id") != purchase["user_id"]
             or session.get("payment_status") != "paid"
-            or session.get("currency") != "usd"
+            or session.get("currency") != purchase["currency"]
             or session.get("amount_total", 0) < purchase["unit_amount"]
             or len(items) != 1
             or items[0].get("quantity") != 1
@@ -565,7 +568,7 @@ def apply_event(event):
             or sub.get("customer") != purchase["customer_id"]
             or obj.get("customer") != purchase["customer_id"]
             or obj.get("status") != "paid"
-            or obj.get("currency") != "usd"
+            or obj.get("currency") != purchase["currency"]
             or obj.get("amount_paid", 0) < purchase["unit_amount"]
         ):
             fail("STRIPE_PAYMENT_MISMATCH", 400)

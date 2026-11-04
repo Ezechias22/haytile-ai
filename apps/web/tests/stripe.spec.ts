@@ -1,4 +1,4 @@
-import { test, expect, chromium } from '@playwright/test';
+import { test, expect, chromium, request as apiRequest } from '@playwright/test';
 import serverChromium from '@sparticuz/chromium';
 const base = process.env.HAYTILE_TEST_URL || 'http://127.0.0.1:8010';
 async function setup(email = 'creative-browser@example.test') {
@@ -35,8 +35,8 @@ test('approved offer opens hosted checkout with server offer ID and no client cr
             label: 'Verified Stripe pack',
             credits: 500,
             plan: 'free',
-            unit_amount: 500,
-            currency: 'usd',
+            unit_amount: 3490,
+            currency: 'brl',
             mode: 'payment',
             interval: '',
           },
@@ -55,7 +55,7 @@ test('approved offer opens hosted checkout with server offer ID and no client cr
   await page.getByRole('tab', { name: 'Studios', exact: true }).click();
   await page.getByRole('button', { name: 'Credits & plans', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Verified Stripe pack' })).toBeVisible();
-  await expect(page.locator('.stripe-payments')).toContainText('$5.00');
+  await expect(page.locator('.stripe-payments')).toContainText(/R\$\s?34[.,]90/);
   await page.getByRole('button', { name: 'Buy credits', exact: true }).click();
   await expect(
     page.getByRole('heading', { name: 'Offline hosted checkout fixture' }),
@@ -152,4 +152,17 @@ test('return URL waits for an owned server receipt and never grants credits itse
     before.balance,
   );
   await browser.close();
+});
+
+test('public HTTP gateway forwards Stripe signature and raw UTF-8 body unchanged', async()=>{
+ test.skip(process.env.HAYTILE_OFFLINE_CREATIONS!=='1','Offline webhook transport fixture.');
+ const {createHmac}=await import('node:crypto');
+ const body=JSON.stringify({id:'evt_transport_fixture',data:{object:{message:'Bonjou, kè mwen — café 🌍'}}});
+ const timestamp=String(Math.floor(Date.now()/1000));
+ const signature=createHmac('sha256','whsec_offline_transport_fixture').update(timestamp+'.'+body).digest('hex');
+ const context=await apiRequest.newContext();
+ const response=await context.post(base+'/api/v1/offline/stripe-signature',{data:body,headers:{'content-type':'application/json','stripe-signature':'t='+timestamp+',v1='+signature}});
+ expect(response.status()).toBe(200);expect(await response.json()).toEqual({valid:true});
+ const invalid=await context.post(base+'/api/v1/offline/stripe-signature',{data:body+' ',headers:{'content-type':'application/json','stripe-signature':'t='+timestamp+',v1='+signature}});
+ expect(await invalid.json()).toEqual({valid:false});await context.dispose();
 });

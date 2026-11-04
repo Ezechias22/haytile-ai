@@ -1,5 +1,14 @@
 # HAYTILE AI — estati livrezon
 
+## Koneksyon Stripe pwodiksyon ak BRL
+
+Itilizatè a chwazi kle pwodiksyon. Kle live la verifye ak Stripe, kont BR
+pare pou peman kat, webhook live kreye epi sekrè siyen an sove sou Render
+san ekspoze li. Sipò BRL ajoute ak pri kredi minimòm R$0.06 sou baz referans
+USD/BRL verifye 5.4654 (4 novanm 2026). 123 tès backend ak 4 workflow
+billing navigatè pase; transpò reyèl lokal la konsève siyati ak kò webhook
+UTF-8 egzakteman. Pa gen chaj kat ni jenerasyon Google nan verifikasyon sa yo.
+
 ## Stripe web ak chat mobil pi lejè
 
 Peman Hosted Checkout, abònman pa fakti verifye, pòtay kliyan, webhook siyen,

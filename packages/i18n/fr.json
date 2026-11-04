@@ -321,7 +321,7 @@
   "stripeMonth": "par mois",
   "stripeSubscribe": "S’abonner",
   "stripeBuy": "Acheter des crédits",
-  "stripePriceRule": "Utilisez un prix USD fixe actif valant au moins un centime par crédit. Les abonnements doivent être mensuels ou annuels.",
+  "stripePriceRule": "Utilisez un prix fixe actif en USD ou BRL. Minimum par crédit : 0,01 USD ou 0,06 BRL. Abonnements mensuels ou annuels.",
   "stripeExisting": "Un abonnement ou paiement est déjà en cours. Continuez-le ou gérez la facturation.",
   "stripeRevokeUnavailable": "Le montant dépasse les crédits non réservés.",
   "stripeFailed": "Service de paiement indisponible. Réessayez.",

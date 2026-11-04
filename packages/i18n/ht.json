@@ -321,7 +321,7 @@
   "stripeMonth": "chak mwa",
   "stripeSubscribe": "Abòne",
   "stripeBuy": "Achte kredi",
-  "stripePriceRule": "Itilize yon pri USD fiks aktif ki vo omwen yon santim pou chak kredi. Abònman yo dwe pa mwa oswa pa ane.",
+  "stripePriceRule": "Itilize yon pri fiks aktif an USD oswa BRL. Minimòm pou chak kredi: US$0.01 oswa R$0.06. Abònman yo dwe pa mwa oswa pa ane.",
   "stripeExisting": "Gen yon abònman oswa yon peman ki deja louvri. Kontinye li oswa jere peman yo.",
   "stripeRevokeUnavailable": "Kantite a depase kredi ki pa rezève yo.",
   "stripeFailed": "Sèvis peman an pa disponib. Eseye ankò.",

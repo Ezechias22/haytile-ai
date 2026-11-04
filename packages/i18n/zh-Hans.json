@@ -321,7 +321,7 @@
   "stripeMonth": "每月",
   "stripeSubscribe": "订阅",
   "stripeBuy": "购买积分",
-  "stripePriceRule": "使用有效的固定美元价格，每积分至少一美分。订阅仅支持按月或按年。",
+  "stripePriceRule": "使用有效的美元或巴西雷亚尔固定价格。每积分最低0.01美元或0.06雷亚尔。订阅按月或按年。",
   "stripeExisting": "已有订阅或付款进行中。请继续该付款或管理账单。",
   "stripeRevokeUnavailable": "金额超过未预留积分。",
   "stripeFailed": "付款服务不可用。请重试。",

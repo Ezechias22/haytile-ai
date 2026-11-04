@@ -7,10 +7,15 @@ on the backend. This does not publish native Google Play or Apple in-app billing
 
 ## Configuration and activation
 
-The current deployment cannot accept payments until real server configuration
-is supplied. No Stripe keys were found in the development environment or Render
-when this integration was prepared. No actual Stripe sandbox or live transaction
-has been executed. Automated tests use explicit local Stripe transports.
+The owner explicitly selected production credentials on 2026-11-04. The live key
+has been verified against Stripe; the Brazilian account reports card payments
+active and no outstanding requirements. A live webhook endpoint has been created
+and its signing secret saved directly in Render. No key was printed or committed.
+No card charge or completed paid transaction has been made for verification.
+The live catalog uses BRL; publication and delivery verification are recorded below.
+
+The following sandbox procedure remains available for isolated development;
+it is not a claim that a real Stripe sandbox transaction was performed:
 
 1. In Render → HAYTILE AI → Environment, set `STRIPE_SECRET_KEY` to the Stripe
    **test-mode** secret key. Never send it through chat or put it in Git.
@@ -30,8 +35,10 @@ has been executed. Automated tests use explicit local Stripe transports.
    and the free/Creator/Pro plan. The backend fetches and validates each price.
    `free` means a one-time credit pack, not a free purchase. Creator/Pro require
    recurring monthly or yearly prices with interval count 1. At least 100 credits
-   per offer are required. Initially only fixed USD prices are supported, with
-   at least one US cent per credit, matching the app's internal credit reference.
+   per offer are required. Fixed USD and BRL prices are supported, with
+   at least US$0.01 or R$0.06 per credit. The BRL floor is rounded upward from
+   the internal US$0.01 credit reference using the observed USD/BRL 5.4654
+   on 2026-11-04 (https://api.frankfurter.dev/v1/latest?base=USD&symbols=BRL).
    This is a retail floor, not a claim about Stripe fees, exchange rates or profit.
    Check whether the merchant account supports USD presentment before activation.
 4. Test Hosted Checkout, asynchronous completion where relevant, invoice renewal,
@@ -51,7 +58,8 @@ The server's Stripe REST API version is pinned to `2025-02-24.acacia`; invoice
 parsing accepts both the legacy subscription field and the newer parent details.
 No prices, Stripe IDs, fees or successful payments are fabricated. Provider fees,
 taxes, merchant verification, refund policies and country availability require
-merchant-specific review. This release does not implement automatic tax or FX.
+merchant-specific review. This release does not implement automatic tax or automatic FX conversion.
+The BRL retail floor is an app policy, not a guaranteed current exchange rate.
 
 ## Financial behavior
 
@@ -126,3 +134,19 @@ workflows; production web build and four locale/configuration checks. The tests
 use local providers; actual Stripe sandbox verification and live activation remain
 blocked by the missing configuration. No Google generation or real Stripe charge
 was made.
+
+## Production connection follow-up
+
+At the owner's explicit request, configuration uses live credentials rather than
+requiring a test key. Initial BRL offers: a 500-credit pack at R$34.90, Creator with
+1,000 credits at R$69.90/month, and Pro with 3,000 credits at R$199.90/month. These
+are Haytile retail prices, not provider API prices. Published Stripe Brazil card
+pricing was checked at https://stripe.com/br/pricing (domestic reference 3.99% +
+R$0.39); account-specific fees, taxes and FX variation can differ. There is no
+profit guarantee. Actual product/price IDs and connection verification are recorded
+only after creation. No payment is submitted on behalf of the owner.
+
+The Next API proxy forwards `Stripe-Signature`; a transport regression checks that
+the public HTTP gateway, Next and backend preserve both this header and the exact
+UTF-8 body. Credentials, BRL grants, invoice currency checks and duplicate-credit
+protection were verified with 123 backend tests and four browser billing flows.

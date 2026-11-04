@@ -321,7 +321,7 @@
   "stripeMonth": "por mês",
   "stripeSubscribe": "Assinar",
   "stripeBuy": "Comprar créditos",
-  "stripePriceRule": "Use um preço fixo ativo em USD de pelo menos um centavo por crédito. Assinaturas devem ser mensais ou anuais.",
+  "stripePriceRule": "Use um preço fixo ativo em USD ou BRL. Mínimo por crédito: US$0,01 ou R$0,06. Assinaturas mensais ou anuais.",
   "stripeExisting": "Já existe uma assinatura ou pagamento em andamento. Continue ou gerencie os pagamentos.",
   "stripeRevokeUnavailable": "O valor excede os créditos não reservados.",
   "stripeFailed": "Serviço de pagamento indisponível. Tente novamente.",

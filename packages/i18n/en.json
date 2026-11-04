@@ -321,7 +321,7 @@
   "stripeMonth": "per month",
   "stripeSubscribe": "Subscribe",
   "stripeBuy": "Buy credits",
-  "stripePriceRule": "Use an active fixed USD price worth at least one cent per credit. Subscription prices must be monthly or yearly.",
+  "stripePriceRule": "Use an active fixed USD or BRL price. Minimum per credit: US$0.01 or R$0.06. Subscriptions must be monthly or yearly.",
   "stripeExisting": "A subscription or checkout already exists. Continue that checkout or manage billing.",
   "stripeRevokeUnavailable": "The amount exceeds unreserved credits.",
   "stripeFailed": "Payment service unavailable. Please try again.",

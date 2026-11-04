@@ -321,7 +321,7 @@
   "stripeMonth": "per bulan",
   "stripeSubscribe": "Berlangganan",
   "stripeBuy": "Beli kredit",
-  "stripePriceRule": "Gunakan harga USD tetap aktif minimal satu sen per kredit. Langganan harus bulanan atau tahunan.",
+  "stripePriceRule": "Gunakan harga tetap aktif dalam USD atau BRL. Minimum per kredit US$0,01 atau R$0,06. Langganan bulanan atau tahunan.",
   "stripeExisting": "Sudah ada langganan atau pembayaran yang berjalan. Lanjutkan atau kelola tagihan.",
   "stripeRevokeUnavailable": "Jumlah melebihi kredit yang tidak dicadangkan.",
   "stripeFailed": "Layanan pembayaran tidak tersedia. Coba lagi.",

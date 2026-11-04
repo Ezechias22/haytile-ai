@@ -11,7 +11,7 @@ async function forward(request: NextRequest, { params }: { params: Promise<{ pat
     base,
   );
   const headers = new Headers();
-  for (const name of ['content-type', 'cookie', 'origin', 'authorization', 'range', 'if-range']) {
+  for (const name of ['content-type', 'cookie', 'origin', 'authorization', 'range', 'if-range', 'stripe-signature']) {
     const value = request.headers.get(name);
     if (value) headers.set(name, value);
   }
