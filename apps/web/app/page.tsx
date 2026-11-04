@@ -1,4 +1,5 @@
 'use client';
+import StripeBilling from './stripe-billing';
 import {
   useState,
   useEffect,
@@ -314,6 +315,8 @@ export default function App() {
     (key: string) => dictionaries[locale]?.[key] || dictionaries.en[key] || key,
     [locale],
   );
+  useEffect(()=>{const value=new URLSearchParams(window.location.search).get('billing');if(value==='return'||value==='cancel')setPage('pricing');},[]);
+
   const describeError = (e: unknown) => {
     const code = e instanceof Error ? e.message : 'ERROR';
     if (/AUTH_REQUIRED|SESSION_EXPIRED/.test(code)) {
@@ -324,6 +327,13 @@ export default function App() {
     if (/CHAT_STILL_PROCESSING/.test(code)) return t('chatProcessingDelete');
     if (/VOICE_SESSION_BUDGET_REACHED|VOICE_BUDGET_TOO_SMALL/.test(code)) return t('voiceBudgetReached');
     if (/VOICE_REPLY_TOO_LONG/.test(code)) return t('voiceReplyTooLong');
+    if (/BILLING_REVIEW_REQUIRED/.test(code)) return t('stripeReview');
+    if (/BILLING_NOT_CONFIGURED|STRIPE_SIGNATURE|STRIPE_MODE_MISMATCH/.test(code)) return t('stripeUnavailable');
+    if (/STRIPE_PRICE_UNSUPPORTED|STRIPE_PRICE_TOO_LOW/.test(code)) return t('stripePriceRule');
+    if (/SUBSCRIPTION_EXISTS|SUBSCRIPTION_PENDING/.test(code)) return t('stripeExisting');
+    if (/BILLING_REVOKE_UNAVAILABLE/.test(code)) return t('stripeRevokeUnavailable');
+    if (/STRIPE_REQUEST_FAILED|OFFER_UNAVAILABLE|STRIPE_PAYMENT_MISMATCH/.test(code)) return t('stripeFailed');
+    if (/BILLING_ACCOUNT_DELETE_PENDING/.test(code)) return t('stripeDeletePending');
     if (/LIVE_VOICE_UNAVAILABLE/.test(code)) return t('liveVoiceUnavailable');
     if (/LIVE_CONNECTION_FAILED/.test(code)) return t('liveConnectionFailed');
     if (/LIVE_SESSION_LIMIT/.test(code)) return t('liveSessionLimit');
@@ -1365,15 +1375,12 @@ export default function App() {
                 </div>
                 <h2>{t('freePlan')}</h2>
                 <p>{t('freePlanDescription')}</p>
-                <button className="button primary" onClick={() => navigate('image')}>
+                <button className="button primary" onClick={() => navigate('chat')}>
                   {t('start')}
                   <ArrowRight size={16} />
                 </button>
               </div>
-              <div className="alert info">
-                <AlertCircle size={18} />
-                {t('plansNotice')}
-              </div>
+              <StripeBilling request={api} t={t} authenticated={!!user} onAuth={()=>setAuth('login')} onError={err=>setError(describeError(err))} onWalletChange={()=>refresh().catch(()=>setSyncIssue(true))}/>
               <section className="panel">
                 <div className="panel-title">
                   <Clock size={18} />
@@ -1383,7 +1390,7 @@ export default function App() {
                   <div className="transaction-list">
                     {wallet.transactions.map((tx) => (
                       <div key={tx.id}>
-                        <span>{tx.kind}</span>
+                        <span>{tx.kind === 'stripe_payment' ? t('stripePayment') : tx.kind === 'stripe_sandbox' ? t('stripeSandboxBalance') : tx.kind === 'stripe_risk_resolve' ? t('stripeAdjustment') : tx.kind}</span>
                         <span>{new Date(tx.created_at).toLocaleDateString(locale)}</span>
                         <strong>
                           {tx.amount > 0 ? '+' : ''}
@@ -1528,6 +1535,8 @@ export default function App() {
           )}
           {page === 'admin' && user?.role === 'admin' && (
             <>
+              <StripeBilling administration request={api} t={t} authenticated={!!user} onAuth={()=>setAuth('login')} onError={err=>setError(describeError(err))} onWalletChange={()=>refresh().catch(()=>setSyncIssue(true))}/>
+
               <div className="page-heading">
                 <h1>{t('admin')}</h1>
               </div>

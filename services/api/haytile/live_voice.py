@@ -71,6 +71,8 @@ def reserve(user_id, body):
             return existing.id
         if records.enabled():
             bank = wallets.snapshot(user_id)
+            if bank.get("billing_hold"):
+                fail("BILLING_REVIEW_REQUIRED", 403)
             owner.balance, owner.reserved = bank["balance"], bank["reserved"]
         if owner.balance - owner.reserved < CREDITS:
             fail("INSUFFICIENT_CREDITS", 402)

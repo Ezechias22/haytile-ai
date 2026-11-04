@@ -46,6 +46,8 @@ def name(collection, key):
         "accounts",
         "wallets",
         "wallet_events",
+        "billing_offers", "billing_customers", "billing_purchases", "billing_events",
+        "billing_cycles", "billing_sandbox_wallets", "billing_risks",
         "jobs",
         "assets",
         "projects",

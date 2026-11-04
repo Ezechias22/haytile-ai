@@ -46,6 +46,7 @@ def snapshot(user_id):
     found = store.read("wallets", user_id)
     data = validate(found[0]) if found else base()
     return {
+        "billing_hold": data.get("billing_hold", 0),
         "balance": data["balance"],
         "reserved": data["reserved"],
         "plan": data["plan"] if data["plan_expires_at"] > now() else "free",

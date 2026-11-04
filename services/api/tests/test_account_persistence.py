@@ -81,7 +81,7 @@ class FirestoreFixture:
                 for item in filters:
                     f = item["fieldFilter"]
                     field = f["field"]["fieldPath"]
-                    value = f["value"]["stringValue"]
+                    value = next(iter(f["value"].values()))
                     op = f["op"]
                     rows = [
                         r
@@ -92,7 +92,7 @@ class FirestoreFixture:
                             "GREATER_THAN": lambda x: x > value,
                             "LESS_THAN": lambda x: x < value,
                             "EQUAL": lambda x: x == value,
-                        }[op](r["fields"][field]["stringValue"])
+                        }[op](next(iter(r["fields"][field].values())))
                     ]
             if aggregate:
                 return httpx.Response(

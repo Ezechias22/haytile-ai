@@ -53,6 +53,8 @@ with Session.begin() as db:
 with Session.begin() as db:
     db.add(Model(studio="voice", model_id="offline-voice-model", enabled=True, credits=3, price_source="https://example.test/pricing"))
     db.add(Model(studio="image", model_id="offline-image-model", enabled=True, credits=8, price_source="https://example.test/pricing"))
+with Session.begin() as db:
+    db.add(User(email="billing-admin@example.test", password=password_hash("Offline-browser-password-123"), name="Billing fixture administrator", locale="en", role="admin", balance=0))
 with tempfile.TemporaryDirectory(prefix="offline-audio-fixture-") as folder:
     path = Path(folder) / "tone.mp3"
     subprocess.run(

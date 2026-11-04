@@ -1,5 +1,24 @@
 # HAYTILE AI — estati livrezon
 
+## Stripe web ak chat mobil pi lejè
+
+Peman Hosted Checkout, abònman pa fakti verifye, pòtay kliyan, webhook siyen,
+resi prive ak pwoteksyon kont doub kredi ajoute. Sandbox rete apa de kredi
+reyèl; peman reyèl dezaktive jiskaske kle, pri ak tès Stripe reyèl konfigire.
+Kle Stripe yo poko disponib nan anviwònman/Render lè entegrasyon an te fèt.
+120 tès backend, 8 workflow app ak 3 workflow Stripe nan navigatè pase
+avèk founisè lokal. Sandbox Firestore reyèl verifye izolasyon balans,
+rezistans kont doub kredi ak retou apre SQL efase; fixture yo netwaye.
+Pa gen jenerasyon Google ni tranzaksyon Stripe reyèl nan tès sa yo.
+Gade [STRIPE.md](STRIPE.md) pou etap egzak ak limit aktyèl yo.
+
+Chat mobil la gen bwat yon sèl liy ki grandi lè moun ekri; long nòt yo nan
+meni vwa a. Tès 390×844 verifye pati anba <110px ak plis pase 65% ekran pou
+konvèsasyon. Vèsyon konpak `141de691ec17c1ee0677f175e929d30536e4e455` live
+Render gratis (deploy `dep-dblhj7ijnfac7381nd10`), runtime/source piblik verifye.
+Vokal natif deja live depi `859de935ef4c58f3a6868eee3af8f46cc9a9bab5`
+(deploy `dep-dblh8agae00c73c8f7i0`), WSS anonim rejte san koneksyon Google.
+
 ## Vokal natif an dirèk ak ekran chat fikse
 
 Chemen SpeechRecognition/tèks/TTS ranplase pou bouton konvèsasyon vokal la:
