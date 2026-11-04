@@ -13,6 +13,7 @@ test('installed web app resolves the branded Android and Apple icons', async () 
     const session = await page.context().newCDPSession(page);
     const parsed = await session.send('Page.getAppManifest');
     expect(parsed.errors).toEqual([]);
+    if (!parsed.data) throw new Error('The browser did not discover an install manifest.');
     const manifest = JSON.parse(parsed.data);
     expect(manifest.name).toBe('HAYTILE AI');
     expect(manifest.display).toBe('standalone');
