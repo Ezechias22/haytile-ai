@@ -10,6 +10,12 @@ Kle Stripe yo poko disponib nan anviwònman/Render lè entegrasyon an te fèt.
 avèk founisè lokal. Sandbox Firestore reyèl verifye izolasyon balans,
 rezistans kont doub kredi ak retou apre SQL efase; fixture yo netwaye.
 Pa gen jenerasyon Google ni tranzaksyon Stripe reyèl nan tès sa yo.
+Code `c96c392670f47ca716dd5b97d5fd91f7e6fab573` live sou Render gratis
+(deploy `dep-dblk5s0n74is73ac268g`), runtime piblik `stripe-checkout-v6`
+ak sous verifye. Admin Stripe prive, webhook san siyati rejte, vokal natif
+aktif, balans kont reyèl la pa chanje nan smoke checks. `STRIPE_SECRET_KEY`
+ak `STRIPE_WEBHOOK_SECRET` toude absan; koleksyon peman rete dezaktive.
+12 tès billing pase apre verifikasyon atomik blokaj ranbousman an.
 Gade [STRIPE.md](STRIPE.md) pou etap egzak ak limit aktyèl yo.
 
 Chat mobil la gen bwat yon sèl liy ki grandi lè moun ekri; long nòt yo nan

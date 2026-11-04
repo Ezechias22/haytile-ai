@@ -109,3 +109,20 @@ card. A disposable real Firestore probe verified concurrent fulfillment once,
 sandbox-wallet isolation and replay after total SQL-cache loss, then cleaned up
 its own records. Actual Stripe sandbox verification is still required before live
 activation. No Google generation is involved in these checks.
+
+## Verified deployment
+
+Source `c96c392670f47ca716dd5b97d5fd91f7e6fab573` is live on the existing free
+Render service, deploy `dep-dblk5s0n74is73ac268g`, release `stripe-checkout-v6`.
+Public-source checks matched; anonymous billing administration is rejected and
+unsigned webhooks return 400. Native live configuration remains available and
+the owner's wallet did not change during read/quote checks. Both Stripe server
+secrets were confirmed absent, so payment admission remains disabled. Anonymous
+Firestore reads of wallets and billing purchases returned 403.
+
+Validation: 120 backend tests in the full suite, then all 12 billing tests after
+adding the atomic hold-race check; eight core browser workflows plus three billing
+workflows; production web build and four locale/configuration checks. The tests
+use local providers; actual Stripe sandbox verification and live activation remain
+blocked by the missing configuration. No Google generation or real Stripe charge
+was made.
