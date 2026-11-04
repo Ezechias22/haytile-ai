@@ -66,7 +66,7 @@ fee or a cash credit-purchase implementation. Losses on failed generations and
 manual gifts are still possible; this is not a profit guarantee.
 
 Indicative short-prompt/no-reference quotes: Nano Banana 2 Lite 8 credits, Nano
-Banana 11 credits at most for a modest prompt, Nano Banana 2 16 credits, Nano Banana
+Banana 10 credits for a short prompt, Nano Banana 2 16 credits, Nano Banana
 2.1 11 credits, Nano Banana Pro 33 credits. Exact quotes depend on input/reference
 size and configured model floors. The default is set to the economical
 `gemini-3.1-flash-lite-image`. Supported Gemini 3 image calls explicitly request
@@ -98,3 +98,16 @@ change, paid voice file playback/reload, sidebar history, no Text Studio navigat
 paid image debit, creation progress/rename/playback, uploaded text/private download,
 mobile/RTL navigation and storyboards. Web production build, mobile TypeScript,
 locale coverage and Python lint pass. No paid Google generation endpoint is used.
+
+## Public rollout receipt
+
+Source `a4259ab4e1c4ffeb3fe8d07b75b08e729a1cf2d1` is live as `dep-dbla1ggu01pc739jekg0`
+on the existing free Render service. The public runtime fingerprint, rendered HTML
+and exact logo bytes were verified. The deployed API returns 30 classified voice
+options, private history access, no chat turns in default creations jobs, and
+positive paid-image pricing with text still free. Quotes for the default short
+sample were text 0, Image Lite 8, TTS Lite 26 credits. These are read/quote checks,
+not paid generation or voice-quality tests. An ephemeral owner-authorized session
+was removed after checking the wallet remained unchanged. No old zero-cost job was
+repriced, no real user's balance was mutated by verification, and no mobile build
+or OTA was published.

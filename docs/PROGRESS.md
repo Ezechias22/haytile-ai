@@ -9,7 +9,11 @@ Chat tèks toujou gratis dapre dènye koreksyon itilizatè a. Imaj peye ak quote
 obligatwa; ansyen travay zewo-kredi pa chaje apre. Mikwo navigatè + repons TTS
 peye ak konfimasyon ajoute. Logo nouvo sou web ak nan sous mobil.
 96 tès backend ak 6 workflow navigatè lokal pase san jenerasyon Google peye.
-Deplwaman ap vini apre dènye kontwòl. Gade [SIDEBAR_VOICE_AND_IMAGE_BILLING.md](SIDEBAR_VOICE_AND_IMAGE_BILLING.md).
+Commit `a4259ab4e1c4ffeb3fe8d07b75b08e729a1cf2d1` live sou Render gratis
+(deploy `dep-dbla1ggu01pc739jekg0`). Vèsyon piblik + logo verifye, pa gen Text Studio
+nan HTML piblik, 30 vwa ak etikèt gason/fi/net, chat prive konsève. Quotes
+piblik verifye: tèks 0, imaj Lite 8, vwa Lite 26 kredi pou ti tèks.
+Balans kont reyèl la pa chanje pandan smoke checks yo; 0 jenerasyon Google peye. Gade [SIDEBAR_VOICE_AND_IMAGE_BILLING.md](SIDEBAR_VOICE_AND_IMAGE_BILLING.md).
 
 ## Nouvo chat ak kreyasyon dirab — deplwaye sou web
 
