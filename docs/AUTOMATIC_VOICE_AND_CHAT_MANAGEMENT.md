@@ -33,3 +33,15 @@ playable audio. No Google generation is invoked. A disposable real Firestore pro
 also verified budget concurrency, restoration after complete SQL cache loss,
 failure refunds and durable cleanup restoration, then removed its own fixtures.
 Native mobile voice, store builds and payment collection are not published here.
+
+## Verified web deployment
+
+Source `3ceca5b4e77e3b38ef0169d38aa10537796d7990` is live on the existing
+free Render service, deploy `dep-dblg86egekts738b1r90`. Public runtime release
+and source fingerprint match. Public navigation controls, logo and 30 voice
+options verified; private chat routes reject anonymous access. Authenticated
+read/quote checks retained the owner's wallet balance and reservations unchanged.
+Text/image/default voice quotes: 0/8/26 Haytile credits. No paid generation.
+102 backend tests, 7 offline browser workflows, web build, mobile TypeScript and
+4 locale checks passed. Speech recognition inputs and AI outputs were local
+fixtures; real-provider audio quality has not been tested with the user's credits.

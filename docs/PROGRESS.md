@@ -8,6 +8,11 @@ Haytile Topup sèlman pwopoze pou rechaj, gift card ak sèvis dijital ki korespo
 lyen li yo pa sèvi kòm lyen estidyo AI. Chat tèks rete gratis, imaj/vwa peye.
 102 tès backend ak 7 workflow navigatè pase ak founisè lokal, san jenerasyon Google.
 Build web, TypeScript mobil ak 4 tès tradiksyon verifye.
+Commit `3ceca5b4e77e3b38ef0169d38aa10537796d7990` live sou Render gratis
+(deploy `dep-dblg86egekts738b1r90`). Runtime piblik `voice-mode-navigation-v3`
+ak SHA konfime. Meni separe, bouton lateral, logo, 30 vwa ak otorizasyon
+chat prive verifye. Quotes piblik tèks 0 / imaj 8 / vwa 26 kredi;
+balans kont reyèl la pa chanje. Pa gen jenerasyon Google pandan tès/verifikasyon.
 Gade [dokiman teknik la](AUTOMATIC_VOICE_AND_CHAT_MANAGEMENT.md).
 
 
