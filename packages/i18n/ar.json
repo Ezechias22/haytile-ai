@@ -330,5 +330,8 @@
   "stripeSandboxBalance": "أرصدة تجريبية",
   "stripeVerified": "تحقق الخادم من الدفع. راجع الرصيد والخطة؛ المدفوعات التجريبية لا تغير الأرصدة القابلة للاستخدام.",
   "stripePayment": "دفعة Stripe",
-  "stripeAdjustment": "تسوية الفوترة"
+  "stripeAdjustment": "تسوية الفوترة",
+  "chatMorning": "صباح الخير",
+  "chatAfternoon": "مساء الخير",
+  "chatEvening": "مساء الخير"
 }

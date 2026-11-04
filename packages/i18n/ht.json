@@ -330,5 +330,8 @@
   "stripeSandboxBalance": "Kredi sandbox",
   "stripeVerified": "Sèvè a verifye peman an. Gade balans ak plan yo; peman sandbox pa chanje kredi ou ka depanse yo.",
   "stripePayment": "Peman Stripe",
-  "stripeAdjustment": "Ajisteman faktirasyon"
+  "stripeAdjustment": "Ajisteman faktirasyon",
+  "chatMorning": "Bonjou",
+  "chatAfternoon": "Bonswa",
+  "chatEvening": "Bonswa"
 }

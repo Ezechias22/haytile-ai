@@ -330,5 +330,8 @@
   "stripeSandboxBalance": "Salio la sandbox",
   "stripeVerified": "Seva imethibitisha malipo. Angalia salio na mpango; malipo ya sandbox hayabadili salio la matumizi.",
   "stripePayment": "Malipo ya Stripe",
-  "stripeAdjustment": "Marekebisho ya malipo"
+  "stripeAdjustment": "Marekebisho ya malipo",
+  "chatMorning": "Habari za asubuhi",
+  "chatAfternoon": "Habari za mchana",
+  "chatEvening": "Habari za jioni"
 }

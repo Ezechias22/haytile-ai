@@ -17,7 +17,8 @@ test('offline chat: identity, replies in place, context and persisted history', 
     };
   });
   await page.goto(process.env.HAYTILE_TEST_URL || 'http://127.0.0.1:3010');
-  await expect(page.getByRole('heading', { name: 'Hello, I’m HAYTILE AI' })).toBeVisible();
+  await expect(page.locator('.chat-introduction h1')).toContainText(/Good morning|Good afternoon|Good evening/);
+  await expect(page.locator('.chat-suggestions')).toHaveCount(0);
   await page.getByRole('button', { name: 'Sign in', exact: true }).first().click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Email', { exact: true }).fill('creative-browser@example.test');
@@ -27,6 +28,8 @@ test('offline chat: identity, replies in place, context and persisted history', 
   const originalBalance = (await (await page.request.get((process.env.HAYTILE_TEST_URL || 'http://127.0.0.1:3010') + '/api/v1/wallet')).json()).balance;
   await page.getByRole('button', { name: 'HAYTILE Chat', exact: true }).click();
   await page.getByRole('button', { name: 'New chat', exact: true }).click();
+  await expect(page.locator('.chat-introduction h1')).toContainText('Creative');
+  await expect(page.locator('.chat-introduction p')).toHaveCount(0);
   const composer = page.getByRole('textbox', { name: 'Your message', exact: true });
   await page.getByRole('button', { name: 'Dictate a message', exact: true }).click();
   await expect(composer).toHaveValue('Who are you? Remember the word mango.');
@@ -104,5 +107,31 @@ test('offline paid images: exact quote and a real wallet debit after completion'
   const after = await (await page.request.get(base + '/api/v1/wallet')).json();
   expect(after.balance).toBe(before.balance - 8);
   expect(after.reserved).toBe(0);
+  await browser.close();
+});
+
+test('offline welcome uses local time, name and language without repeating introduction', async () => {
+  test.skip(process.env.HAYTILE_OFFLINE_CREATIONS !== '1', 'Requires explicit offline provider.');
+  const browser = await chromium.launch({ executablePath: await serverChromium.executablePath(), args: serverChromium.args.filter(x => x !== '--disable-web-security'), headless: true });
+  const page = await browser.newPage({ timezoneId: 'UTC' });
+  const base = process.env.HAYTILE_TEST_URL || 'http://127.0.0.1:3010';
+  await page.addInitScript(() => localStorage.setItem('haytile-locale', 'en'));
+  await page.clock.install({ time: new Date('2026-11-04T09:00:00Z') });
+  const login = await page.request.post(base + '/api/v1/auth/login', { data: { email: 'creative-browser@example.test', password: 'Offline-browser-password-123' }, headers: { Origin: base } });
+  expect(login.status()).toBe(200);
+  await page.goto(base);
+  await expect(page.locator('.user-line strong')).toHaveText('Creative browser fixture');
+  await expect(page.locator('.language-switch select')).toHaveValue('en');
+  await page.locator('.language-switch select').selectOption('ht');
+  await page.getByRole('button', { name: 'Nouvo chat', exact: true }).click();
+  await expect(page.locator('.chat-introduction h1')).toHaveText('Bonjou, Creative');
+  await expect(page.locator('.chat-introduction p')).toHaveCount(0);
+  await page.clock.setFixedTime(new Date('2026-11-04T15:00:00Z'));
+  await page.getByRole('button', { name: 'Nouvo chat', exact: true }).click();
+  await expect(page.locator('.chat-introduction h1')).toHaveText('Bonswa, Creative');
+  await page.clock.setFixedTime(new Date('2026-11-04T20:00:00Z'));
+  await page.getByRole('button', { name: 'Nouvo chat', exact: true }).click();
+  await expect(page.locator('.chat-introduction h1')).toHaveText('Bonswa, Creative');
+  await expect(page.locator('.chat-suggestions')).toHaveCount(0);
   await browser.close();
 });

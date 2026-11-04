@@ -330,5 +330,8 @@
   "stripeSandboxBalance": "沙盒积分",
   "stripeVerified": "服务器已验证付款。请查看余额与套餐；沙盒付款不会改变可用积分。",
   "stripePayment": "Stripe 付款",
-  "stripeAdjustment": "账单调整"
+  "stripeAdjustment": "账单调整",
+  "chatMorning": "早上好",
+  "chatAfternoon": "下午好",
+  "chatEvening": "晚上好"
 }

@@ -330,5 +330,8 @@
   "stripeSandboxBalance": "Sandbox credits",
   "stripeVerified": "Payment verified by the server. Check the balance and plan below; sandbox payments do not change spendable credits.",
   "stripePayment": "Stripe payment",
-  "stripeAdjustment": "Billing adjustment"
+  "stripeAdjustment": "Billing adjustment",
+  "chatMorning": "Good morning",
+  "chatAfternoon": "Good afternoon",
+  "chatEvening": "Good evening"
 }

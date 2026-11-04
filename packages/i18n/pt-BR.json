@@ -330,5 +330,8 @@
   "stripeSandboxBalance": "Créditos sandbox",
   "stripeVerified": "Pagamento verificado pelo servidor. Confira o saldo e o plano; pagamentos sandbox não alteram créditos utilizáveis.",
   "stripePayment": "Pagamento Stripe",
-  "stripeAdjustment": "Ajuste de faturamento"
+  "stripeAdjustment": "Ajuste de faturamento",
+  "chatMorning": "Bom dia",
+  "chatAfternoon": "Boa tarde",
+  "chatEvening": "Boa noite"
 }

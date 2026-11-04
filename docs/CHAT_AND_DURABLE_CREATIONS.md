@@ -131,3 +131,26 @@ Validation: 93 backend tests, five browser workflows, production web build,
 web/mobile TypeScript, four locale/discovery checks and two upload proxy tests.
 Browser responses and media were explicit offline fixtures. Public checks are
 configuration/read/quote checks, not live paid model output quality tests.
+
+## Account welcome and concise replies (2026-11-04)
+
+New, empty chats display a short greeting with the first name from the signed-in
+profile, using the selected UI language and device local hour: morning before
+12:00, afternoon before 18:00, evening thereafter. Haitian Creole uses Bonjou
+in the morning and Bonswa thereafter. All nine locale files contain the labels.
+Opening an existing conversation does not prepend another welcome.
+
+`POST /v1/chat/welcome` claims the introduction once per authenticated account.
+Production stores `chat_introduced` on the canonical Firestore account with an
+optimistic version precondition and retries conflicts. Existing chat history
+also suppresses reintroduction. SQL development uses an internal, deterministic
+project marker excluded from project listings; no database migration is needed.
+No Google call, credit charge, or generated creation is involved in the greeting.
+
+Welcome suggestion cards were removed. The shared assistant instructions ask for
+direct drafts, no repetitive identity preamble, no unsolicited studio promotion
+or app URLs. Identity questions still receive an honest identity; requested media
+navigation may briefly name the relevant in-app menu. Topup recommendations remain
+limited to relevant digital-product requests. These are model instructions, not a
+promise that every generated response will obey perfectly. Provider behavior was
+not tested with paid Google requests.

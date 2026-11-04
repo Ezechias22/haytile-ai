@@ -1016,7 +1016,7 @@ export default function App() {
               </section>
             </>
           )}
-          {page === 'chat' && <HaytileChat key={(user?.id || 'guest') + ':' + chatEpoch} conversation={chatConversation} setConversation={setChatConversation} onThread={thread => setChatThreads(rows => [thread, ...rows.filter(row => row.id !== thread.id)])} request={api} t={t} userId={user?.id} locale={locale} voiceOptions={voiceDetails} voiceModels={models.find(m => m.studio === 'voice')?.options || []} onWalletChange={() => refresh().catch(() => setSyncIssue(true))} models={models.find(m => m.studio === 'text')?.options || []} available={!generationPaused && backgroundProcessing && !!models.find(m => m.studio === 'text')?.available} onAuth={() => setAuth('login')} onError={err => setError(describeError(err))} />}
+          {page === 'chat' && <HaytileChat key={(user?.id || 'guest') + ':' + chatEpoch} conversation={chatConversation} setConversation={setChatConversation} onThread={thread => setChatThreads(rows => [thread, ...rows.filter(row => row.id !== thread.id)])} request={api} t={t} userId={user?.id} userName={user?.name} locale={locale} voiceOptions={voiceDetails} voiceModels={models.find(m => m.studio === 'voice')?.options || []} onWalletChange={() => refresh().catch(() => setSyncIssue(true))} models={models.find(m => m.studio === 'text')?.options || []} available={!generationPaused && backgroundProcessing && !!models.find(m => m.studio === 'text')?.available} onAuth={() => setAuth('login')} onError={err => setError(describeError(err))} />}
           {studio && (
             <>
               <div className="page-heading studio-heading">

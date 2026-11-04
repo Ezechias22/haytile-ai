@@ -266,7 +266,7 @@ def runtime_settings():
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
     return {
-        "api_release": "stripe-live-brl-v7",
+        "api_release": "personal-chat-v8",
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
         "metadata_store": "firestore" if records.enabled() else "sql",
@@ -857,6 +857,66 @@ def get_job(job_id: str, user=Depends(current)):
         if not job:
             fail("NOT_FOUND", 404)
         return job_json(job)
+
+
+@app.post("/v1/chat/welcome")
+def chat_welcome(user=Depends(current)):
+    """Claim the once-per-account introduction without an AI generation call."""
+    with Session() as db:
+        returning = (
+            db.scalar(
+                select(Job.id)
+                .where(
+                    Job.user_id == user.id,
+                    Job.studio == "text",
+                    Job.params["input_params"]["chat"].as_boolean().is_(True),
+                )
+                .limit(1)
+            )
+            is not None
+        )
+    if accounts.enabled():
+        for _ in range(5):
+            found = accounts.read("accounts", user.id)
+            if not found:
+                fail("ACCOUNT_UNAVAILABLE", 503)
+            data, version = found
+            if data.get("chat_introduced"):
+                return {"introduce": False}
+            try:
+                accounts.commit(
+                    [
+                        accounts.update_write(
+                            "accounts", user.id, {**data, "chat_introduced": True}, version=version
+                        )
+                    ]
+                )
+                return {"introduce": not returning}
+            except accounts.Conflict:
+                continue
+        fail("ACCOUNT_UNAVAILABLE", 503)
+    from uuid import NAMESPACE_URL, uuid5
+
+    from sqlalchemy.exc import IntegrityError
+
+    from .db import Project
+
+    marker = str(uuid5(NAMESPACE_URL, "haytile:chat-welcome:" + user.id))
+    try:
+        with Session.begin() as db:
+            if db.get(Project, marker):
+                return {"introduce": False}
+            db.add(
+                Project(
+                    id=marker,
+                    user_id=user.id,
+                    title="Chat welcome",
+                    document={"kind": "chat_welcome"},
+                )
+            )
+        return {"introduce": not returning}
+    except IntegrityError:
+        return {"introduce": False}
 
 
 @app.get("/v1/chat/conversations")
@@ -1575,6 +1635,7 @@ def activate_admin(body: AdminActivation, request: Request, user=Depends(current
                 )
             )
     return {"ok": True}
+
 
 from .live_voice import router as live_voice_router  # noqa: E402
 

@@ -208,7 +208,8 @@ def test_topup_scope_does_not_leak_commerce_links_into_media_answers():
     ]:
         assert not topup_relevant(prompt)
         policy = system_for(prompt)
-        assert "https://haytile-ai.onrender.com" in policy
+        assert "https://haytile-ai.onrender.com" not in policy
+        assert "Do not append unsolicited suggestions" in policy
         assert "https://app.haytiles.com" not in policy and "https://haytiles.com" not in policy
     for prompt in [
         "Ki app pou rechaj mobil?",

@@ -35,6 +35,7 @@ def test_chat_identity_context_history_and_private_ownership(client, monkeypatch
     first = client.post("/v1/jobs", headers=auth, json=body)
     assert first.status_code == 202, first.text
     assert worker.run_once()
+    assert client.post("/v1/chat/welcome", headers=auth).json() == {"introduce": False}
     assert "You are HAYTILE AI" in calls[0]["systemInstruction"]["parts"][0]["text"]
     assert calls[0]["contents"] == [{"role": "user", "parts": [{"text": "Kiyès ou ye?"}]}]
     second = {
@@ -220,5 +221,53 @@ def test_chat_voice_is_owned_paid_preserved_in_chat_and_hidden_from_creations(cl
 
     assert "Ezechias Toussaint" in SYSTEM and "Haitian" in SYSTEM
     commerce_policy = system_for("Ki aplikasyon pou rechaj mobil ak gift card?")
-    assert "https://app.haytiles.com" in commerce_policy and "https://haytiles.com" in commerce_policy
+    assert (
+        "https://app.haytiles.com" in commerce_policy and "https://haytiles.com" in commerce_policy
+    )
     assert "haytiletopup.onrender.com" not in SYSTEM
+
+
+def test_welcome_is_once_per_account_private_and_not_a_creation(client):
+    assert client.post("/v1/chat/welcome").status_code == 401
+    _, auth = register(client)
+    assert client.post("/v1/chat/welcome", headers=auth).json() == {"introduce": True}
+    assert client.post("/v1/chat/welcome", headers=auth).json() == {"introduce": False}
+    assert client.get("/v1/projects", headers=auth).json() == []
+    assert client.get("/v1/jobs", headers=auth).json() == []
+    _, other = register(client, "welcome-other@example.test")
+    assert client.post("/v1/chat/welcome", headers=other).json() == {"introduce": True}
+
+
+def test_ordinary_chat_does_not_prompt_studio_promotions_or_reintroductions():
+    from haytile.chat import system_for
+
+    policy = system_for("Ekri yon chante kreyòl pou mwen")
+    assert "Do not introduce yourself" in policy
+    assert "Do not append unsolicited suggestions" in policy
+    assert "provide a useful draft" in policy
+    assert "https://" not in policy
+
+
+def test_firebase_welcome_claim_retries_and_keeps_account_fields(client, monkeypatch):
+    from types import SimpleNamespace
+
+    from haytile import accounts
+    from haytile.main import chat_welcome
+
+    stored = {"id": str(uuid.uuid4()), "name": "Ezechias", "role": "admin"}
+    writes = []
+    monkeypatch.setattr(accounts, "enabled", lambda: True)
+    monkeypatch.setattr(accounts, "read", lambda collection, key: (dict(stored), "v1"))
+    monkeypatch.setattr(accounts, "update_write", lambda collection, key, data, **kw: data)
+
+    def commit(rows):
+        writes.append(rows)
+        if len(writes) == 1:
+            raise accounts.Conflict()
+        stored.update(rows[0])
+
+    monkeypatch.setattr(accounts, "commit", commit)
+    user = SimpleNamespace(id=stored["id"])
+    assert chat_welcome(user) == {"introduce": True}
+    assert chat_welcome(user) == {"introduce": False}
+    assert len(writes) == 2 and stored["role"] == "admin"

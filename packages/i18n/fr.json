@@ -330,5 +330,8 @@
   "stripeSandboxBalance": "Crédits sandbox",
   "stripeVerified": "Paiement vérifié par le serveur. Consultez le solde et le forfait ; les paiements sandbox ne changent pas les crédits utilisables.",
   "stripePayment": "Paiement Stripe",
-  "stripeAdjustment": "Ajustement de facturation"
+  "stripeAdjustment": "Ajustement de facturation",
+  "chatMorning": "Bonjour",
+  "chatAfternoon": "Bon après-midi",
+  "chatEvening": "Bonsoir"
 }

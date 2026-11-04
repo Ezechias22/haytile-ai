@@ -330,5 +330,8 @@
   "stripeSandboxBalance": "Kredit sandbox",
   "stripeVerified": "Pembayaran diverifikasi server. Periksa saldo dan paket; pembayaran sandbox tidak mengubah kredit yang dapat dipakai.",
   "stripePayment": "Pembayaran Stripe",
-  "stripeAdjustment": "Penyesuaian tagihan"
+  "stripeAdjustment": "Penyesuaian tagihan",
+  "chatMorning": "Selamat pagi",
+  "chatAfternoon": "Selamat sore",
+  "chatEvening": "Selamat malam"
 }
