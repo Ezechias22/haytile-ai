@@ -13,6 +13,7 @@ test('real backend: account, draft, private download, handoff, rename, delete an
   page.on('pageerror', (error) => errors.push(error.message));
   await page.addInitScript(() => localStorage.setItem('haytile-locale', 'en'));
   await page.goto(base);
+  await page.getByRole('button', { name: 'Home', exact: true }).click();
   await expect(
     page.getByRole('heading', { name: 'A little imagination. Infinite creation.' }),
   ).toBeVisible();
@@ -84,7 +85,7 @@ test('mobile viewport, navigation and Arabic direction', async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await page.addInitScript(() => localStorage.setItem('haytile-locale', 'ht'));
   await page.goto(base);
-  await expect(page.getByRole('heading', { name: 'Kisa w ap kreye jodi a?' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Bonjou, mwen se HAYTILE AI' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );

@@ -110,3 +110,20 @@ A real Firestore-only disposable probe additionally verified one reserve, one
 debit (100 → 93, reserved 0), and Job/Asset/Project restoration after complete
 in-memory SQL loss. Its isolated queue namespace prevented production claims;
 no provider was invoked, fixture records were cleaned, and real users were untouched.
+
+## Public rollout receipt
+
+Source `de567c39f10f03f663f7c11795cdc93a4eff562b` is live on the existing free
+Render service as `dep-dbl7vuutlv9c73b8qjkg`. Public runtime source_revision and
+HTML were verified, not just the control-plane status. Runtime reports
+`durable-creations-chat-v1`, Firestore identity/wallet/metadata, and both duration
+caps at 180. A short-lived owner-authorized session verified private chat access,
+admin durable finances and exact free/paid quotes; it was removed afterwards.
+No real balance changed and no generation endpoint was invoked. The legacy
+preflight found two accounts, zero extant SQL job/asset/project metadata, and
+zero active jobs. This does not claim recovery of previously lost creations.
+
+Validation: 93 backend tests, five browser workflows, production web build,
+web/mobile TypeScript, four locale/discovery checks and two upload proxy tests.
+Browser responses and media were explicit offline fixtures. Public checks are
+configuration/read/quote checks, not live paid model output quality tests.

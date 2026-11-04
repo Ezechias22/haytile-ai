@@ -1,16 +1,24 @@
 # HAYTILE AI — estati livrezon
 
-## Nouvo chat ak kreyasyon dirab — verifikasyon anvan deplwaman
+## Nouvo chat ak kreyasyon dirab — deplwaye sou web
 
 Chat HAYTILE ajoute ak istwa, kontèks, prezantasyon AI, chwa modèl ak repons
 nan menm fil la. Metadata travay/bibliyotèk/pwojè ak debi jenerasyon deplase sou
 Firestore atomik; imaj ak tèks gratis. Nouvo quotes pwoteje depans modèl chè yo;
 UI montre etap reyèl, tit otomatik modifyab, 30 vwa TTS ak dire 8–180s.
-93 tès backend, 2 workflow navigatè chat/jenerasyon lokal, build web,
+93 tès backend, 5 workflow navigatè (chat, jenerasyon, kont/brouyon,
+navigasyon mobil ak storyboard), build web,
 TypeScript mobil, tradiksyon ak limit proxy pase. Vrè Firestore verifye
 rezèvasyon/debi + retou travay/rezilta/pwojè apre SQL efase sou kont jetab.
 Pa gen jenerasyon Google peye.
-Deplwaman ak resi vèsyon piblik ap vini apre achiv legacy verifye.
+Commit `de567c39f10f03f663f7c11795cdc93a4eff562b` live sou Render gratis
+(deploy `dep-dbl7vuutlv9c73b8qjkg`). API piblik + HTML konfime menm
+vèsyon an, chat prive, finans admin aktif, 30 vwa, 36 chwa pa estidyo,
+imaj/tèks 0 kredi ak dire 180s. Quotes piblik: mizik default 32, videyo
+180s 10,258, epizòd 180s 11,158. Pa gen balans reyèl ki modifye nan smoke
+checks yo; pa gen jenerasyon Google peye. Achiv legacy anvan deplwaman
+verifye 2 kont, 0 metadata travay/rezilta/pwojè ak 0 travay aktif.
+Nou pa reklame rekiperasyon ansyen kreyasyon ki te deja pèdi metadata yo.
 Gade [CHAT_AND_DURABLE_CREATIONS.md](CHAT_AND_DURABLE_CREATIONS.md).
 
 Seksyon ki anba yo se resi istorik; limit ansyen vèsyon yo pa estati nouvo sous la.
