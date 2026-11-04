@@ -2,6 +2,15 @@
 
 ## Koneksyon Stripe pwodiksyon ak BRL
 
+Source `759fbdcedc2ff8ba2e1857bd552544418af47704` live sou Render gratis
+(`dep-dblok2dg1s2s73d2rbjg`), runtime `stripe-live-brl-v7` verifye.
+Stripe live aktive ak 3 òf BRL reyèl. Twa evènman Stripe delivre epi aksepte.
+Checkout pake 500 kredi (R$34.90) ak Creator (R$69.90/mwa) ouvri an live,
+paj yo 200, epi sesyon yo ekspire san peman. Pro: 3,000 kredi R$199.90/mwa.
+Pòtay kliyan pare. Balans ak plan kont reyèl la pa chanje. Pa gen chaj kat
+ni jenerasyon Google. Pa reklame yon acha peye reyèl teste; validasyon
+finansye gen tès lokal ak Firestore atomik. Sekrè yo sèlman sou Render.
+
 Itilizatè a chwazi kle pwodiksyon. Kle live la verifye ak Stripe, kont BR
 pare pou peman kat, webhook live kreye epi sekrè siyen an sove sou Render
 san ekspoze li. Sipò BRL ajoute ak pri kredi minimòm R$0.06 sou baz referans

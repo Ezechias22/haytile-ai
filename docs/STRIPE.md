@@ -150,3 +150,33 @@ The Next API proxy forwards `Stripe-Signature`; a transport regression checks th
 the public HTTP gateway, Next and backend preserve both this header and the exact
 UTF-8 body. Credentials, BRL grants, invoice currency checks and duplicate-credit
 protection were verified with 123 backend tests and four browser billing flows.
+
+## Production verification completed
+
+Live source `759fbdcedc2ff8ba2e1857bd552544418af47704`, free Render deploy
+`dep-dblok2dg1s2s73d2rbjg`, release `stripe-live-brl-v7`, is publicly verified.
+The live signing secret is stored only in Render. Three real `product.created`
+events were acknowledged (Stripe reports zero pending webhooks for each), proving
+the live signing/transport path without creating a charge. The temporary product
+verification event was then removed from the destination's seven billing events.
+
+Published live offers:
+
+| Offer | Credits | Price | Interval |
+| --- | ---: | ---: | --- |
+| Credit pack | 500 | R$34.90 | One time |
+| Creator | 1,000 | R$69.90 | Monthly |
+| Pro | 3,000 | R$199.90 | Monthly |
+
+Actual live Checkout sessions for the pack and Creator subscription were opened,
+verified as BRL with the intended amounts, and their hosted pages returned 200.
+Both sessions were expired while still unpaid, and only their own pending app
+records were removed. The billing portal was created successfully. The owner's
+wallet, reservations and plan remained unchanged. No card charge, completed paid
+purchase, actual renewal or Google generation was submitted for verification.
+Automatic credit fulfillment is covered by local signature/provider tests and
+real Firestore atomicity probes; a real paid purchase is not claimed as tested.
+
+Stripe account readiness was checked: BR, BRL, card payments active, no currently
+due requirements. Live payment admission is enabled by explicit owner request.
+Products/prices are genuine live Stripe objects, and the app catalog is active.
