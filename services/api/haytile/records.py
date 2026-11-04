@@ -358,6 +358,10 @@ def before_commit(db):
                             ]
                         bank, _ = banks[obj.user_id]
                         if reserve:
+                            if bank.get("billing_hold"):
+                                from fastapi import HTTPException
+
+                                raise HTTPException(403, detail="BILLING_REVIEW_REQUIRED")
                             if bank["balance"] - bank["reserved"] < credit:
                                 from fastapi import HTTPException
 

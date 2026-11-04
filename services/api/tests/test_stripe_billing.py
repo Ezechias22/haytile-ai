@@ -423,3 +423,35 @@ def test_payment_receipt_is_owned_and_verified_only_after_signed_fulfillment(cli
             "credits": 500,
         }
     assert wallets.snapshot(user["id"])["balance"] == 500
+
+
+def test_durable_reservation_rechecks_hold_after_admission_snapshot(
+    client, setup_billing, monkeypatch
+):
+    from fastapi import HTTPException
+
+    from haytile import live_voice
+
+    _, admin, user, auth, _, _ = setup_billing
+    wallets.grant(user["email"], 100, user["id"], "held-wallet-fixture")
+    found = accounts.read("wallets", user["id"])
+    accounts.commit(
+        [
+            accounts.update_write(
+                "wallets", user["id"], {**found[0], "billing_hold": 1}, version=found[1]
+            )
+        ]
+    )
+    original = wallets.snapshot
+    # Model the race: the admission snapshot predates a refund's durable hold.
+    monkeypatch.setattr(wallets, "snapshot", lambda uid: {**original(uid), "billing_hold": 0})
+    with pytest.raises(HTTPException) as error:
+        live_voice.reserve(
+            user["id"],
+            live_voice.Start(
+                voice_name="Puck", model_id=live_voice.MODEL, idempotency_key=str(uuid.uuid4())
+            ),
+        )
+    assert error.value.detail == "BILLING_REVIEW_REQUIRED"
+    bank = accounts.read("wallets", user["id"])[0]
+    assert bank["balance"] == 100 and bank["reserved"] == 0 and bank["billing_hold"] == 1
