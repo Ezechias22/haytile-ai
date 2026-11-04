@@ -57,6 +57,7 @@ test('long chat scroll leaves header, sidebar and composer fixed on desktop and 
   expect((await header.boundingBox())!.y).toBe(head!.y);expect(await page.evaluate(()=>window.scrollY)).toBe(0);
   await transcript.evaluate(e=>{e.scrollTop=0;});expect((await composer.boundingBox())!.y).toBe(after!.y);
   if(size.width>700){expect((await sidebar.boundingBox())!.y).toBe(0);const brand=await page.locator('.brand').boundingBox(),profile=await page.locator('.user-line').boundingBox();await page.locator('.sidebar-chat-pane').evaluate(e=>{e.scrollTop=e.scrollHeight;});expect((await page.locator('.brand').boundingBox())!.y).toBe(brand!.y);expect((await page.locator('.user-line').boundingBox())!.y).toBe(profile!.y);}
+  if(size.width<700){expect((await page.locator('.chat-footer').boundingBox())!.height).toBeLessThan(110);expect((await transcript.boundingBox())!.height).toBeGreaterThan(size.height*.65);}
   await page.screenshot({path:'test-results/fixed-chat-'+size.width+'.png'});
  }
  await browser.close();

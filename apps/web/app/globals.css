@@ -2411,3 +2411,31 @@ html, body { height: 100%; overflow: hidden; }
 .sidebar nav { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 .sidebar nav > button, .sidebar-nav-tabs { flex-shrink: 0; }
 .sidebar-chat-pane, .sidebar-tools-pane { flex: 1; min-height: 0; }
+.stripe-offers { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 16px; margin-top: 18px; }
+.stripe-offers article, .stripe-risk { border: 1px solid #393044; border-radius: 14px; padding: 20px; overflow-wrap: anywhere; }
+.stripe-offers p, .stripe-admin p, .stripe-payments p { color: #b5a9c5; line-height: 1.7; font-size: 13px; }
+.stripe-offer-form { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 16px; align-items: end; margin: 20px 0; }
+.stripe-risk { margin: 18px 0; display: grid; gap: 12px; }
+/* Compact composer: explanations stay in the voice menu, leaving room for chat. */
+.chat-page .chat-footer { padding-top: 8px; padding-bottom: max(8px,env(safe-area-inset-bottom)); }
+.chat-page .chat-input-box { padding: 10px 12px; }
+.chat-page .chat-input-box textarea { min-height: 28px; height: 28px; max-height: 96px; resize: none; line-height: 1.5; }
+.chat-voice-toggle[hidden], .chat-send[hidden] { display: none; }
+.chat-page .chat-voice-preferences { margin-top: 6px; }
+.chat-voice-preferences summary { display: flex; align-items: center; gap: 6px; font-size: 10px; list-style: none; }
+.chat-voice-preferences summary::-webkit-details-marker { display: none; }
+.chat-page .chat-voice-preferences .chat-voice-settings { bottom: 34px; }
+.chat-voice-settings .chat-voice-cost, .chat-voice-settings .chat-disclaimer { flex-basis: 100%; margin: 5px 0 0; text-align: start; }
+@media(max-width:700px) {
+ .chat-page .chat-toolbar { padding: 7px 12px; min-height: 0; }
+ .chat-page .chat-toolbar > div { display: none; }
+ .chat-page .chat-model-label { width: auto; }
+ .chat-page .chat-model-label select { height: 34px; max-width: 100%; font-size: 11px; padding: 4px 10px; }
+ .chat-page .chat-footer { padding-inline: 10px; }
+ .chat-page .chat-input-box { display: flex; align-items: flex-end; gap: 8px; border-radius: 22px; }
+ .chat-page .chat-input-box textarea { flex: 1; min-width: 0; padding-top: 5px; }
+ .chat-page .chat-input-actions { display: contents; }
+ .chat-page .chat-input-actions > small { display: none; }
+ .chat-page .chat-composer-controls { flex-shrink: 0; gap: 4px; }
+ .chat-page .chat-mic, .chat-page .chat-voice-toggle, .chat-page .chat-send { width: 34px; height: 34px; }
+}
