@@ -315,6 +315,23 @@ def generate(studio, model, prompt, params):
             "parts": [{"text": system_for(prompt, params.get("voice_conversation") is True)}]
         }
         payload["contents"] = params["_chat_contents"] + payload["contents"]
+    if studio == "text" and params.get("chat") is True:
+        if params.get("_chat_materialized") is not None:
+            payload["contents"] = params["_chat_materialized"]
+        location = params.get("location")
+        if location:
+            payload["contents"][-1]["parts"].append(
+                {
+                    "text": f"Approximate location explicitly shared for this message only: latitude {location['latitude']:.3f}, longitude {location['longitude']:.3f}. Do not treat this as verified live tracking."
+                }
+            )
+        if params.get("chat") is True:
+            payload["tools"] = [{"googleSearch": {}}]
+            payload["systemInstruction"]["parts"].append(
+                {
+                    "text": "Decide automatically whether web search is needed: use it for current, uncertain, time-sensitive or local facts, but not for greetings, creative writing or stable facts you can answer confidently. Cite sources for researched claims. Do not include the complete text of private attached documents in search queries; only search general non-sensitive terms relevant to the question. If no web sources are returned, say clearly that current facts were not verified."
+                }
+            )
     response = request("POST", f"/models/{model}:generateContent", payload)
     candidates = response.get("candidates", [])
     if not candidates or candidates[0].get("finishReason") in (
@@ -323,9 +340,41 @@ def generate(studio, model, prompt, params):
         "PROHIBITED_CONTENT",
     ):
         raise ProviderError("PROVIDER_REFUSED_OR_EMPTY")
+    if studio == "text" and params.get("chat") is True:
+        from .chat_tools import grounding
+
+        callback = params.get("_grounding_callback")
+        if callable(callback):
+            callback(grounding(candidates[0].get("groundingMetadata", {})))
     output = candidates[0].get("content", {}).get("parts", [])
+    if studio == "text" and params.get("chat") is True:
+        from .chat_tools import cite_parts
+
+        output = cite_parts(output, candidates[0].get("groundingMetadata", {}))
     if studio in ("text", "minidrama"):
         text = "\n".join(p["text"] for p in output if "text" in p and not p.get("thought"))
+        location_requested = "[HAYTILE_REQUEST_LOCATION]" in text and not params.get("location")
+        if params.get("chat") is True:
+            text = text.replace("[HAYTILE_REQUEST_LOCATION]", "").strip()
+        if studio == "text" and params.get("chat") is True:
+            callback = params.get("_location_request_callback")
+            if callable(callback):
+                callback(location_requested)
+        if location_requested and not text:
+            text = {
+                "ht": "Ou ka otorize lokalizasyon an oswa ekri vil ou pou mwen ede w.",
+                "en": "You can authorize location or enter your city so I can help.",
+                "fr": "Vous pouvez autoriser la localisation ou indiquer votre ville pour que je vous aide.",
+                "pt-BR": "Você pode autorizar a localização ou informar sua cidade para que eu ajude.",
+                "es": "Puede autorizar la ubicación o indicar su ciudad para que le ayude.",
+                "ar": "يمكنك السماح بالموقع أو كتابة مدينتك حتى أساعدك.",
+                "zh-Hans": "您可以允许获取位置，或输入城市，以便我提供帮助。",
+                "id": "Anda dapat mengizinkan lokasi atau memasukkan kota agar saya dapat membantu.",
+                "sw": "Unaweza kuruhusu mahali au kuandika mji wako ili nikusaidie.",
+            }.get(
+                params.get("language", "en"),
+                "You can authorize location or enter your city so I can help.",
+            )
         if not text.strip():
             raise ProviderError("PROVIDER_EMPTY_TEXT")
         return text.encode(), "text/plain"

@@ -341,5 +341,17 @@
   "voiceWaiting": "Twòp demann youn apre lòt. Tann yon ti moman; konvèsasyon an rete ouvè.",
   "appCapacityLimit": "Limit itilizasyon tanporè app la rive. Eseye pita. Demann sa a pa voye bay founisè AI a.",
   "appBurstLimit": "Twòp demann fèt youn apre lòt. Tann kèk segonn epi eseye ankò. Demann sa a pa voye bay AI a.",
-  "musicTargetDuration": "Dire estime dapre pawòl ou yo"
+  "musicTargetDuration": "Dire estime dapre pawòl ou yo",
+  "chatAttach": "Ajoute imaj oswa dokiman",
+  "chatFileLimits": "Jiska 3 fichye, 5 MB chak, 8 MB total. PDF: 10 paj maksimòm, san modpas. PNG, JPEG, WebP, PDF ak tèks UTF-8.",
+  "chatLocationUnavailable": "Pozisyon an pa disponib oswa pèmisyon an refize. Ekri vil ou oswa adrès ou pito.",
+  "chatSources": "Sous entènèt",
+  "chatNoWebSources": "Pa gen sous entènèt ki retounen; enfòmasyon aktyèl yo pa verifye.",
+  "chatSearchSuggestions": "Sijesyon Google Search",
+  "chatAttachedFiles": "fichye atache",
+  "chatLocationShared": "Pozisyon apeprè pataje",
+  "chatAuthorizeLocation": "Otorize lokalizasyon",
+  "chatLocationConsent": "Pozisyon apeprè ou ap ale bay founisè AI a pou demann sa a epi l ap sove nan chat prive sa a. Pa gen swivi kontinyèl.",
+  "chatRemoveAttachment": "Retire fichye",
+  "chatAttachmentError": "Fichye a pa disponib oswa li pa valab. Retire li epi ajoute yon fichye ki sipòte ankò."
 }

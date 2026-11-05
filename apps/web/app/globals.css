@@ -2439,3 +2439,12 @@ html, body { height: 100%; overflow: hidden; }
  .chat-page .chat-composer-controls { flex-shrink: 0; gap: 4px; }
  .chat-page .chat-mic, .chat-page .chat-voice-toggle, .chat-page .chat-send { width: 34px; height: 34px; }
 }
+
+.chat-tool-context { display:flex; flex-wrap:wrap; gap:4px; padding-bottom:5px; max-height:72px; overflow:auto; }
+.chat-tool-context button { display:flex; align-items:center; gap:5px; max-width:100%; overflow:hidden; text-overflow:ellipsis; color:#e1d5f7; background:#30263e; border:1px solid #514367; border-radius:14px; padding:3px 8px; font-size:10px; }
+.chat-tool-context small { font-size:11px; }
+.chat-turn-tools { display:flex; align-items:center; gap:5px; margin-top:5px; opacity:.75; }
+.chat-sources { display:flex; flex-direction:column; align-items:flex-start; gap:6px; margin-top:16px; padding:12px; border:1px solid #393046; border-radius:12px; font-size:12px; }
+.chat-sources a { color:#cbb0ff; overflow-wrap:anywhere; }
+.chat-sources iframe { border:0; width:100%; height:100px; background:white; border-radius:8px; }
+.chat-location-consent { display:block; margin:8px 0; color:#b9b1c7; font-size:11px; }

@@ -341,5 +341,17 @@
   "voiceWaiting": "Terlalu banyak permintaan beruntun. Tunggu sebentar; percakapan tetap terbuka.",
   "appCapacityLimit": "Batas penggunaan aplikasi tercapai. Coba lagi nanti. Permintaan ini tidak dikirim ke penyedia AI.",
   "appBurstLimit": "Terlalu banyak permintaan beruntun. Tunggu beberapa detik lalu coba lagi. Permintaan ini tidak dikirim ke penyedia AI.",
-  "musicTargetDuration": "Perkiraan durasi berdasarkan lirik"
+  "musicTargetDuration": "Perkiraan durasi berdasarkan lirik",
+  "chatAttach": "Lampirkan gambar atau dokumen",
+  "chatFileLimits": "Maksimal 3 berkas, masing-masing 5 MB, total 8 MB. PDF maksimal 10 halaman tanpa kata sandi. PNG, JPEG, WebP, PDF, dan teks UTF-8.",
+  "chatLocationUnavailable": "Lokasi tidak tersedia atau izin ditolak. Masukkan kota atau alamat Anda.",
+  "chatSources": "Sumber web",
+  "chatNoWebSources": "Tidak ada sumber web yang dikembalikan; informasi terkini belum diverifikasi.",
+  "chatSearchSuggestions": "Saran Google Search",
+  "chatAttachedFiles": "berkas terlampir",
+  "chatLocationShared": "Lokasi perkiraan dibagikan",
+  "chatAuthorizeLocation": "Izinkan lokasi",
+  "chatLocationConsent": "Lokasi perkiraan Anda akan dikirim ke penyedia AI untuk permintaan ini dan disimpan dalam chat pribadi ini. Tanpa pelacakan berkelanjutan.",
+  "chatRemoveAttachment": "Hapus lampiran",
+  "chatAttachmentError": "Lampiran tidak tersedia atau tidak valid. Hapus dan lampirkan berkas yang didukung."
 }

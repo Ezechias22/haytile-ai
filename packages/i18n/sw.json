@@ -341,5 +341,17 @@
   "voiceWaiting": "Maombi mengi mfululizo. Subiri kidogo; mazungumzo yanabaki wazi.",
   "appCapacityLimit": "Kikomo cha matumizi ya programu kimefikiwa. Jaribu baadaye. Ombi hili halikutumwa kwa mtoa huduma wa AI.",
   "appBurstLimit": "Maombi mengi kwa haraka. Subiri sekunde chache kisha ujaribu tena. Ombi hili halikutumwa kwa mtoa huduma wa AI.",
-  "musicTargetDuration": "Muda unaokadiriwa kwa maneno yako"
+  "musicTargetDuration": "Muda unaokadiriwa kwa maneno yako",
+  "chatAttach": "Ambatisha picha au hati",
+  "chatFileLimits": "Faili zisizozidi 3, MB 5 kila moja, MB 8 jumla. PDF hadi kurasa 10 bila nenosiri. PNG, JPEG, WebP, PDF na maandishi UTF-8.",
+  "chatLocationUnavailable": "Mahali hapapatikani au ruhusa imekataliwa. Andika mji au anwani yako.",
+  "chatSources": "Vyanzo vya wavuti",
+  "chatNoWebSources": "Hakuna vyanzo vya wavuti vilivyorejeshwa; taarifa za sasa hazijathibitishwa.",
+  "chatSearchSuggestions": "Mapendekezo ya Google Search",
+  "chatAttachedFiles": "faili zilizoambatishwa",
+  "chatLocationShared": "Mahali pa kukadiria pameshirikiwa",
+  "chatAuthorizeLocation": "Ruhusu mahali",
+  "chatLocationConsent": "Mahali pako pa kukadiria patatumwa kwa mtoa huduma wa AI kwa ombi hili na kuhifadhiwa katika mazungumzo haya ya faragha. Hakuna ufuatiliaji endelevu.",
+  "chatRemoveAttachment": "Ondoa kiambatisho",
+  "chatAttachmentError": "Kiambatisho hakipatikani au si sahihi. Kiondoe na uambatishe faili inayokubalika."
 }

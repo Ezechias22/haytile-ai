@@ -341,5 +341,17 @@
   "voiceWaiting": "Too many requests close together. Please wait briefly; the conversation remains open.",
   "appCapacityLimit": "The application usage limit was reached. Try again later. This request was not sent to the AI provider.",
   "appBurstLimit": "Too many requests in quick succession. Wait a few seconds and try again. This request was not sent to the AI provider.",
-  "musicTargetDuration": "Estimated duration from your lyrics"
+  "musicTargetDuration": "Estimated duration from your lyrics",
+  "chatAttach": "Attach image or document",
+  "chatFileLimits": "Up to 3 files, 5 MB each, 8 MB total. PDFs: at most 10 pages, no password. PNG, JPEG, WebP, PDF and UTF-8 text.",
+  "chatLocationUnavailable": "Location unavailable or permission denied. Enter your city or address instead.",
+  "chatSources": "Web sources",
+  "chatNoWebSources": "No web sources were returned; current information was not verified.",
+  "chatSearchSuggestions": "Google Search suggestions",
+  "chatAttachedFiles": "attached files",
+  "chatLocationShared": "Approximate location shared",
+  "chatAuthorizeLocation": "Authorize location",
+  "chatLocationConsent": "Your approximate position will be sent to the AI provider for this request and saved in this private chat. No continuous tracking.",
+  "chatRemoveAttachment": "Remove attachment",
+  "chatAttachmentError": "Attachment unavailable or invalid. Remove it and attach a supported file again."
 }

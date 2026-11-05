@@ -341,5 +341,17 @@
   "voiceWaiting": "连续请求过多。请稍候，对话仍保持开启。",
   "appCapacityLimit": "已达到应用使用限制，请稍后重试。此请求未发送给 AI 服务商。",
   "appBurstLimit": "短时间内请求过多。请等待几秒后重试。此请求未发送给 AI 服务商。",
-  "musicTargetDuration": "根据歌词估算的时长"
+  "musicTargetDuration": "根据歌词估算的时长",
+  "chatAttach": "添加图片或文档",
+  "chatFileLimits": "最多3个文件，每个5MB，总计8MB。PDF最多10页，不可加密。支持PNG、JPEG、WebP、PDF和UTF-8文本。",
+  "chatLocationUnavailable": "无法获取位置或权限被拒绝。请改为输入城市或地址。",
+  "chatSources": "网络来源",
+  "chatNoWebSources": "未返回网络来源，尚未核实最新信息。",
+  "chatSearchSuggestions": "Google搜索建议",
+  "chatAttachedFiles": "个附件",
+  "chatLocationShared": "已分享大致位置",
+  "chatAuthorizeLocation": "允许获取位置",
+  "chatLocationConsent": "您的大致位置将为本次请求发送给AI服务商，并保存在此私人聊天中。不会持续追踪。",
+  "chatRemoveAttachment": "移除附件",
+  "chatAttachmentError": "附件不可用或无效。请移除后重新添加支持的文件。"
 }

@@ -84,6 +84,13 @@ def fixture_generate(studio, model, prompt, params):
         assert model == "offline-chat-model"
         time.sleep(1)
         assert "_chat_contents" in params
+        if prompt == "Find nearby offline hospital":
+            if not params.get("location"):
+                params["_location_request_callback"](True)
+                return b"Please authorize location to find nearby help.", "text/plain"
+            params["_location_request_callback"](False)
+            params["_grounding_callback"]({"searched": True, "sources": [{"url":"https://example.org/hospital", "title":"Offline hospital source"}], "search_html": '<a href="https://google.com">Search suggestions</a><script>parent.fixtureUnsafe=true</script>'})
+            return b"Nearby help found using the location you shared.", "text/plain"
         return ("I am HAYTILE AI. Offline reply: " + prompt + ". Previous messages: " + str(len(params["_chat_contents"]))).encode(), "text/plain"
     if studio == "voice":
         assert model == "offline-voice-model" and params.get("chat_audio") is True and params["voice_name"] in ("Puck", "Charon", "Kore")

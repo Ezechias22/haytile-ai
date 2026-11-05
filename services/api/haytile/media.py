@@ -11,7 +11,18 @@ MAX_BYTES = 30 * 1024 * 1024
 def inspect_media(data, requested_mime, max_bytes=MAX_BYTES):
     if not data or len(data) > max_bytes:
         raise ValueError("FILE_SIZE")
-    if requested_mime == "text/plain":
+    if requested_mime == "application/pdf":
+        from pypdf import PdfReader
+
+        if len(data) > 5 * 1024 * 1024 or not data.startswith(b"%PDF-"):
+            raise ValueError("PDF_INVALID")
+        reader = PdfReader(io.BytesIO(data), strict=True)
+        if reader.is_encrypted or not 1 <= len(reader.pages) <= 10:
+            raise ValueError("PDF_PAGE_LIMIT")
+        return "application/pdf", None
+    if requested_mime in ("text/plain", "text/csv", "text/markdown"):
+        if len(data) > 1024 * 1024:
+            raise ValueError("TEXT_TOO_LARGE")
         text = data.decode("utf-8")
         if "\x00" in text:
             raise ValueError("FILE_TYPE")

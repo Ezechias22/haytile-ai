@@ -266,7 +266,7 @@ def runtime_settings():
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
     return {
-        "api_release": "music-duration-v17",
+        "api_release": "chat-tools-v18",
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
         "metadata_store": "firestore" if records.enabled() else "sql",
@@ -285,6 +285,20 @@ def runtime_settings():
         or not worker_enabled()
         or not configured
         or (FREE_BETA and engine.dialect.name != "postgresql" and not trial_enabled()),
+        "chat_capabilities": {
+            "automatic_web_search": True,
+            "assistant_location_requests": True,
+            "attachments": [
+                "image/png",
+                "image/jpeg",
+                "image/webp",
+                "application/pdf",
+                "text/plain",
+            ],
+            "max_attachments": 3,
+            "max_attachment_total_bytes": 8 * 1024 * 1024,
+            "max_pdf_pages": 10,
+        },
         "paid_generation_daily_limit": None,
         "paid_generation_burst": {"requests": 6, "seconds": 10},
         "trial_ai": trial_enabled(),
@@ -723,7 +737,9 @@ def generate(body: Generate, user=Depends(current)):
             if body.studio != "text" or body.params.get("chat") is not True:
                 fail("CHAT_INVALID")
             from .chat import context
+            from .chat_tools import validate
 
+            validate(db, user.id, body.params)
             chat_contents = context(db, user.id, body.params)
         model = (
             select_choice(db, body.studio, body.model_id)
@@ -1285,6 +1301,7 @@ def download(asset_id: str, expires: int, signature: str, request: Request):
             fail("NOT_FOUND", 404)
     ext = {
         "text/plain": "txt",
+        "application/pdf": "pdf",
         "image/png": "png",
         "image/jpeg": "jpg",
         "image/webp": "webp",

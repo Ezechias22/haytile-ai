@@ -324,6 +324,8 @@ export default function App() {
       return t('accountNeeded');
     }
     if (/DURABLE_JOB_BILLING_REQUIRED/.test(code)) return t('creditBillingPending');
+    if (/CHAT_ATTACHMENT|CHAT_TOOLS_INVALID|CHAT_LOCATION_INVALID/.test(code)) return t('chatAttachmentError');
+    if (/FILE_INVALID_OR_TOO_LARGE/.test(code)) return t('chatFileLimits');
     if (/CHAT_STILL_PROCESSING/.test(code)) return t('chatProcessingDelete');
     if (/VOICE_SESSION_BUDGET_REACHED|VOICE_BUDGET_TOO_SMALL/.test(code)) return t('voiceBudgetReached');
     if (/VOICE_REPLY_TOO_LONG/.test(code)) return t('voiceReplyTooLong');

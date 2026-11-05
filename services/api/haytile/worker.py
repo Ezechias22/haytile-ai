@@ -105,6 +105,12 @@ def run_once():
         if not job:
             return False
         job.status = "processing"
+        if job.params.get("input_params", {}).get("chat") is True:
+            job.params = {
+                k: v
+                for k, v in job.params.items()
+                if k not in ("chat_grounding", "chat_location_requested")
+            }
         job.progress = 15
         job.lease_until = now() + timedelta(hours=2)
         job_id = job.id
@@ -154,6 +160,35 @@ def run_once():
                 raise providers.ProviderError("REFERENCE_INVALID")
             params["_reference_data"] = base64.b64encode(storage.get(ref.key)).decode()
             params["_reference_mime"] = ref.mime
+        if params.get("chat") is True:
+            from .chat_tools import markers, materialize
+
+            contents = params.get("_chat_contents", []) + [
+                {
+                    "role": "user",
+                    "parts": [{"text": job.prompt}] + markers(params.get("attachment_ids", [])),
+                }
+            ]
+            with Session() as context_db:
+                params["_chat_materialized"] = materialize(context_db, job.user_id, contents)
+
+            def save_grounding(value):
+                if not value.get("searched"):
+                    return
+                with Session.begin() as state:
+                    row = state.get(Job, job_id)
+                    if row and row.status == "processing":
+                        row.params = {**row.params, "chat_grounding": value}
+
+            params["_grounding_callback"] = save_grounding
+
+            def save_location_request(value):
+                with Session.begin() as state:
+                    row = state.get(Job, job_id)
+                    if row and row.status == "processing":
+                        row.params = {**row.params, "chat_location_requested": value}
+
+            params["_location_request_callback"] = save_location_request
         prompt = job.prompt
         language = params.get("language", "ht")
         if job.studio == "minidrama":

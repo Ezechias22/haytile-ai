@@ -341,5 +341,17 @@
   "voiceWaiting": "Trop de demandes rapprochées. Patientez un instant ; la conversation reste ouverte.",
   "appCapacityLimit": "La limite d’utilisation de l’application est atteinte. Réessayez plus tard. Cette demande n’a pas été envoyée au fournisseur IA.",
   "appBurstLimit": "Trop de demandes rapprochées. Attendez quelques secondes puis réessayez. Cette demande n’a pas été envoyée au fournisseur IA.",
-  "musicTargetDuration": "Durée estimée selon vos paroles"
+  "musicTargetDuration": "Durée estimée selon vos paroles",
+  "chatAttach": "Joindre une image ou un document",
+  "chatFileLimits": "3 fichiers maximum, 5 Mo chacun, 8 Mo au total. PDF : 10 pages maximum, sans mot de passe. PNG, JPEG, WebP, PDF et texte UTF-8.",
+  "chatLocationUnavailable": "Position indisponible ou permission refusée. Saisissez plutôt votre ville ou adresse.",
+  "chatSources": "Sources web",
+  "chatNoWebSources": "Aucune source web reçue ; les informations actuelles ne sont pas vérifiées.",
+  "chatSearchSuggestions": "Suggestions Google Search",
+  "chatAttachedFiles": "fichiers joints",
+  "chatLocationShared": "Position approximative partagée",
+  "chatAuthorizeLocation": "Autoriser la localisation",
+  "chatLocationConsent": "Votre position approximative sera transmise au fournisseur IA pour cette demande et enregistrée dans ce chat privé. Aucun suivi continu.",
+  "chatRemoveAttachment": "Retirer le fichier",
+  "chatAttachmentError": "Fichier indisponible ou invalide. Retirez-le puis joignez un fichier compatible."
 }
