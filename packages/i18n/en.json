@@ -333,5 +333,8 @@
   "stripeAdjustment": "Billing adjustment",
   "chatMorning": "Good morning",
   "chatAfternoon": "Good afternoon",
-  "chatEvening": "Good evening"
+  "chatEvening": "Good evening",
+  "pricingClip": "clip",
+  "videoClipPricingNote": "The listed price is per clip, not for the full video. Duration determines the number of clips; Generate shows the total price.",
+  "totalPrice": "Total price"
 }

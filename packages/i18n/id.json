@@ -333,5 +333,8 @@
   "stripeAdjustment": "Penyesuaian tagihan",
   "chatMorning": "Selamat pagi",
   "chatAfternoon": "Selamat sore",
-  "chatEvening": "Selamat malam"
+  "chatEvening": "Selamat malam",
+  "pricingClip": "klip",
+  "videoClipPricingNote": "Harga dalam daftar adalah per klip. Durasi menentukan jumlah klip; tombol Buat menampilkan harga total.",
+  "totalPrice": "Harga total"
 }

@@ -333,5 +333,8 @@
   "stripeAdjustment": "تسوية الفوترة",
   "chatMorning": "صباح الخير",
   "chatAfternoon": "مساء الخير",
-  "chatEvening": "مساء الخير"
+  "chatEvening": "مساء الخير",
+  "pricingClip": "مقطع",
+  "videoClipPricingNote": "السعر في القائمة لكل مقطع، وليس للفيديو الكامل. تحدد المدة عدد المقاطع، ويعرض زر الإنشاء السعر الإجمالي.",
+  "totalPrice": "السعر الإجمالي"
 }

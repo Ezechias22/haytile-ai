@@ -67,11 +67,11 @@ def test_verified_prices_scale_with_cost_duration_and_voice_size(monkeypatch):
     assert pricing.quote("music", "lyria-3.5", "Song", {})["credits"] == 32
     assert (
         pricing.quote("video", pricing.VIDEO, "Scene", {"duration": 8})["credits"]
-        == 446
+        == 168
     )
     assert (
         pricing.quote("video", pricing.VIDEO, "Scene", {"duration": 180})["credits"]
-        == 10258
+        == 3864
     )
     episode = pricing.quote(
         "minidrama",
@@ -80,7 +80,7 @@ def test_verified_prices_scale_with_cost_duration_and_voice_size(monkeypatch):
         {"mode": "episode", "duration": 180},
         render_config={"video": pricing.VIDEO},
     )
-    assert episode["clip_count"] == 23 and episode["credits"] == 11158
+    assert episode["clip_count"] == 23 and episode["credits"] == 4202
     cheap = pricing.quote("voice", "gemini-3.8-flash-lite-tts", "a" * 1000, {})
     premium = pricing.quote("voice", "gemini-2.5-pro-preview-tts", "a" * 1000, {})
     assert premium["credits"] > cheap["credits"] > 0

@@ -1050,11 +1050,12 @@ export default function App() {
                         }}
                       >
                         {!modelOptions.length && <option value="">{t('notConfigured')}</option>}
-                        {modelOptions.map((option) => <option key={option.model_id} value={option.model_id} disabled={!!option.unavailable_reason}>{option.label}{option.unavailable_reason ? ' — ' + t('pricingPending') : studio === 'minidrama' ? '' : ' · ' + (option.credits ? option.credits + ' ' + t('credits') : t('freeGeneration'))}</option>)}
+                        {modelOptions.map((option) => <option key={option.model_id} value={option.model_id} disabled={!!option.unavailable_reason}>{option.label}{option.unavailable_reason ? ' — ' + t('pricingPending') : studio === 'minidrama' ? '' : ' · ' + (option.credits ? option.credits + ' ' + t('credits') + (studio === 'video' ? ' / ' + t('pricingClip') : '') : t('freeGeneration'))}</option>)}
                       </select>
                     </label>
                     <p className="fine-print">{t('modelPricingNotice')} <a href={activeChoice?.pricing_url || 'https://ai.google.dev/gemini-api/docs/pricing'} target="_blank" rel="noreferrer">{t('providerPricing')}</a></p>
                     {studio === 'minidrama' && <p className="fine-print">{t('miniModelChoiceNote')}</p>}
+                    {studio === 'video' && <p className="fine-print">{t('videoClipPricingNote')}</p>}
                     <label>
                       {t('title')}
                       <input
@@ -1180,6 +1181,7 @@ export default function App() {
                     )}
                     {studio === 'music' && <p className="fine-print">{t('musicNote')}</p>}
                     {studio === 'voice' && <p className="fine-print">{t('voiceNote')}</p>}
+                    {studio === 'video' && quoteReady && generationQuote?.key === quoteKey && <p className="fine-print" role="status">{generationQuote.clip_count} {t('plannedScenes')} · {t('totalPrice')}: {generationQuote.credits} {t('credits')}</p>}
                     <div className="composer-actions">
                       <button
                         type="button"

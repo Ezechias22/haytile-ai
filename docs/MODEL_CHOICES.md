@@ -77,3 +77,27 @@ Render Free service. The public API returns 11 studio/model choices (nine distin
 IDs), all unavailable for generation while paused. Runtime confirms generation
 paused and the Render worker disabled. The allowlist was checked against model
 metadata using the deployed provider key; no generation was invoked.
+
+## Video consumption price revision
+
+The video model selector now explicitly labels credits per clip. The server quote
+shows the planned clip count and full duration total before Generate/confirmation.
+A selector's base price is not a quote for a three-minute project.
+
+The regular Gemini Omni Flash source was rechecked at
+https://aistudio.google.com/docs/pricing (redirect from the older ai.google.dev URL):
+720p output is 5,792 tokens/second at USD17.50/million output tokens. Input/text
+costs remain separate. Haytile still reserves up to ten generated seconds plus
+USD0.10 of input/operations per clip and plans one clip for each started eight
+seconds of requested duration. Output token limits are unchanged.
+
+Video-specific markup changes from4 to1.5; other studios' multipliers and Stripe
+credit-pack/subscription prices are unchanged. With no manual admin price floor:
+8seconds=168credits;30seconds=672;180seconds=3864(23clips). MiniDrama180seconds
+is4202credits including338 for the planning/reference reserve. Manual higher
+admin floors still apply. Image prices and free text are unchanged.
+
+This is a retail policy, not a claim that Google changed its price or a guarantee
+of net profit. Payment fees, exchange rates, free chat, hosting, retries, refunds
+and actual provider usage still require monitoring. Existing purchases, wallets,
+job reservations and completed-job debits are not rewritten by this change.

@@ -333,5 +333,8 @@
   "stripeAdjustment": "Ajuste de faturamento",
   "chatMorning": "Bom dia",
   "chatAfternoon": "Boa tarde",
-  "chatEvening": "Boa noite"
+  "chatEvening": "Boa noite",
+  "pricingClip": "clipe",
+  "videoClipPricingNote": "O preço da lista é por clipe. A duração determina o número de clipes; o botão Gerar mostra o preço total.",
+  "totalPrice": "Preço total"
 }

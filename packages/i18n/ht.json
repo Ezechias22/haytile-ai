@@ -333,5 +333,8 @@
   "stripeAdjustment": "Ajisteman faktirasyon",
   "chatMorning": "Bonjou",
   "chatAfternoon": "Bonswa",
-  "chatEvening": "Bonswa"
+  "chatEvening": "Bonswa",
+  "pricingClip": "klip",
+  "videoClipPricingNote": "Pri nan lis la se pou yon klip, pa pou tout videyo a. Dire a detèmine kantite klip yo; bouton Jenere a montre pri total la.",
+  "totalPrice": "Pri total"
 }

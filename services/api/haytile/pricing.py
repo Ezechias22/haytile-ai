@@ -1,7 +1,8 @@
 """Server quotes from dated official rates plus an explicit Haytile reserve/margin.
 
-1 reference credit = US$0.01. This is an app policy, not a Google price or an
-implemented credit purchase. Free text still costs the operator money; paid
+1 reference credit = US$0.01. This is an app policy, not a Google price or a
+Google billing unit. Credit purchases use separately configured Stripe offers.
+Free text still costs the operator money; paid
 images are enabled explicitly by the operator.
 """
 
@@ -12,7 +13,7 @@ from decimal import ROUND_CEILING, Decimal
 from fastapi import HTTPException
 
 SOURCE = "https://ai.google.dev/gemini-api/docs/pricing"
-VERSION = "google-2026-11-03-regular-rates-v1"
+VERSION = "google-2026-11-04-video-margin-v2"
 # USD per generated request, as listed on the official Standard pricing page.
 MUSIC_USD = {
     "lyria-3-clip-preview": Decimal("0.04"),
@@ -36,6 +37,7 @@ VIDEO_SECOND_USD = Decimal("5792") * Decimal("17.50") / Decimal("1000000")
 INPUT_AND_OPERATION_RESERVE = Decimal("0.10")
 DRAMA_PLAN_AND_REFERENCES_RESERVE = Decimal("2.25")
 MARKUP = Decimal("4")
+VIDEO_MARKUP = Decimal("1.5")
 CREDIT_USD = Decimal("0.01")
 
 
@@ -43,8 +45,8 @@ def verified():
     return os.environ.get("HAYTILE_PRICING_POLICY", "operator") == "verified"
 
 
-def credits_for(cost):
-    return int((cost * MARKUP / CREDIT_USD).to_integral_value(rounding=ROUND_CEILING))
+def credits_for(cost, markup=MARKUP):
+    return int((cost * markup / CREDIT_USD).to_integral_value(rounding=ROUND_CEILING))
 
 
 # Official 1K output-image USD, input/output-text USD per million tokens.
@@ -91,7 +93,7 @@ def base_credits(studio, model_id, operator_credits=0):
         # Reserve up to 10 native seconds per request although planning uses 8s.
         return max(
             operator_credits,
-            credits_for(VIDEO_SECOND_USD * 10 + INPUT_AND_OPERATION_RESERVE),
+            credits_for(VIDEO_SECOND_USD * 10 + INPUT_AND_OPERATION_RESERVE, VIDEO_MARKUP),
         )
     if studio == "voice" and model_id in VOICE_RATES:
         inp, out = VOICE_RATES[model_id]
@@ -131,7 +133,7 @@ def quote(
             if not render_config:
                 raise HTTPException(409, detail="PROVIDER_SETUP_REQUIRED")
             per_clip = base_credits("video", render_config["video"], video_credits)
-            total = clip_count * per_clip + credits_for(DRAMA_PLAN_AND_REFERENCES_RESERVE)
+            total = clip_count * per_clip + credits_for(DRAMA_PLAN_AND_REFERENCES_RESERVE, VIDEO_MARKUP)
         else:
             total = unit + clip_count * video_credits
     else:

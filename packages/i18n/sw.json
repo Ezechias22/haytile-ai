@@ -333,5 +333,8 @@
   "stripeAdjustment": "Marekebisho ya malipo",
   "chatMorning": "Habari za asubuhi",
   "chatAfternoon": "Habari za mchana",
-  "chatEvening": "Habari za jioni"
+  "chatEvening": "Habari za jioni",
+  "pricingClip": "kipande",
+  "videoClipPricingNote": "Bei kwenye orodha ni kwa kila kipande. Muda huamua idadi ya vipande; kitufe cha Tengeneza kinaonyesha bei ya jumla.",
+  "totalPrice": "Bei ya jumla"
 }
