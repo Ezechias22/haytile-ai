@@ -135,7 +135,7 @@
   "style": "Estil",
   "duration": "Dire sib (segonn)",
   "scriptOnly": "Modifye senaryo, pèsonaj ak sèn anba a. Lip-sync otomatik ak nòt kontinwite poko aplike.",
-  "musicNote": "Jenerasyon mizik itilize yon modèl mizik espesyalize, pa TTS. Verifikasyon lyrics egzak poko disponib.",
+  "musicNote": "Dire a estime otomatikman dapre kantite pawòl ak ritm lan. Pou yon ti deskripsyon san lyrics, objektif la se 2 minit. Modèl la detèmine dire reyèl la; jiska 5 minit se yon objektif, li pa garanti. Modèl Clip yo fè 30 segonn sèlman. Pa gen repetisyon, ralantisman oswa esè peye otomatik.",
   "voiceNote": "Itilize sèlman tèks ak vwa ou gen pèmisyon itilize. Pa gen klonaj vwa.",
   "referenceNote": "Imaj referans ale sèlman nan modèl imaj ou chwazi a.",
   "privacy": "Espas ou prive. Lè ou jenere, prompt yo ale nan founisè ki konfigire a.",
@@ -340,5 +340,6 @@
   "voiceReconnecting": "M ap rekonekte konvèsasyon an…",
   "voiceWaiting": "Twòp demann youn apre lòt. Tann yon ti moman; konvèsasyon an rete ouvè.",
   "appCapacityLimit": "Limit itilizasyon tanporè app la rive. Eseye pita. Demann sa a pa voye bay founisè AI a.",
-  "appBurstLimit": "Twòp demann fèt youn apre lòt. Tann kèk segonn epi eseye ankò. Demann sa a pa voye bay AI a."
+  "appBurstLimit": "Twòp demann fèt youn apre lòt. Tann kèk segonn epi eseye ankò. Demann sa a pa voye bay AI a.",
+  "musicTargetDuration": "Dire estime dapre pawòl ou yo"
 }

@@ -288,7 +288,7 @@ export default function App() {
     [voiceGender, setVoiceGender] = useState('all'),
     [vocalStyle, setVocalStyle] = useState('auto'),
     [dramaVideoModel, setDramaVideoModel] = useState(''),
-    [generationQuote, setGenerationQuote] = useState<{ key: string; credits: number; clip_count: number; free: boolean } | null>(null),
+    [generationQuote, setGenerationQuote] = useState<{ key: string; credits: number; clip_count: number; free: boolean; music_target_seconds?: number } | null>(null),
     [quotePending, setQuotePending] = useState(false),
     [quoteError, setQuoteError] = useState(false),
     [wallet, setWallet] = useState<{
@@ -525,7 +525,7 @@ export default function App() {
     let cancelled = false;
     setQuotePending(true); setQuoteError(false);
     const timer = setTimeout(() => {
-      api<{ credits: number; clip_count: number; free: boolean }>('/quotes', { method: 'POST', body: quoteKey })
+      api<{ credits: number; clip_count: number; free: boolean; music_target_seconds?: number }>('/quotes', { method: 'POST', body: quoteKey })
         .then(data => { if (!cancelled) setGenerationQuote({ ...data, key: quoteKey }); })
         .catch(() => { if (!cancelled) setQuoteError(true); })
         .finally(() => { if (!cancelled) setQuotePending(false); });
@@ -1181,6 +1181,7 @@ export default function App() {
                         {t(miniMode === 'episode' ? 'episodeReviewNote' : 'scriptOnly')}
                       </p>
                     )}
+                    {studio === 'music' && generationQuote?.key === quoteKey && generationQuote.music_target_seconds && <p className="fine-print" role="status">{t('musicTargetDuration')}: {Math.floor(generationQuote.music_target_seconds / 60)} min {generationQuote.music_target_seconds % 60} s</p>}
                     {studio === 'music' && <p className="fine-print">{t('musicNote')}</p>}
                     {studio === 'voice' && <p className="fine-print">{t('voiceNote')}</p>}
                     {studio === 'video' && quoteReady && generationQuote?.key === quoteKey && <p className="fine-print" role="status">{generationQuote.clip_count} {t('plannedScenes')} · {t('totalPrice')}: {generationQuote.credits} {t('credits')}</p>}

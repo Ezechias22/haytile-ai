@@ -135,7 +135,7 @@
   "style": "Gaya",
   "duration": "Durasi target (detik)",
   "scriptOnly": "Naskah dan perencanaan; sinkronisasi bibir otomatis belum diterapkan.",
-  "musicNote": "Musik menggunakan model musik khusus, bukan pengubah teks ke suara. Verifikasi lirik yang persis belum tersedia.",
+  "musicNote": "Durasi diperkirakan otomatis berdasarkan lirik dan tempo. Deskripsi singkat tanpa lirik menargetkan dua menit. Durasi sebenarnya ditentukan model; hingga lima menit adalah target tanpa jaminan. Model Clip hanya menghasilkan 30 detik. Tanpa pengulangan, peregangan, atau percobaan berbayar otomatis.",
   "voiceNote": "Gunakan hanya teks dan suara yang diizinkan. Kloning suara tidak ditawarkan.",
   "referenceNote": "Gambar referensi hanya dikirim ke model gambar yang dipilih.",
   "privacy": "Ruang kerja Anda pribadi. Deskripsi dikirim ke penyedia yang diatur saat Anda membuat konten.",
@@ -340,5 +340,6 @@
   "voiceReconnecting": "Menghubungkan kembali percakapan…",
   "voiceWaiting": "Terlalu banyak permintaan beruntun. Tunggu sebentar; percakapan tetap terbuka.",
   "appCapacityLimit": "Batas penggunaan aplikasi tercapai. Coba lagi nanti. Permintaan ini tidak dikirim ke penyedia AI.",
-  "appBurstLimit": "Terlalu banyak permintaan beruntun. Tunggu beberapa detik lalu coba lagi. Permintaan ini tidak dikirim ke penyedia AI."
+  "appBurstLimit": "Terlalu banyak permintaan beruntun. Tunggu beberapa detik lalu coba lagi. Permintaan ini tidak dikirim ke penyedia AI.",
+  "musicTargetDuration": "Perkiraan durasi berdasarkan lirik"
 }

@@ -135,7 +135,7 @@
   "style": "Mtindo",
   "duration": "Muda unaolengwa (sekunde)",
   "scriptOnly": "Hati na mipango; kusawazisha midomo kiotomatiki bado hakujatekelezwa.",
-  "musicNote": "Muziki hutumia modeli maalumu ya muziki, si maandishi kwenda sauti. Uhakiki wa maneno halisi ya wimbo bado haupatikani.",
+  "musicNote": "Muda hukadiriwa kiotomatiki kwa maneno na kasi. Maelezo mafupi bila maneno hulenga dakika mbili. Muda halisi huamuliwa na muundo; hadi dakika tano ni lengo lisilo na hakikisho. Miundo ya Clip hutengeneza sekunde 30 tu. Hakuna kurudia, kurefusha au kujaribu tena kwa malipo kiotomatiki.",
   "voiceNote": "Tumia tu maandishi na sauti ulizoidhinishwa kutumia. Kuiga sauti za watu hakutolewi.",
   "referenceNote": "Picha za rejea hutumwa kwa modeli ya picha iliyochaguliwa tu.",
   "privacy": "Eneo lako la kazi ni la faragha. Maelezo hutumwa kwa mtoa huduma aliyesanidiwa unapozalisha maudhui.",
@@ -340,5 +340,6 @@
   "voiceReconnecting": "Inaunganisha mazungumzo tena…",
   "voiceWaiting": "Maombi mengi mfululizo. Subiri kidogo; mazungumzo yanabaki wazi.",
   "appCapacityLimit": "Kikomo cha matumizi ya programu kimefikiwa. Jaribu baadaye. Ombi hili halikutumwa kwa mtoa huduma wa AI.",
-  "appBurstLimit": "Maombi mengi kwa haraka. Subiri sekunde chache kisha ujaribu tena. Ombi hili halikutumwa kwa mtoa huduma wa AI."
+  "appBurstLimit": "Maombi mengi kwa haraka. Subiri sekunde chache kisha ujaribu tena. Ombi hili halikutumwa kwa mtoa huduma wa AI.",
+  "musicTargetDuration": "Muda unaokadiriwa kwa maneno yako"
 }

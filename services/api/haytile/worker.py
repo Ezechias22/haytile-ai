@@ -166,6 +166,9 @@ def run_once():
         elif job.studio == "text" and not params.get("chat"):
             prompt = "Output language: " + language + "\n" + prompt
         if job.studio == "music":
+            from .music import target_seconds
+
+            params["_music_target_seconds"] = target_seconds(job.prompt, model)
             prompt = "Requested song language: " + language + "\n" + prompt
         if job.studio == "minidrama" and params.get("mode") == "episode":
             from .drama import render_episode

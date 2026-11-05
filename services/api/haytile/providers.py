@@ -10,6 +10,7 @@ from urllib.parse import quote, urlsplit
 
 import httpx
 
+from .music import target_seconds
 from .voice_choices import VOCALS, VOICES
 
 BASE = "https://generativelanguage.googleapis.com/v1beta"
@@ -192,6 +193,22 @@ def generate(studio, model, prompt, params):
     if studio == "voice" and voice not in VOICES:
         raise ProviderError("VOICE_INVALID")
     if studio == "music":
+        duration = params.get(
+            "duration", params.get("_music_target_seconds", target_seconds(prompt, model))
+        )
+        if duration is not None:
+            if type(duration) is not int or not 30 <= duration <= 300:
+                raise ProviderError("MUSIC_DURATION_INVALID")
+            if model == "lyria-3-clip-preview" and duration != 30:
+                raise ProviderError("MUSIC_CLIP_DURATION_INVALID")
+            prompt = (
+                f"Target song duration: {duration} seconds. Compose a complete song with "
+                "an introduction, verses, choruses, bridge and a natural finished outro. "
+                "Plan the musical structure across the requested duration; do not abruptly "
+                "cut off the vocals or ending. This duration is approximate: prioritize singing "
+                "all supplied lyrics exactly once over forcing the estimated time. Do not omit, "
+                "invent or repeat lines to fill time.\n\n" + prompt
+            )
         direction = params.get("vocal_style", "auto")
         if direction not in VOCALS:
             raise ProviderError("VOCAL_STYLE_INVALID")

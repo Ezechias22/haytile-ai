@@ -111,6 +111,14 @@ def quote(
     render_config=None,
     video_credits=0,
 ):
+    if studio == "music" and "duration" in params:
+        duration = params["duration"]
+        if type(duration) is not int or not 30 <= duration <= 300:
+            raise HTTPException(400, detail="MUSIC_DURATION_INVALID")
+        if model_id == "lyria-3-clip-preview" and duration != 30:
+            raise HTTPException(400, detail="MUSIC_CLIP_DURATION_INVALID")
+    from .music import target_seconds
+
     unit = base_credits(studio, model_id, operator_credits)
     clip_count = 0
     voice_tokens = 0
@@ -133,7 +141,9 @@ def quote(
             if not render_config:
                 raise HTTPException(409, detail="PROVIDER_SETUP_REQUIRED")
             per_clip = base_credits("video", render_config["video"], video_credits)
-            total = clip_count * per_clip + credits_for(DRAMA_PLAN_AND_REFERENCES_RESERVE, VIDEO_MARKUP)
+            total = clip_count * per_clip + credits_for(
+                DRAMA_PLAN_AND_REFERENCES_RESERVE, VIDEO_MARKUP
+            )
         else:
             total = unit + clip_count * video_credits
     else:
@@ -143,6 +153,7 @@ def quote(
         "free": total == 0,
         "clip_count": clip_count,
         "voice_token_limit": voice_tokens,
+        "music_target_seconds": target_seconds(prompt, model_id) if studio == "music" else None,
         "image_size": "1K" if studio == "image" and paid_images() else None,
         "pricing_version": VERSION if verified() else "operator-configured",
         "reference_unit_usd": str(CREDIT_USD),

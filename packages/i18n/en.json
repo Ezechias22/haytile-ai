@@ -135,7 +135,7 @@
   "style": "Style",
   "duration": "Target duration (seconds)",
   "scriptOnly": "Edit scripts, characters and scenes below. Automatic lip-sync and continuity scoring are not implemented.",
-  "musicNote": "Music generation uses a dedicated music model, not text-to-speech. Exact lyric verification is not available yet.",
+  "musicNote": "Duration is estimated automatically from the supplied lyrics and tempo. A short creative brief uses a two-minute target. The model determines the actual length; up to five minutes is a target, not guaranteed. Clip models produce only 30 seconds. No looping, stretching or automatic paid retry.",
   "voiceNote": "Use only text and voices you have permission to use. No voice cloning is offered.",
   "referenceNote": "Reference images are sent to the selected image model only.",
   "privacy": "Your workspace is private. AI prompts are sent to the configured provider when you generate.",
@@ -340,5 +340,6 @@
   "voiceReconnecting": "Reconnecting the conversation…",
   "voiceWaiting": "Too many requests close together. Please wait briefly; the conversation remains open.",
   "appCapacityLimit": "The application usage limit was reached. Try again later. This request was not sent to the AI provider.",
-  "appBurstLimit": "Too many requests in quick succession. Wait a few seconds and try again. This request was not sent to the AI provider."
+  "appBurstLimit": "Too many requests in quick succession. Wait a few seconds and try again. This request was not sent to the AI provider.",
+  "musicTargetDuration": "Estimated duration from your lyrics"
 }

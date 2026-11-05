@@ -135,7 +135,7 @@
   "style": "Estilo",
   "duration": "Duración deseada (segundos)",
   "scriptOnly": "Guion y planificación; la sincronización labial automática no está implementada.",
-  "musicNote": "La música utiliza un modelo musical especializado, no síntesis de voz. La verificación exacta de letras aún no está disponible.",
+  "musicNote": "La duración se estima automáticamente según la letra y el ritmo. Una descripción breve sin letra tiene un objetivo de dos minutos. La duración real depende del modelo; hasta cinco minutos es un objetivo sin garantía. Los modelos Clip generan solo 30 segundos. Sin bucles, estiramiento ni reintentos de pago automáticos.",
   "voiceNote": "Utiliza únicamente textos y voces que tengas permiso para usar. No se ofrece clonación de voz.",
   "referenceNote": "Las referencias solo se envían al modelo de imagen seleccionado.",
   "privacy": "Tu espacio es privado. Las descripciones se envían al proveedor configurado al generar contenido.",
@@ -340,5 +340,6 @@
   "voiceReconnecting": "Reconectando la conversación…",
   "voiceWaiting": "Demasiadas solicitudes seguidas. Espera un momento; la conversación sigue abierta.",
   "appCapacityLimit": "Se alcanzó el límite de uso de la aplicación. Inténtalo más tarde. Esta solicitud no se envió al proveedor de IA.",
-  "appBurstLimit": "Demasiadas solicitudes seguidas. Espera unos segundos e inténtalo de nuevo. Esta solicitud no se envió al proveedor de IA."
+  "appBurstLimit": "Demasiadas solicitudes seguidas. Espera unos segundos e inténtalo de nuevo. Esta solicitud no se envió al proveedor de IA.",
+  "musicTargetDuration": "Duración estimada según la letra"
 }
