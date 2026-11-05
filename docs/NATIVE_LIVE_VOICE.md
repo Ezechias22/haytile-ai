@@ -75,3 +75,20 @@ provider API is never called by these tests. A disposable real Firestore probe
 verified reserve/debit/refund exactly once and restoration after complete SQL
 cache loss, then removed its own fixtures. Real provider voice quality, language
 quality, latency and account quota have not been tested using the user's credits.
+
+## Keep the screen awake during web voice calls
+
+The live voice hook holds a Screen Wake Lock during microphone setup and the
+active call, including while muted. It releases the lock when setup fails, the
+socket ends, the user stops, or the component unmounts. A delayed lock grant after
+cleanup is immediately released. When the browser releases a lock while the page
+is hidden, returning to the visible call requests it again.
+
+This requires a secure context and browser/OS support. Unsupported devices or a
+power-saving denial do not themselves terminate the voice call. A screen wake
+lock prevents automatic screen sleep; it does not override the user's power
+button, force background microphone access, or extend the server's session limit.
+
+The offline native-voice browser regression exercises lock acquisition, visibility
+reacquisition and delayed-grant cleanup alongside PCM audio, interruption, mute,
+end and the existing credit debit. No Google generation is used for verification.

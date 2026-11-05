@@ -14,6 +14,14 @@ test('native live PCM speech, interruption, mute and billing without text or TTS
  page.on('pageerror',e=>errors.push(e.message));
  page.on('request',r=>{if(r.method()==='POST'&&r.url().endsWith('/api/v1/jobs'))jobs.push(r.postDataJSON());});
  await page.addInitScript(()=>{
+  const wake=(window as any).__wake={requests:0,releases:0,visibility:'visible',locks:[] as any[]};
+  Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>wake.visibility});
+  Object.defineProperty(navigator,'wakeLock',{configurable:true,value:{request:async(type:string)=>{
+   if(type!=='screen')throw new Error('Unexpected wake lock type');
+   wake.requests++;const lock=Object.assign(new EventTarget(),{released:false,release:async()=>{
+    if(!lock.released){lock.released=true;wake.releases++;lock.dispatchEvent(new Event('release'));}
+   }});wake.locks.push(lock);if(wake.requests===2)await new Promise<void>(resolve=>{(wake as any).resume=resolve;});return lock;
+  }}});
   const stats=(window as any).__pcm={starts:0,stops:0};
   const start=AudioBufferSourceNode.prototype.start,stop=AudioBufferSourceNode.prototype.stop;
   AudioBufferSourceNode.prototype.start=function(...args:any[]){stats.starts++;return start.apply(this,args as any);};
@@ -30,10 +38,17 @@ test('native live PCM speech, interruption, mute and billing without text or TTS
  const call=page.getByRole('dialog',{name:'Voice conversation',exact:true});await expect(call).toBeVisible();
  await expect.poll(()=>page.evaluate(()=>(window as any).__pcm.starts),{timeout:30000}).toBeGreaterThanOrEqual(2);
  await expect.poll(()=>page.evaluate(()=>(window as any).__pcm.stops)).toBeGreaterThanOrEqual(1);
+ await expect.poll(()=>page.evaluate(()=>(window as any).__wake.requests)).toBe(1);
+ await page.evaluate(async()=>{const wake=(window as any).__wake;wake.visibility='hidden';await wake.locks[0].release();document.dispatchEvent(new Event('visibilitychange'));});
+ await expect(call).toBeVisible();
+ await page.evaluate(()=>{(window as any).__wake.visibility='visible';document.dispatchEvent(new Event('visibilitychange'));});
+ await expect.poll(()=>page.evaluate(()=>(window as any).__wake.requests)).toBe(2);
  await call.getByRole('button',{name:'Mute microphone',exact:true}).click();
  await expect(call.getByRole('button',{name:'Unmute microphone',exact:true})).toHaveAttribute('aria-pressed','true');
  await page.screenshot({path:'test-results/native-live-voice.png',fullPage:true});
  await call.getByRole('button',{name:'End voice conversation',exact:true}).click();await expect(call).not.toBeVisible();
+ await page.evaluate(()=>(window as any).__wake.resume());
+ await expect.poll(()=>page.evaluate(()=>(window as any).__wake.releases)).toBe(2);
  await expect.poll(async()=> (await(await page.request.get(base+'/api/v1/wallet')).json()).balance).toBe(before.balance-70);
  await expect(page.locator('.chat-user-bubble')).toHaveCount(0);await expect(page.locator('.chat-answer')).toHaveCount(0);
  expect(jobs).toEqual([]);await expect(page.locator('.chat-voice-audio')).toHaveCount(0);

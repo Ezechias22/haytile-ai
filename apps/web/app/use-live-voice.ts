@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useScreenWakeLock } from './use-screen-wake-lock';
 
 type Config={available:boolean;models:{model_id:string;label:string}[];credits:number;seconds:number};
 type Session={id:string;socket_path:string;credits:number;seconds:number};
@@ -7,6 +8,7 @@ type Options={request:<T>(path:string,options?:RequestInit)=>Promise<T>;authenti
 export function useLiveVoice(options:Options) {
  const latest=useRef(options); latest.current=options;
  const [config,setConfig]=useState<Config|null>(null),[session,setSession]=useState<Session|null>(null),[busy,setBusy]=useState(false),[phase,setPhase]=useState('off'),[muted,setMuted]=useState(false);
+ useScreenWakeLock(busy || !!session);
  const ws=useRef<WebSocket|null>(null), context=useRef<AudioContext|null>(null), stream=useRef<MediaStream|null>(null), node=useRef<AudioWorkletNode|null>(null), sources=useRef(new Set<AudioBufferSourceNode>()), nextTime=useRef(0), generation=useRef(0), ready=useRef(false), mute=useRef(false), timer=useRef<ReturnType<typeof setTimeout>|null>(null);
  useEffect(()=>{let alive=true;options.request<Config>('/chat/live/config').then(c=>{if(alive)setConfig(c);}).catch(()=>{});return()=>{alive=false;};},[options.request]);
  const clearPlayback=useCallback(()=>{for(const source of sources.current){try{source.stop();}catch{}}sources.current.clear();nextTime.current=0;},[]);
