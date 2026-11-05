@@ -77,7 +77,13 @@ def run_once():
             db.scalars(
                 select(Job.id).where(
                     Job.id.in_(candidates) if candidates is not None else True,
-                    or_(Job.status.in_(["processing", "quality_check"]), and_(Job.status == "queued", Job.params["input_params"]["live_voice"].as_boolean().is_(True))),
+                    or_(
+                        Job.status.in_(["processing", "quality_check"]),
+                        and_(
+                            Job.status == "queued",
+                            Job.params["input_params"]["live_voice"].as_boolean().is_(True),
+                        ),
+                    ),
                     Job.lease_until < now(),
                 )
             )
@@ -111,6 +117,15 @@ def run_once():
         with Session.begin() as state:
             row = state.get(Job, job_id)
             if row and row.status == "processing":
+                if job.studio == "video" and "_scene_index" in params:
+                    scenes = dict(row.params.get("video_checkpoints", {}))
+                    slot = str(params["_scene_index"])
+                    scenes[slot] = {
+                        **scenes.get(slot, {}),
+                        "operation_id": identifier,
+                        "model_id": model,
+                    }
+                    row.params = {**row.params, "video_checkpoints": scenes}
                 row.params = {
                     **row.params,
                     "remote_operation": {
@@ -190,10 +205,10 @@ def run_once():
                     if not db.get(User, job.user_id):
                         return True
                 scene = f"{prompt}\nScene {index + 1} of {count}. Generate 8 seconds. Maintain the same characters, clothes, environment, lighting and camera continuity. Include natural synchronized audio. Single continuous shot."
-                clip, _ = providers.generate("video", model, scene, params)
-                path = Path(scratch.name) / f"generated-{index}.mp4"
-                path.write_bytes(clip)
-                del clip
+                from .video_checkpoints import clip as checkpoint_clip
+
+                params["_scene_index"] = index
+                path = checkpoint_clip(job_id, job.user_id, index, model, scene, params)
                 clips.append(path)
                 with Session.begin() as db:
                     row = db.get(Job, job_id)
@@ -300,6 +315,10 @@ def run_once():
                         dedup_key=job_id + ":debit",
                     )
                 )
+            if job.studio == "video":
+                from .video_checkpoints import cleanup_after_completion
+
+                cleanup_after_completion(db, row)
             row.status = "completed"
             row.progress = 100
             row.lease_until = None

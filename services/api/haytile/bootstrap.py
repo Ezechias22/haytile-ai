@@ -57,7 +57,7 @@ def configure_models():
                 db.add(row)
             row.model_id = model_id
             row.credits = int(item.get("credits", 0))
-            row.enabled = available
+            row.enabled = available and item.get("enabled", True) is True
             row.verified_at = now()
             db.add(
                 Audit(

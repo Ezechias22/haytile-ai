@@ -23,14 +23,18 @@ def test_only_account_visible_models_are_activated(monkeypatch):
             [
                 {"studio": "text", "model_id": "visible-fixture"},
                 {"studio": "voice", "model_id": "unavailable-fixture"},
+                {"studio": "video", "model_id": "visible-video", "enabled": False},
             ]
         ),
     )
     monkeypatch.setenv("HAYTILE_OPERATOR_BILLING_ACK", "1")
     monkeypatch.setattr(
-        providers, "discover", lambda: [{"name": "models/visible-fixture"}]
+        providers,
+        "discover",
+        lambda: [{"name": "models/visible-fixture"}, {"name": "models/visible-video"}],
     )
     bootstrap.configure_models()
     with Session() as db:
         assert db.get(Model, "text").enabled
         assert not db.get(Model, "voice").enabled
+        assert not db.get(Model, "video").enabled

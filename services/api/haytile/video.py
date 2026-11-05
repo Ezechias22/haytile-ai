@@ -62,14 +62,15 @@ def assemble(
             has_audio = any(s["codec_type"] == "audio" for s in info["streams"])
             if audio_required and not has_audio:
                 raise ProviderError("VIDEO_AUDIO_MISSING")
-            if (
-                not any(s["codec_type"] == "video" for s in info["streams"])
-                or seconds <= 0
-            ):
+            if not any(s["codec_type"] == "video" for s in info["streams"]) or seconds <= 0:
                 raise ProviderError("VIDEO_STREAM_INVALID")
             target = root / f"clip-{i}.mp4"
             video = next(s for s in info["streams"] if s["codec_type"] == "video")
             audio = next((s for s in info["streams"] if s["codec_type"] == "audio"), {})
+            native_seconds = float(video.get("duration", seconds))
+            if clip_durations is not None and native_seconds + 0.05 < clip_durations[i]:
+                raise ProviderError("VIDEO_TOO_SHORT_NO_STRETCH")
+            seconds = min(seconds, native_seconds)
             compatible = (
                 video.get("codec_name") == "h264"
                 and (video.get("width"), video.get("height")) == (width, height)
@@ -96,6 +97,8 @@ def assemble(
                         "0:a:0",
                         "-c",
                         "copy",
+                        "-video_track_timescale",
+                        "90000",
                         "-t",
                         str(seconds),
                         str(target),
@@ -128,6 +131,8 @@ def assemble(
                 "yuv420p",
                 "-threads",
                 "2",
+                "-video_track_timescale",
+                "90000",
                 "-c:a",
                 "aac",
                 "-ar",
@@ -174,7 +179,78 @@ def assemble(
         if result.returncode:
             raise ProviderError("VIDEO_ASSEMBLY_FAILED")
         final = probe(output)
-        if abs(float(final["format"]["duration"]) - duration) > 0.15:
+
+        def video_duration(info):
+            return next(
+                (
+                    float(s.get("duration", 0))
+                    for s in info["streams"]
+                    if s["codec_type"] == "video"
+                ),
+                0,
+            )
+
+        def duration_matches(info):
+            return (
+                abs(float(info["format"]["duration"]) - duration) <= 0.15
+                and abs(video_duration(info) - duration) <= 0.15
+            )
+
+        if not duration_matches(final):
+            # Packet-copy trimming can end after the requested frame because of
+            # B-frame/AAC timestamps. Re-encode the already-paid scenes only;
+            # never repeat a provider request or loop/stretch missing footage.
+            fallback = subprocess.run(
+                [
+                    "ffmpeg",
+                    "-v",
+                    "error",
+                    "-y",
+                    "-f",
+                    "concat",
+                    "-safe",
+                    "1",
+                    "-i",
+                    str(manifest),
+                    "-map",
+                    "0:v:0",
+                    "-map",
+                    "0:a:0",
+                    "-vf",
+                    "setpts=PTS-STARTPTS,fps=24",
+                    "-af",
+                    "aresample=async=1:first_pts=0",
+                    "-t",
+                    str(duration),
+                    "-c:v",
+                    "libx264",
+                    "-preset",
+                    "ultrafast",
+                    "-crf",
+                    "20",
+                    "-threads",
+                    "1",
+                    "-pix_fmt",
+                    "yuv420p",
+                    "-video_track_timescale",
+                    "90000",
+                    "-c:a",
+                    "aac",
+                    "-ar",
+                    "48000",
+                    "-ac",
+                    "2",
+                    "-movflags",
+                    "+faststart",
+                    str(output),
+                ],
+                capture_output=True,
+                timeout=900,
+            )
+            if fallback.returncode:
+                raise ProviderError("VIDEO_ASSEMBLY_FAILED")
+            final = probe(output)
+        if not duration_matches(final):
             raise ProviderError("VIDEO_FINAL_DURATION_FAILED")
         videos = [s for s in final["streams"] if s["codec_type"] == "video"]
         if not videos or (videos[0]["width"], videos[0]["height"]) != (width, height):

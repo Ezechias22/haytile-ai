@@ -266,7 +266,7 @@ def runtime_settings():
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
     return {
-        "api_release": "video-pricing-v14",
+        "api_release": "safe-video-recovery-v15",
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
         "metadata_store": "firestore" if records.enabled() else "sql",
@@ -433,7 +433,13 @@ def delete_account(body: DeleteAccount, response: Response, user=Depends(current
             )
             for key in row.document.get("keys", [])
         ]
-    for key in cleanup_keys:
+        cleanup_keys += [
+            scene["key"]
+            for job in db.scalars(select(Job).where(Job.user_id == user.id))
+            for scene in job.params.get("video_checkpoints", {}).values()
+            if scene.get("key")
+        ]
+    for key in set(cleanup_keys):
         storage.delete(key)
     if accounts.enabled():
         accounts.remove(user.id)
@@ -1014,18 +1020,34 @@ def retry(job_id: str, user=Depends(current)):
             fail("AI_SERVICE_PAUSED", 503)
         if job.status != "failed":
             fail("JOB_NOT_FAILED", 409)
+        from .video_checkpoints import safe_to_resume
+
+        if job.studio == "video":
+            if job.params.get("incident_generation_hold") or (
+                (
+                    job.params.get("completed_scenes", 0) > 0
+                    or job.params.get("video_checkpoint_version") == 1
+                )
+                and not safe_to_resume(job.params)
+            ):
+                fail("MANUAL_RECONCILIATION_REQUIRED", 409)
         if job.error == "WORKER_INTERRUPTED_RECONCILE":
             operation = job.params.get("remote_operation")
-            can_resume = operation and (
-                job.studio in ("music", "voice")
-                or (
-                    job.studio == "video"
-                    and job.params.get("input_params", {}).get("duration", 8) <= 10
+            can_resume = (
+                (job.studio == "video" and safe_to_resume(job.params))
+                or operation
+                and (
+                    job.studio in ("music", "voice")
+                    or (
+                        job.studio == "video"
+                        and job.params.get("input_params", {}).get("duration", 8) <= 10
+                    )
                 )
             )
             if not can_resume:
                 fail("MANUAL_RECONCILIATION_REQUIRED", 409)
-            job.params = {**job.params, "resume_operation_id": operation["id"]}
+            if operation:
+                job.params = {**job.params, "resume_operation_id": operation["id"]}
         trial_error = trial_limit_code(
             db, user.id, job.studio, job.params.get("input_params", {}), job.credits
         )
