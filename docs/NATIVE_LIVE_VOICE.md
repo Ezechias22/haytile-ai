@@ -29,22 +29,26 @@ interruption protocol were checked against the official Live API reference:
 
 Google's published paid rates for this model are $0.50/$2 per million input/output
 text tokens and $3/$12 per million input/output audio tokens. These are provider
-rates, not a claim of free or unlimited voice. Haytile charges **70 credits for a
-started block of up to 60 seconds**, after the first audio reply is delivered.
-This is an app price, not Google's per-minute price. The internal reference is
-$0.01/credit. The reserve uses a conservative worst-rate token allowance, context
-and output limits, operation allowance and margin. It does not guarantee profit:
-provider accounting, context reuse and in-flight usage can vary.
+rates, not a claim of free or unlimited voice. Haytile charges **70 credits per started minute**, automatically renewing while
+sufficient credits remain. The first minute is reserved at admission and charged
+on the first native audio reply, or after a minute of successfully forwarded
+microphone input. Setup failures and short unserved calls release the reservation.
+Subsequent minutes use idempotent durable reservations and debits. This is an app
+price, not Google's per-minute price; provider accounting can vary.
 
-A block also stops at the conservative 8,000 reported-token threshold; the last
-in-flight response may overshoot. Output is capped at 1,024 tokens, context
-compression triggers at 2,048 tokens with a 1,024-token target, and input is bounded
-to real-time audio speed. Each session is currently one block; it does not silently
-renew or debit another block. The rate and maximum duration are visible before
-starting. No budget dialog is shown. Silence/setup failure before any delivered
-reply releases the reservation; delivered audio is charged even after an
-interruption or early exit. These limits are safeguards, not universal quality or
-provider-cost guarantees. Daily admission limits also apply.
+There is no 60-second call deadline. The same browser socket, microphone and
+playback remain connected until the user stops, funds run out, or a genuine
+provider/network failure occurs. Provider goAway events use session resumption
+when available. A visible rate explains automatic minute billing without a budget
+dialog. The overlay and wallet update as minutes are charged.
+
+Output remains bounded to 1,024 tokens, with context compression at 2,048 tokens
+and a 1,024-token target. Input is bounded to real-time audio speed. An unusually
+large 32,000-token billing interval temporarily pauses input until the next
+interval instead of ending the call. These safeguards do not guarantee provider
+availability, perfect quality or a fixed provider cost. A screen wake lock keeps
+supported foreground devices awake; browser and operating-system restrictions
+still apply.
 
 Reservations, debits and releases use existing durable job/wallet transactions.
 Single-use claims prevent duplicate socket sessions; the ordinary generation

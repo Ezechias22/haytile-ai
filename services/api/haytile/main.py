@@ -63,14 +63,14 @@ def fail(code, status=400):
     raise HTTPException(status, detail=code)
 
 
-def limit(key, maximum, seconds):
+def limit(key, maximum, seconds, error_code="RATE_LIMIT"):
     if os.environ.get("HAYTILE_RATE_LIMIT_PROVIDER") == "firestore":
         from . import firestore_limits
 
         try:
             firestore_limits.consume(key, maximum, seconds)
         except firestore_limits.LimitExceeded:
-            fail("RATE_LIMIT", 429)
+            fail(error_code, 429)
         except firestore_limits.LimitUnavailable:
             fail("RATE_LIMIT_UNAVAILABLE", 503)
         return
@@ -90,7 +90,7 @@ def limit(key, maximum, seconds):
             row.count = 0
             row.reset_at = now() + timedelta(seconds=seconds)
         if row.count >= maximum:
-            fail("RATE_LIMIT", 429)
+            fail(error_code, 429)
         row.count += 1
 
 
@@ -266,7 +266,7 @@ def runtime_settings():
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
     return {
-        "api_release": "safe-video-recovery-v15",
+        "api_release": "continuous-voice-v16",
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
         "metadata_store": "firestore" if records.enabled() else "sql",
@@ -285,6 +285,8 @@ def runtime_settings():
         or not worker_enabled()
         or not configured
         or (FREE_BETA and engine.dialect.name != "postgresql" and not trial_enabled()),
+        "paid_generation_daily_limit": None,
+        "paid_generation_burst": {"requests": 6, "seconds": 10},
         "trial_ai": trial_enabled(),
         "trial_max_episode_seconds": int(os.environ.get("HAYTILE_TRIAL_MAX_EPISODE_SECONDS", "180"))
         if trial_enabled()
@@ -665,16 +667,29 @@ def generate(body: Generate, user=Depends(current)):
     if body.studio == "music" and body.params.get("preserve_lyrics"):
         fail("EXACT_LYRICS_VERIFICATION_PENDING", 409)
     is_chat = body.studio == "text" and body.params.get("chat") is True
-    limit(
-        "generation-chat-global" if is_chat else "generation-global",
-        int(os.environ.get("HAYTILE_DAILY_CHAT_LIMIT", "50"))
-        if is_chat
-        else int(os.environ.get("HAYTILE_DAILY_JOB_LIMIT", "100")),
-        86400,
-    )
+    with Session() as db:
+        configured = selected or db.get(Model, body.studio)
+        if not configured or not configured.enabled:
+            fail("PROVIDER_SETUP_REQUIRED", 503)
+        paid_request = (
+            episode
+            or pricing.base_credits(body.studio, configured.model_id, configured.credits) > 0
+        )
+    if paid_request:
+        # Paid use is governed by the durable wallet, not a daily/hourly quota.
+        limit("paid-generation-burst:" + user.id, 6, 10, "APP_BURST_LIMIT")
+    else:
+        limit(
+            "generation-chat-global" if is_chat else "generation-global",
+            int(os.environ.get("HAYTILE_DAILY_CHAT_LIMIT", "50"))
+            if is_chat
+            else int(os.environ.get("HAYTILE_DAILY_JOB_LIMIT", "100")),
+            86400,
+        )
     if is_chat:
         limit("chat-daily:" + user.id, int(os.environ.get("HAYTILE_CHAT_PER_DAY", "20")), 86400)
-    limit("generation:" + user.id, 30, 3600)
+    if not paid_request:
+        limit("generation:" + user.id, 30, 3600)
     if selected and selected.catalog_check:
         try:
             catalog = providers.discover()
@@ -765,7 +780,7 @@ def generate(body: Generate, user=Depends(current)):
                 Job.status.in_(["queued", "processing", "quality_check"]),
             )
         )
-        if pending >= 3:
+        if pending >= 3 and not paid_request:
             fail("TOO_MANY_JOBS", 429)
         if body.studio == "image":
             count = db.scalar(

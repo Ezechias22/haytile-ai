@@ -344,6 +344,8 @@ export default function App() {
     if (/PROVIDER_QUOTA_EXCEEDED/.test(code)) return t('providerQuota');
     if (/PROVIDER_ACCESS_DENIED|PROVIDER_MODEL_UNAVAILABLE/.test(code)) return t('providerAccess');
     if (/PROVIDER|ADAPTER|MODEL/.test(code)) return t('providerError');
+    if (/APP_BURST_LIMIT/.test(code)) return t('appBurstLimit');
+    if (/APP_CAPACITY_LIMIT/.test(code)) return t('appCapacityLimit');
     if (/LIMIT|TOO_MANY/.test(code)) return t('limitError');
     if (/INSUFFICIENT/.test(code)) return t('creditsError');
     return t('error') + ' (' + code + ')';

@@ -110,6 +110,15 @@ def document(data, kind, token=""):
             + data["id"]
         )
     if kind == "jobs":
+        live_until = data.get("params", {}).get("native_call_active_until")
+        if live_until and data.get("params", {}).get("input_params", {}).get("live_voice"):
+            result["native_live_key"] = (
+                os.environ.get("HAYTILE_QUEUE_NAMESPACE", "main")
+                + ":live_"
+                + live_until
+                + "_"
+                + data["id"]
+            )
         result["state_key"] = (
             os.environ.get("HAYTILE_QUEUE_NAMESPACE", "main")
             + ":"
