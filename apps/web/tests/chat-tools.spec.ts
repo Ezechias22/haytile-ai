@@ -12,11 +12,24 @@ test('offline chat files and assistant-requested location consent, no search tog
     if(window.top!==window) return;
     localStorage.setItem('haytile-locale','en');
     (window as any).fixtureGeoCalls=0;
-    Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition(success:any,error:any){
-      (window as any).fixtureGeoCalls++;
-      if((window as any).fixtureGeoCalls===1)error({code:1});
-      else success({coords:{latitude:18.543291,longitude:-72.343917}});
-    }}});
+    (window as any).fixtureWatchStarts=0;
+    (window as any).fixtureWatchClears=0;
+    Object.defineProperty(navigator,'permissions',{value:{query:async()=>({state:localStorage.getItem('fixture-geo-granted')==='yes'?'granted':'prompt',addEventListener(){},removeEventListener(){}})}});
+    Object.defineProperty(navigator,'geolocation',{value:{
+      getCurrentPosition(success:any,error:any){
+        (window as any).fixtureGeoCalls++;
+        if((window as any).fixtureGeoCalls===1&&localStorage.getItem('fixture-geo-granted')!=='yes') error({code:1});
+        else {localStorage.setItem('fixture-geo-granted','yes');success({timestamp:Date.now(),coords:{latitude:18.543291,longitude:-72.343917,accuracy:8.5}});}
+      },
+      watchPosition(success:any,_error:any,options:any){
+        (window as any).fixtureWatchStarts++;
+        (window as any).fixtureHighAccuracy=options.enableHighAccuracy;
+        const timer=setTimeout(()=>success({timestamp:Date.now(),coords:{latitude:18.543992,longitude:-72.344112,accuracy:4.5}}),10);
+        return timer;
+      },
+      clearWatch(id:number){clearTimeout(id);(window as any).fixtureWatchClears++;}
+    }});
+
   });
   const login=await page.request.post(base+'/api/v1/auth/login',{data:{email:'creative-browser@example.test',password:'Offline-browser-password-123'},headers:{Origin:base}});
   expect(login.status()).toBe(200);
@@ -47,17 +60,36 @@ test('offline chat files and assistant-requested location consent, no search tog
   await expect(authorize).toBeVisible({timeout:20000});
   expect(await page.evaluate(()=>(window as any).fixtureGeoCalls)).toBe(0);
   await authorize.click();
-  await expect(page.locator('.chat-tool-context')).toContainText('permission denied');
+  await expect(page.locator('.chat-location-warning')).toContainText('permission denied');
   expect(sent).toHaveLength(2);
-  await authorize.click();
+  await page.getByRole('button',{name:'Enable location',exact:true}).click();
   await expect(page.getByRole('log')).toContainText('Nearby help found',{timeout:20000});
-  expect(sent[2].params.location).toEqual({latitude:18.543,longitude:-72.344});
-  await expect(page.getByRole('link',{name:'[1] Offline hospital source',exact:true})).toHaveAttribute('href','https://example.org/hospital');
+  expect(sent[2].params.location).toMatchObject({latitude:18.543291,longitude:-72.343917,accuracy_m:8.5});
+  await page.getByRole('button',{name:'Web sources 1',exact:true}).click();
+  const research=page.getByRole('dialog');
+  await expect(research.getByRole('link',{name:/Offline hospital source/})).toHaveAttribute('href','https://example.org/hospital');
+  await research.getByRole('button',{name:'Close sources',exact:true}).click();
   await expect(page.getByTitle('Google Search suggestions')).toHaveAttribute('sandbox','allow-popups allow-popups-to-escape-sandbox');
   expect(await page.evaluate(()=>(window as any).fixtureUnsafe)).toBeUndefined();
   const box=await composer.boundingBox();
   expect(box!.y+box!.height).toBeLessThan(844);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.reload();
+  await expect(page.getByRole('button',{name:'Stop location sharing',exact:true})).toBeVisible();
+  expect(await page.evaluate(()=>(window as any).fixtureGeoCalls)).toBe(0);
+  await expect.poll(()=>page.evaluate(()=>(window as any).fixtureWatchStarts)).toBeGreaterThan(0);
+  expect(await page.evaluate(()=>(window as any).fixtureHighAccuracy)).toBe(true);
+  await expect.poll(async()=>((await page.request.get(base+'/api/v1/chat/location')).json()).then(value=>value.position?.latitude)).toBe(18.543992);
+  const countBefore=sent.length;
+  await composer.fill('Find nearby offline hospital');
+  await page.getByRole('button',{name:'Send message',exact:true}).click();
+  await expect.poll(()=>sent.length).toBeGreaterThan(countBefore);
+  await expect(page.getByRole('log')).toContainText('Nearby help found',{timeout:20000});
+  await expect(page.getByRole('button',{name:'Authorize location',exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:'Stop location sharing',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Enable location',exact:true})).toBeVisible();
+  await expect.poll(async()=>((await page.request.get(base+'/api/v1/chat/location')).json()).then(value=>value.enabled)).toBe(false);
+  await expect.poll(()=>page.evaluate(()=>(window as any).fixtureWatchClears)).toBeGreaterThan(0);
   expect(failures).toEqual([]);
   await browser.close();
 });

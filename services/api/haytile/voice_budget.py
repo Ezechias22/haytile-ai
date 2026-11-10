@@ -7,7 +7,7 @@ from sqlalchemy import select
 
 from .db import Project, now
 
-INTERNAL_KINDS = ("voice_session", "chat_cleanup", "chat_welcome")
+INTERNAL_KINDS = ("voice_session", "chat_cleanup", "chat_welcome", "chat_location")
 
 
 def fail(code, status=409):

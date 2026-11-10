@@ -266,7 +266,7 @@ def runtime_settings():
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
     return {
-        "api_release": "chat-tools-v18",
+        "api_release": "remembered-location-v19",
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
         "metadata_store": "firestore" if records.enabled() else "sql",
@@ -288,6 +288,8 @@ def runtime_settings():
         "chat_capabilities": {
             "automatic_web_search": True,
             "assistant_location_requests": True,
+            "remembered_location": True,
+            "foreground_location_refresh": True,
             "attachments": [
                 "image/png",
                 "image/jpeg",
@@ -1545,6 +1547,10 @@ app.include_router(voice_router)
 from .chat_management import router as chat_management_router  # noqa: E402
 
 app.include_router(chat_management_router)
+
+from .chat_location import router as chat_location_router  # noqa: E402
+
+app.include_router(chat_location_router)
 
 
 @app.get("/v1/admin/users")

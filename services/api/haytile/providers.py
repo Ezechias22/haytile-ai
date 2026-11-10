@@ -322,7 +322,16 @@ def generate(studio, model, prompt, params):
         if location:
             payload["contents"][-1]["parts"].append(
                 {
-                    "text": f"Approximate location explicitly shared for this message only: latitude {location['latitude']:.3f}, longitude {location['longitude']:.3f}. Do not treat this as verified live tracking."
+                    "text": f"Device-reported location authorized by the user: latitude {location['latitude']:.6f}, longitude {location['longitude']:.6f}. Reported accuracy: {location.get('accuracy_m', 'unknown')} meters. Captured at: {location.get('captured_at', 'unknown')}. Treat this as the last reported fix, not a guarantee of exact or current position. Never ask for location permission again when already authorized. If the fix is stale or uncertain, explain this and ask whether the user is still in that area."
+                }
+            )
+        consent = params.get("_location_consent", "unknown")
+        if consent in ("enabled", "disabled"):
+            payload["systemInstruction"]["parts"].append(
+                {
+                    "text": "Location preference is remembered: "
+                    + consent
+                    + ". Do not request location permission or emit the application location marker again. If permission is disabled or position unavailable, ask for a city/address instead; the user can change their saved preference in the location control."
                 }
             )
         if params.get("chat") is True:
@@ -353,7 +362,11 @@ def generate(studio, model, prompt, params):
         output = cite_parts(output, candidates[0].get("groundingMetadata", {}))
     if studio in ("text", "minidrama"):
         text = "\n".join(p["text"] for p in output if "text" in p and not p.get("thought"))
-        location_requested = "[HAYTILE_REQUEST_LOCATION]" in text and not params.get("location")
+        location_requested = (
+            "[HAYTILE_REQUEST_LOCATION]" in text
+            and not params.get("location")
+            and params.get("_location_consent", "unknown") == "unknown"
+        )
         if params.get("chat") is True:
             text = text.replace("[HAYTILE_REQUEST_LOCATION]", "").strip()
         if studio == "text" and params.get("chat") is True:

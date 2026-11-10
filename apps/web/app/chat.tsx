@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Paperclip, MapPin, X, AudioLines, Square, ArrowUp, Check, Copy, Download, Mic, MicOff, LoaderCircle, RotateCcw, Sparkles } from 'lucide-react';
 import ChatAudio from './chat-audio';
+import {ChatResponse, type Research} from './chat-research';
+import {useChatLocation, type ChatPosition} from './use-chat-location';
 import { useLiveVoice } from './use-live-voice';
 import { useSpeechInput } from './speech-input';
 import { suggestTitle } from '../../../packages/creation-titles';
 
-type Turn = { audio?: { id: string; status: string; params: { result_asset_id?: string } }; id: string; prompt: string; reply?: string | null; status: string; error?: string | null; title: string; params?: { chat_location_requested?: boolean; chat_grounding?: { sources: {url: string; title: string}[]; search_html?: string }; input_params?: { attachment_ids?: string[]; web_search?: boolean; location?: unknown } } };
+type Turn = { audio?: { id: string; status: string; params: { result_asset_id?: string } }; id: string; prompt: string; reply?: string | null; status: string; error?: string | null; title: string; params?: { chat_location_requested?: boolean; chat_grounding?: Research; input_params?: { attachment_ids?: string[]; web_search?: boolean; location?: unknown } } };
 type Thread = { id: string; title: string };
 type Choice = { model_id: string; label: string; available: boolean; unavailable_reason?: string | null };
 type Props = {
@@ -48,7 +50,10 @@ export default function HaytileChat({ request, t, userId, userName, locale, mode
   const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState<{id:string; title:string; size:number}[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [locating, setLocating] = useState(false);
+  const location = useChatLocation({request,userId,onError});
+  const locating = location.busy;
+  const [locationNoticeHidden,setLocationNoticeHidden]=useState(false);
+  useEffect(()=>setLocationNoticeHidden(false),[location.unavailable]);
   const [toolNotice, setToolNotice] = useState('');
   const toolsEpoch = useRef(0);
   const attachmentInput = useRef<HTMLInputElement>(null);
@@ -62,17 +67,11 @@ export default function HaytileChat({ request, t, userId, userName, locale, mode
     catch (error) { onError(error); }
     finally { setUploading(false); if(attachmentInput.current) attachmentInput.current.value=''; }
   };
-  const locate = (requestPrompt: string) => {
+  const locate = async (requestPrompt: string) => {
     if (!userId) { onAuth(); return; }
-    if (!navigator.geolocation) { setToolNotice(t('chatLocationUnavailable')); return; }
     const epoch=toolsEpoch.current;
-    setLocating(true); setToolNotice('');
-    navigator.geolocation.getCurrentPosition(position => {
-      if(epoch!==toolsEpoch.current) { setLocating(false); return; }
-      const shared = {latitude:Math.round(position.coords.latitude*1000)/1000,longitude:Math.round(position.coords.longitude*1000)/1000};
-      setLocating(false);
-      send(requestPrompt, false, shared);
-    }, () => { setLocating(false); setToolNotice(t('chatLocationUnavailable')); }, {enableHighAccuracy:false,timeout:12000,maximumAge:60000});
+    const shared = await location.enable();
+    if(shared && epoch===toolsEpoch.current) send(requestPrompt, false, shared);
   };
 
   const [model, setModel] = useState('');
@@ -126,12 +125,13 @@ export default function HaytileChat({ request, t, userId, userName, locale, mode
 
   useEffect(() => { bottom.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, [turns.length, turns.map(turn => turn.status).join(',')]);
 
-  const send = async (content = message, voiceTurn = false, sharedLocation: {latitude:number;longitude:number} | null = null) => {
+  const send = async (content = message, voiceTurn = false, sharedLocation: ChatPosition | null = null) => {
     if (!userId) { onAuth(); return; }
     if (!content.trim() || sending || uploading || active || !chosen || !available) return;
     const cid = conversation || crypto.randomUUID();
     const parent = [...turns].reverse().find(turn => turn.status === 'completed');
-    const draft = { studio: 'text', prompt: content.trim(), title: turns[0]?.title || suggestTitle(content, t('newChat')), model_id: chosen.model_id, confirmed_credits: 0, params: { chat: true, conversation_id: cid, parent_job_id: parent?.id || null, language: locale, ...(attachments.length ? { attachment_ids: attachments.map(a=>a.id) } : {}), ...(sharedLocation ? { location: sharedLocation } : {}), ...(voiceTurn ? { voice_conversation: true } : {}) } };
+    const actualLocation = sharedLocation || (location.profile.enabled && location.tracking && !location.unavailable ? location.profile.position : null);
+    const draft = { studio: 'text', prompt: content.trim(), title: turns[0]?.title || suggestTitle(content, t('newChat')), model_id: chosen.model_id, confirmed_credits: 0, params: { chat: true, conversation_id: cid, parent_job_id: parent?.id || null, language: locale, ...(attachments.length ? { attachment_ids: attachments.map(a=>a.id) } : {}), ...(actualLocation ? { location: actualLocation, location_consent_version: location.version() } : {}), ...(voiceTurn ? { voice_conversation: true } : {}) } };
     const fingerprint = JSON.stringify(draft);
     if (pending.current?.fingerprint !== fingerprint) pending.current = { fingerprint, id: crypto.randomUUID() };
     setSending(true);
@@ -145,12 +145,13 @@ export default function HaytileChat({ request, t, userId, userName, locale, mode
     } catch (error) { onError(error); }
     finally { setSending(false); }
   };
+  const exportText = (turn: Turn) => (turn.reply || '') + (turn.params?.chat_grounding?.sources.length ? '\n\n'+t('chatSources')+'\n'+turn.params.chat_grounding.sources.map((source,index)=>`[${index+1}] ${source.title} — ${source.url}`).join('\n') : '');
   const copy = async (turn: Turn) => {
-    try { await navigator.clipboard.writeText(turn.reply || ''); setCopied(turn.id); setTimeout(() => setCopied(''), 2000); }
+    try { await navigator.clipboard.writeText(exportText(turn)); setCopied(turn.id); setTimeout(() => setCopied(''), 2000); }
     catch (error) { onError(error); }
   };
   const download = (turn: Turn) => {
-    const url = URL.createObjectURL(new Blob([turn.reply || ''], { type: 'text/plain;charset=utf-8' }));
+    const url = URL.createObjectURL(new Blob([exportText(turn)], { type: 'text/plain;charset=utf-8' }));
     const link = document.createElement('a'); link.href = url; link.download = turn.title.replace(/[/\\]/g, '-') + '.txt'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   const retry = async (turn: Turn) => {
@@ -167,10 +168,13 @@ export default function HaytileChat({ request, t, userId, userName, locale, mode
       <div className="chat-transcript" role="log" aria-label={t('chatMessages')} aria-live="polite" aria-relevant="additions text">
         {!turns.length && !loading && <article className="chat-message assistant chat-introduction"><div className="chat-avatar"><img src="/mark.png" width={36} height={36} alt="" /></div><div><strong>HAYTILE AI</strong><h1>{greeting}</h1>{introduce && <p>{t('chatIntroduction')}</p>}</div></article>}
         {loading && <p role="status"><LoaderCircle className="spin" size={16} /> {t('loading')}</p>}
-        {turns.map(turn => <div key={turn.id} className="chat-turn"><article className="chat-message user"><div className="chat-user-bubble">{turn.prompt}{!!turn.params?.input_params?.attachment_ids?.length && <small className="chat-turn-tools"><Paperclip size={13}/> {turn.params.input_params.attachment_ids.length} {t('chatAttachedFiles')}</small>}{!!turn.params?.input_params?.location && <small className="chat-turn-tools"><MapPin size={13}/> {t('chatLocationShared')}</small>}</div></article><article className="chat-message assistant"><div className="chat-avatar"><img src="/mark.png" width={36} height={36} alt="" /></div><div className="chat-answer"><strong>HAYTILE AI</strong>{turn.status === 'completed' && turn.reply ? <><div className="chat-response">{turn.reply.split(/(```[\s\S]*?```)/g).map((part, index) => part.startsWith('```') ? <pre key={index}><code>{part.slice(3, -3).replace(/^\w+\n/, '')}</code></pre> : <span key={index}>{part}</span>)}</div>{turn.params?.chat_location_requested && turn.id === turns[turns.length-1]?.id && !active && <div><small className="chat-location-consent">{t('chatLocationConsent')}</small><button type="button" className="button secondary" onClick={()=>locate(turn.prompt)} disabled={locating || uploading || sending || !!voice.session}><MapPin size={16}/>{t('chatAuthorizeLocation')}</button></div>}{turn.params?.chat_grounding && <div className="chat-sources"><strong>{t('chatSources')}</strong>{turn.params.chat_grounding.sources.map((source,index)=><a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">[{index+1}] {source.title}</a>)}{!turn.params.chat_grounding.sources.length && <small>{t('chatNoWebSources')}</small>}{turn.params.chat_grounding.search_html && <iframe title={t('chatSearchSuggestions')} sandbox="allow-popups allow-popups-to-escape-sandbox" referrerPolicy="no-referrer" srcDoc={'<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src https: data:; base-uri \'none\'; form-action \'none\'">'+turn.params.chat_grounding.search_html}/>}</div>}<div className="chat-answer-actions"><button onClick={() => copy(turn)} aria-label={t('copy')}>{copied === turn.id ? <Check size={15} /> : <Copy size={15} />}{t('copy')}</button><button onClick={() => download(turn)}><Download size={15} />{t('download')}</button></div>{!voice.session && <ChatAudio request={request} t={t} reply={turn.reply} initialJob={turn.audio} messageId={turn.id} conversation={conversation} locale={locale} voice={chatVoice} model={voiceModel} onWalletChange={onWalletChange} onError={onError} />}</> : turn.status === 'failed' ? <div className="chat-failure"><p>{t('chatFailed')} <small>{turn.error}</small></p><button className="button secondary" onClick={() => retry(turn)} disabled={sending}><RotateCcw size={15} />{t('retry')}</button></div> : <p className="chat-thinking"><LoaderCircle className="spin" size={16} />{turn.status === 'queued' ? t('queued') : t('chatThinking')}</p>}</div></article></div>)}
+        {turns.map(turn => <div key={turn.id} className="chat-turn"><article className="chat-message user"><div className="chat-user-bubble">{turn.prompt}{!!turn.params?.input_params?.attachment_ids?.length && <small className="chat-turn-tools"><Paperclip size={13}/> {turn.params.input_params.attachment_ids.length} {t('chatAttachedFiles')}</small>}{!!turn.params?.input_params?.location && <small className="chat-turn-tools"><MapPin size={13}/> {t('chatLocationShared')}</small>}</div></article><article className="chat-message assistant"><div className="chat-avatar"><img src="/mark.png" width={36} height={36} alt="" /></div><div className="chat-answer"><strong>HAYTILE AI</strong>{turn.status === 'completed' && turn.reply ? <><ChatResponse reply={turn.reply} research={turn.params?.chat_grounding} t={t}/>{turn.params?.chat_location_requested && !location.profile.known && turn.id === turns[turns.length-1]?.id && !active && <div><small className="chat-location-consent">{t('chatLocationConsent')}</small><button type="button" className="button secondary" onClick={()=>locate(turn.prompt)} disabled={locating || uploading || sending || !!voice.session}><MapPin size={16}/>{t('chatAuthorizeLocation')}</button></div>}<div className="chat-answer-actions"><button onClick={() => copy(turn)} aria-label={t('copy')}>{copied === turn.id ? <Check size={15} /> : <Copy size={15} />}{t('copy')}</button><button onClick={() => download(turn)}><Download size={15} />{t('download')}</button></div>{!voice.session && <ChatAudio request={request} t={t} reply={turn.reply} initialJob={turn.audio} messageId={turn.id} conversation={conversation} locale={locale} voice={chatVoice} model={voiceModel} onWalletChange={onWalletChange} onError={onError} />}</> : turn.status === 'failed' ? <div className="chat-failure"><p>{t('chatFailed')} <small>{turn.error}</small></p><button className="button secondary" onClick={() => retry(turn)} disabled={sending}><RotateCcw size={15} />{t('retry')}</button></div> : <p className="chat-thinking"><LoaderCircle className="spin" size={16} />{turn.status === 'queued' ? t('queued') : t('chatThinking')}</p>}</div></article></div>)}
         <div ref={bottom} />
       </div>
       <footer className="chat-footer">
+        {location.profile.known && <div className="chat-location-status"><button type="button" onClick={()=>{const last=turns[turns.length-1];if(!location.profile.enabled&&last?.params?.chat_location_requested)locate(last.prompt);else location.enable();}} disabled={locating} aria-label={t(location.profile.enabled ? 'chatRefreshLocation' : 'chatEnableLocation')} title={t('chatLocationRemembered')}><MapPin size={12}/>{t(location.profile.enabled ? location.unavailable ? 'chatLocationUnavailableShort' : location.tracking ? 'chatLocationActive' : 'chatLocationLastKnown' : 'chatLocationDisabled')}{location.profile.enabled && location.profile.position && <> · ±{location.profile.position.accuracy_m<1 ? '<1' : Math.ceil(location.profile.position.accuracy_m)} m</>}</button>{location.profile.enabled&&<button type="button" onClick={()=>location.disable()} aria-label={t('chatStopLocation')}><X size={12}/></button>}</div>}
+
+        {location.unavailable && !locationNoticeHidden && <div className="chat-location-warning" role="status"><span>{t('chatLocationUnavailable')}</span><button type="button" aria-label={t('chatDismissNotice')} onClick={()=>setLocationNoticeHidden(true)}><X size={14}/></button></div>}
         {syncError && <p role="alert">{t('chatSyncError')}</p>}
         {!available && <p role="status">{t('servicePausedBody')}</p>}
         {(voice.session || voice.busy) && <div className="live-call-overlay" role="dialog" aria-modal="true" aria-label={t('voiceMode')}><div className="live-call-card"><span className={'live-voice-orb '+voice.phase} aria-hidden="true"><AudioLines size={64}/></span><h2>HAYTILE AI</h2><p role="status">{t(voice.busy ? 'voicePreparing' : voice.phase === 'reconnecting' ? 'voiceReconnecting' : voice.phase === 'waiting' ? 'voiceWaiting' : voice.phase === 'speaking' ? 'voiceSpeaking' : 'voiceListening')}</p><p>{t('liveVoiceNotice')}</p><p>{voice.chargedCredits} {t('credits')}</p><div className="live-call-actions"><button type="button" className="button secondary" onClick={voice.toggleMute} aria-pressed={voice.muted}>{voice.muted ? <MicOff size={20}/> : <Mic size={20}/>} {t(voice.muted ? 'liveUnmute' : 'liveMute')}</button><button type="button" className="button primary" onClick={voice.stop}>{t('voiceStop')}</button></div></div></div>}

@@ -351,7 +351,18 @@
   "chatAttachedFiles": "arquivos anexados",
   "chatLocationShared": "Localização aproximada compartilhada",
   "chatAuthorizeLocation": "Autorizar localização",
-  "chatLocationConsent": "Sua posição aproximada será enviada ao provedor de IA para esta solicitação e salva neste chat privado. Sem rastreamento contínuo.",
+  "chatLocationConsent": "Lembrar esta escolha e compartilhar a localização do aparelho com a IA nos próximos chats. Ela é atualizada enquanto o chat está visível. Você pode parar a qualquer momento; a precisão varia.",
   "chatRemoveAttachment": "Remover anexo",
-  "chatAttachmentError": "Anexo indisponível ou inválido. Remova-o e anexe um arquivo compatível."
+  "chatAttachmentError": "Anexo indisponível ou inválido. Remova-o e anexe um arquivo compatível.",
+  "chatStopLocation": "Parar de compartilhar localização",
+  "chatEnableLocation": "Ativar localização",
+  "chatRefreshLocation": "Atualizar localização",
+  "chatLocationRemembered": "Escolha salva. A localização é atualizada enquanto o chat está visível; a precisão depende do aparelho.",
+  "chatLocationActive": "Localização ativa",
+  "chatLocationDisabled": "Localização desativada",
+  "chatLocationUnavailableShort": "Localização indisponível",
+  "chatLocationLastKnown": "Última localização conhecida",
+  "chatResearchQueries": "Consultas de pesquisa",
+  "chatCloseSources": "Fechar fontes",
+  "chatDismissNotice": "Dispensar aviso"
 }

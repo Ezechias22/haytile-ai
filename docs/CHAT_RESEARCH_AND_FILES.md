@@ -10,33 +10,60 @@ Grounding metadata, not model-invented links, supplies a numbered HTTPS source
 list. When Google's byte-indexed grounding supports are present, claim citations
 are inserted at the matching UTF-8 boundaries. Search suggestions supplied by
 Google appear inside a sandboxed, script-disabled iframe with a restrictive CSP.
-No HTML from a model answer is executed. Plain replies do not get empty source
-panels. Failed or absent grounding must not be described as verified research.
+Replies now render Markdown, lists, tables and code with react-markdown/remark-gfm;
+raw HTML remains disabled. Inline citation chips open a keyboard-accessible source
+dialog (side panel on desktop, bottom sheet on mobile). The compact source summary
+opens numbered cards with domains and links, plus actual provider search queries
+when supplied. Copy/download include the source URLs. Google search suggestions
+remain visible alongside the answer in their sandbox. Plain replies do not get
+empty source panels. Failed or absent grounding must not be described as verified research.
 No automatic second paid generation or silent provider fallback is added.
 
-## Location
+## Remembered location
 
-When location is necessary, the model emits the application's reserved
-`[HAYTILE_REQUEST_LOCATION]` control marker alongside its explanation. The server
-removes the marker from the answer and stores an owner-private request flag.
-Only the latest completed requesting turn shows **Authorize location**. Ordinary
-messages never call the Geolocation API and there is no permanent location button.
-The user sees why location is needed and a disclosure before clicking; the
-browser then obtains permission. Denial sends no position and offers manual city
-or address input. This depends on HTTPS and browser/OS permission support.
+For a location-related question without a saved choice, the model emits the
+reserved `[HAYTILE_REQUEST_LOCATION]` marker with an explanation. The server
+replaces the marker with a consent button. The consent text now explicitly covers
+remembering the choice and using location in later chats. Earlier one-message
+consent is not silently migrated into continuing sharing.
 
-The browser rounds coordinates to three decimal places and submits the original
-question again with a distinct, explicit location-bearing chat turn. No watch or
-background tracking is started. Coordinates are passed to the provider for that
-turn only, retained in the user's private chat for history, and excluded from
-subsequent reconstructed model context. They are removed with chat/account data
-through existing deletion paths. Nearby web results are not guaranteed complete,
-current or the nearest establishment. Immediate danger should be directed to
-local emergency services without waiting for an AI search.
+`GET/PATCH/DELETE /v1/chat/location` stores a private internal Project document
+per authenticated account: enabled/disabled choice, latest device-reported fix,
+accuracy in meters, capture time and consent version. This survives redeployment
+through the existing canonical Firestore records. Internal preferences are hidden
+from storyboard APIs. Permission denial and explicit Stop retain a disabled choice
+and clear the latest fix, so the assistant does not repeatedly request permission.
+Account deletion removes the preference; existing chat messages remain governed
+by their normal deletion paths.
 
-The spoken Live API call keeps its existing native-audio path; it does not gain
-these text-chat tools. Its identity policy suppresses application control markers
-in spoken responses and asks verbally for a city/address when necessary.
+After authorization, the browser requests high-accuracy geolocation. While the
+chat is visible and browser permission remains granted, a foreground watch updates
+the current fix. Server publication is throttled to once per 30 seconds, without
+AI calls. Hiding the page, leaving the chat or signing out clears the watch.
+Browser permission revocation disables sharing. A compact control shows active,
+last-known or unavailable status with reported accuracy and allows refresh/Stop.
+Enabling GPS alone does not grant browser permission; other browsers/devices may
+still require their own native permission. There is no background location access.
+
+Coordinates are no longer artificially rounded to three decimal places. The
+provider receives device coordinates (six decimal places), measured accuracy and
+capture time, and is instructed never to promise exact/current location when the
+fix is uncertain or stale. The latest saved position can be reused without asking
+again while enabled. A timestamped last-known fix is not proof of current location.
+The visible page's own fix takes priority when a message is sent.
+
+Updates require a matching consent version. Delayed updates and queued messages
+with a revoked version cannot restore sharing or forward the revoked fix. Re-enable
+requires an explicit authorization action. Location is kept in private account
+metadata and, for directly shared turns, private chat parameters; search/provider
+processing may use it while sharing is enabled. Stop clears the saved latest fix
+but does not rewrite earlier conversation messages or recall in-flight provider
+requests. Nearby search results are not guaranteed complete, current or nearest.
+Immediate danger should be directed to local emergency services without waiting.
+
+The native spoken Live API call remains on its existing audio path; it does not
+gain these text-chat research tools. Its policy suppresses control markers in
+spoken responses and asks verbally for city/address if needed.
 
 ## Files
 

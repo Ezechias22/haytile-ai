@@ -351,7 +351,18 @@
   "chatAttachedFiles": "fichye atache",
   "chatLocationShared": "Pozisyon apeprè pataje",
   "chatAuthorizeLocation": "Otorize lokalizasyon",
-  "chatLocationConsent": "Pozisyon apeprè ou ap ale bay founisè AI a pou demann sa a epi l ap sove nan chat prive sa a. Pa gen swivi kontinyèl.",
+  "chatLocationConsent": "Konsève chwa sa a epi pataje pozisyon aparèy la bay ak AI a pou pwochen chat yo. Li mete ajou pandan chat la vizib. Ou ka kanpe pataj la nenpòt lè; presizyon an depann de aparèy la.",
   "chatRemoveAttachment": "Retire fichye",
-  "chatAttachmentError": "Fichye a pa disponib oswa li pa valab. Retire li epi ajoute yon fichye ki sipòte ankò."
+  "chatAttachmentError": "Fichye a pa disponib oswa li pa valab. Retire li epi ajoute yon fichye ki sipòte ankò.",
+  "chatStopLocation": "Kanpe pataj pozisyon",
+  "chatEnableLocation": "Aktive lokalizasyon",
+  "chatRefreshLocation": "Mete pozisyon ajou",
+  "chatLocationRemembered": "Chwa a konsève. Pozisyon an mete ajou pandan chat la vizib; presizyon an depann de aparèy la.",
+  "chatLocationActive": "Lokalizasyon aktive",
+  "chatLocationDisabled": "Lokalizasyon dezaktive",
+  "chatLocationUnavailableShort": "Pozisyon pa disponib",
+  "chatLocationLastKnown": "Dènye pozisyon ki te konnen",
+  "chatResearchQueries": "Rechèch ki fèt yo",
+  "chatCloseSources": "Fèmen sous yo",
+  "chatDismissNotice": "Kache mesaj la"
 }

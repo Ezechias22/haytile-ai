@@ -351,7 +351,18 @@
   "chatAttachedFiles": "faili zilizoambatishwa",
   "chatLocationShared": "Mahali pa kukadiria pameshirikiwa",
   "chatAuthorizeLocation": "Ruhusu mahali",
-  "chatLocationConsent": "Mahali pako pa kukadiria patatumwa kwa mtoa huduma wa AI kwa ombi hili na kuhifadhiwa katika mazungumzo haya ya faragha. Hakuna ufuatiliaji endelevu.",
+  "chatLocationConsent": "Kumbuka chaguo hili na shiriki mahali panaporipotiwa na kifaa na AI kwa mazungumzo yajayo. Husasishwa mazungumzo yanapoonekana. Unaweza kusitisha wakati wowote; usahihi hutofautiana.",
   "chatRemoveAttachment": "Ondoa kiambatisho",
-  "chatAttachmentError": "Kiambatisho hakipatikani au si sahihi. Kiondoe na uambatishe faili inayokubalika."
+  "chatAttachmentError": "Kiambatisho hakipatikani au si sahihi. Kiondoe na uambatishe faili inayokubalika.",
+  "chatStopLocation": "Acha kushiriki mahali",
+  "chatEnableLocation": "Washa mahali",
+  "chatRefreshLocation": "Sasisha mahali",
+  "chatLocationRemembered": "Chaguo limehifadhiwa. Mahali husasishwa mazungumzo yanapoonekana; usahihi hutegemea kifaa chako.",
+  "chatLocationActive": "Mahali pamewashwa",
+  "chatLocationDisabled": "Mahali pamezimwa",
+  "chatLocationUnavailableShort": "Mahali hapapatikani",
+  "chatLocationLastKnown": "Mahali pa mwisho palipojulikana",
+  "chatResearchQueries": "Hoja za utafutaji",
+  "chatCloseSources": "Funga vyanzo",
+  "chatDismissNotice": "Ficha taarifa"
 }

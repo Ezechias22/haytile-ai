@@ -351,7 +351,18 @@
   "chatAttachedFiles": "个附件",
   "chatLocationShared": "已分享大致位置",
   "chatAuthorizeLocation": "允许获取位置",
-  "chatLocationConsent": "您的大致位置将为本次请求发送给AI服务商，并保存在此私人聊天中。不会持续追踪。",
+  "chatLocationConsent": "记住此选择，并在后续聊天中向AI分享设备报告的位置。仅在聊天可见时更新。可随时停止分享；设备准确度会变化。",
   "chatRemoveAttachment": "移除附件",
-  "chatAttachmentError": "附件不可用或无效。请移除后重新添加支持的文件。"
+  "chatAttachmentError": "附件不可用或无效。请移除后重新添加支持的文件。",
+  "chatStopLocation": "停止分享位置",
+  "chatEnableLocation": "启用位置",
+  "chatRefreshLocation": "刷新位置",
+  "chatLocationRemembered": "已记住选择。聊天可见时更新位置；准确度取决于设备。",
+  "chatLocationActive": "位置已启用",
+  "chatLocationDisabled": "位置已关闭",
+  "chatLocationUnavailableShort": "位置不可用",
+  "chatLocationLastKnown": "上次已知位置",
+  "chatResearchQueries": "搜索查询",
+  "chatCloseSources": "关闭来源",
+  "chatDismissNotice": "关闭提示"
 }

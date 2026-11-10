@@ -351,7 +351,18 @@
   "chatAttachedFiles": "ملفات مرفقة",
   "chatLocationShared": "تمت مشاركة موقع تقريبي",
   "chatAuthorizeLocation": "السماح بالموقع",
-  "chatLocationConsent": "سيُرسل موقعك التقريبي لمزود الذكاء الاصطناعي لهذا الطلب ويُحفظ في هذه المحادثة الخاصة. لا تتبع مستمر.",
+  "chatLocationConsent": "تذكّر هذا الخيار ومشاركة الموقع الذي يبلّغه الجهاز مع الذكاء الاصطناعي للمحادثات المقبلة. يُحدّث عندما تكون المحادثة ظاهرة. يمكنك إيقاف المشاركة في أي وقت؛ الدقة متغيرة.",
   "chatRemoveAttachment": "إزالة المرفق",
-  "chatAttachmentError": "المرفق غير متاح أو غير صالح. أزله وأرفق ملفاً مدعوماً."
+  "chatAttachmentError": "المرفق غير متاح أو غير صالح. أزله وأرفق ملفاً مدعوماً.",
+  "chatStopLocation": "إيقاف مشاركة الموقع",
+  "chatEnableLocation": "تفعيل الموقع",
+  "chatRefreshLocation": "تحديث الموقع",
+  "chatLocationRemembered": "تم حفظ الخيار. يُحدّث الموقع عندما تكون المحادثة ظاهرة؛ تعتمد الدقة على جهازك.",
+  "chatLocationActive": "الموقع مفعّل",
+  "chatLocationDisabled": "الموقع معطّل",
+  "chatLocationUnavailableShort": "الموقع غير متاح",
+  "chatLocationLastKnown": "آخر موقع معروف",
+  "chatResearchQueries": "عبارات البحث",
+  "chatCloseSources": "إغلاق المصادر",
+  "chatDismissNotice": "إخفاء الإشعار"
 }

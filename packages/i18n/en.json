@@ -351,7 +351,18 @@
   "chatAttachedFiles": "attached files",
   "chatLocationShared": "Approximate location shared",
   "chatAuthorizeLocation": "Authorize location",
-  "chatLocationConsent": "Your approximate position will be sent to the AI provider for this request and saved in this private chat. No continuous tracking.",
+  "chatLocationConsent": "Remember this choice and share device-reported location with the AI for future chats. It updates while chat is visible. You can stop sharing at any time; device accuracy varies.",
   "chatRemoveAttachment": "Remove attachment",
-  "chatAttachmentError": "Attachment unavailable or invalid. Remove it and attach a supported file again."
+  "chatAttachmentError": "Attachment unavailable or invalid. Remove it and attach a supported file again.",
+  "chatStopLocation": "Stop location sharing",
+  "chatEnableLocation": "Enable location",
+  "chatRefreshLocation": "Refresh location",
+  "chatLocationRemembered": "Choice remembered. Location updates while chat is visible; accuracy depends on your device.",
+  "chatLocationActive": "Location on",
+  "chatLocationDisabled": "Location off",
+  "chatLocationUnavailableShort": "Location unavailable",
+  "chatLocationLastKnown": "Last known location",
+  "chatResearchQueries": "Search queries",
+  "chatCloseSources": "Close sources",
+  "chatDismissNotice": "Dismiss notice"
 }

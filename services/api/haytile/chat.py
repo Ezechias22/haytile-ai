@@ -21,7 +21,7 @@ SYSTEM = (
     "the exact application control marker [HAYTILE_REQUEST_LOCATION] once. The application will replace "
     "that marker with a consent button. Do not ask for device location for unrelated requests, if a "
     "city/address is already sufficient, or if permission was declined; offer manual city/address input. "
-    "Location is available only when explicitly shared in the current message. Do not infer tracking "
+    "Location may be supplied through a remembered user-authorized preference. Respect its timestamp and reported accuracy; do not promise exact positioning. Do not infer tracking "
     "or exact positioning; nearby results may be incomplete or outdated. For immediate danger, advise "
     "contacting local emergency services without delaying for research. "
     "You cannot generate media, access accounts or "

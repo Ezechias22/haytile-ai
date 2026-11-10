@@ -351,7 +351,18 @@
   "chatAttachedFiles": "berkas terlampir",
   "chatLocationShared": "Lokasi perkiraan dibagikan",
   "chatAuthorizeLocation": "Izinkan lokasi",
-  "chatLocationConsent": "Lokasi perkiraan Anda akan dikirim ke penyedia AI untuk permintaan ini dan disimpan dalam chat pribadi ini. Tanpa pelacakan berkelanjutan.",
+  "chatLocationConsent": "Ingat pilihan ini dan bagikan lokasi yang dilaporkan perangkat kepada AI untuk chat berikutnya. Lokasi diperbarui saat chat terlihat. Anda dapat menghentikannya kapan saja; akurasi bervariasi.",
   "chatRemoveAttachment": "Hapus lampiran",
-  "chatAttachmentError": "Lampiran tidak tersedia atau tidak valid. Hapus dan lampirkan berkas yang didukung."
+  "chatAttachmentError": "Lampiran tidak tersedia atau tidak valid. Hapus dan lampirkan berkas yang didukung.",
+  "chatStopLocation": "Hentikan berbagi lokasi",
+  "chatEnableLocation": "Aktifkan lokasi",
+  "chatRefreshLocation": "Perbarui lokasi",
+  "chatLocationRemembered": "Pilihan disimpan. Lokasi diperbarui saat chat terlihat; akurasi tergantung perangkat Anda.",
+  "chatLocationActive": "Lokasi aktif",
+  "chatLocationDisabled": "Lokasi nonaktif",
+  "chatLocationUnavailableShort": "Lokasi tidak tersedia",
+  "chatLocationLastKnown": "Lokasi terakhir diketahui",
+  "chatResearchQueries": "Kueri pencarian",
+  "chatCloseSources": "Tutup sumber",
+  "chatDismissNotice": "Tutup pemberitahuan"
 }

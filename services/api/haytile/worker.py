@@ -170,6 +170,23 @@ def run_once():
                 }
             ]
             with Session() as context_db:
+                from .chat_location import preference
+
+                settings = preference(context_db, job.user_id)
+                params["_location_consent"] = (
+                    "enabled"
+                    if settings["enabled"]
+                    else "disabled"
+                    if settings["known"]
+                    else "unknown"
+                )
+                if "location_consent_version" in params and (
+                    not settings["enabled"]
+                    or params["location_consent_version"] != settings["version"]
+                ):
+                    params.pop("location", None)
+                if not params.get("location") and settings["enabled"] and settings["position"]:
+                    params["location"] = settings["position"]
                 params["_chat_materialized"] = materialize(context_db, job.user_id, contents)
 
             def save_grounding(value):

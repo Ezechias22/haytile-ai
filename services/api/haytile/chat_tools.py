@@ -37,10 +37,34 @@ def validate(db, user_id, params):
         total += asset.size
     if total > MAX_ATTACHMENT_BYTES:
         fail("CHAT_ATTACHMENTS_TOO_LARGE")
+    if "location_consent_version" in params and (
+        type(params["location_consent_version"]) is not int
+        or params["location_consent_version"] < 0
+    ):
+        fail("CHAT_LOCATION_INVALID")
     location = params.get("location")
     if location is not None:
-        if not isinstance(location, dict) or set(location) != {"latitude", "longitude"}:
+        if (
+            not isinstance(location, dict)
+            or not {"latitude", "longitude"} <= set(location)
+            or not set(location) <= {"latitude", "longitude", "accuracy_m", "captured_at"}
+        ):
             fail("CHAT_LOCATION_INVALID")
+        if "accuracy_m" in location and (
+            type(location["accuracy_m"]) not in (int, float)
+            or not math.isfinite(location["accuracy_m"])
+            or not 0 < location["accuracy_m"] <= 100000
+        ):
+            fail("CHAT_LOCATION_INVALID")
+        if "captured_at" in location:
+            from datetime import datetime
+
+            try:
+                value = datetime.fromisoformat(location["captured_at"].replace("Z", "+00:00"))
+                if value.tzinfo is None:
+                    raise ValueError()
+            except (ValueError, TypeError, AttributeError):
+                fail("CHAT_LOCATION_INVALID")
         for key, bound in [("latitude", 90), ("longitude", 180)]:
             value = location[key]
             if (
@@ -144,6 +168,9 @@ def grounding(metadata):
         "sources": sources,
         "search_html": snippet[:100000] if isinstance(snippet, str) else "",
         "searched": bool(sources or snippet or metadata.get("webSearchQueries")),
+        "queries": [
+            q[:240] for q in metadata.get("webSearchQueries", [])[:8] if isinstance(q, str)
+        ],
     }
 
 

@@ -351,7 +351,18 @@
   "chatAttachedFiles": "archivos adjuntos",
   "chatLocationShared": "Ubicación aproximada compartida",
   "chatAuthorizeLocation": "Autorizar ubicación",
-  "chatLocationConsent": "Su posición aproximada se enviará al proveedor de IA para esta solicitud y se guardará en este chat privado. Sin seguimiento continuo.",
+  "chatLocationConsent": "Recordar esta elección y compartir la ubicación del dispositivo con la IA en próximos chats. Se actualiza mientras el chat está visible. Puede detenerla en cualquier momento; la precisión varía.",
   "chatRemoveAttachment": "Quitar archivo",
-  "chatAttachmentError": "Archivo no disponible o inválido. Quítelo y adjunte un archivo compatible."
+  "chatAttachmentError": "Archivo no disponible o inválido. Quítelo y adjunte un archivo compatible.",
+  "chatStopLocation": "Dejar de compartir ubicación",
+  "chatEnableLocation": "Activar ubicación",
+  "chatRefreshLocation": "Actualizar ubicación",
+  "chatLocationRemembered": "Preferencia guardada. La ubicación se actualiza mientras el chat está visible; la precisión depende del dispositivo.",
+  "chatLocationActive": "Ubicación activa",
+  "chatLocationDisabled": "Ubicación desactivada",
+  "chatLocationUnavailableShort": "Ubicación no disponible",
+  "chatLocationLastKnown": "Última ubicación conocida",
+  "chatResearchQueries": "Consultas de búsqueda",
+  "chatCloseSources": "Cerrar fuentes",
+  "chatDismissNotice": "Ocultar aviso"
 }
