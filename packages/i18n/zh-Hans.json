@@ -372,5 +372,6 @@
   "chatInterrupted": "中断后无法找回先前的回复。再次发送将创建一个新请求。",
   "chatRecoverable": "已保存服务商的响应。恢复将使用已保存的响应，不会再次生成AI内容。",
   "chatResendRequest": "发送新请求",
-  "chatRecoverResponse": "恢复已保存的回复"
+  "chatRecoverResponse": "恢复已保存的回复",
+  "workerPreparationFailed": "本次尝试在联系AI之前的准备阶段失败。服务修复后可以重试。"
 }

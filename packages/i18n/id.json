@@ -372,5 +372,6 @@
   "chatInterrupted": "Jawaban sebelumnya tidak dapat dipulihkan setelah terputus. Mengirim lagi membuat permintaan baru.",
   "chatRecoverable": "Respons penyedia telah disimpan. Pemulihan menggunakannya tanpa generasi AI tambahan.",
   "chatResendRequest": "Kirim permintaan baru",
-  "chatRecoverResponse": "Pulihkan respons tersimpan"
+  "chatRecoverResponse": "Pulihkan respons tersimpan",
+  "workerPreparationFailed": "Percobaan ini gagal saat persiapan, sebelum menghubungi AI. Anda dapat mencoba lagi setelah layanan diperbaiki."
 }

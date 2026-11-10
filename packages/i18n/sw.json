@@ -372,5 +372,6 @@
   "chatInterrupted": "Jibu la awali halikuweza kurejeshwa baada ya kukatika. Kutuma tena huunda ombi jipya.",
   "chatRecoverable": "Jibu la mtoa huduma limehifadhiwa. Urejeshaji hulitumia bila uzalishaji mwingine wa AI.",
   "chatResendRequest": "Tuma ombi jipya",
-  "chatRecoverResponse": "Rejesha jibu lililohifadhiwa"
+  "chatRecoverResponse": "Rejesha jibu lililohifadhiwa",
+  "workerPreparationFailed": "Jaribio hili limeshindwa wakati wa maandalizi, kabla ya kuwasiliana na AI. Unaweza kujaribu tena baada ya huduma kurekebishwa."
 }

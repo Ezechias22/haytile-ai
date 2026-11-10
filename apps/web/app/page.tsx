@@ -343,6 +343,7 @@ export default function App() {
     if (/VOICE_INPUT_UNAVAILABLE/.test(code)) return t('voiceInputUnsupported');
     if (/LOGIN_INVALID/.test(code)) return t('authError');
     if (/AI_SERVICE_PAUSED|BACKGROUND_PROCESSING_PAUSED/.test(code)) return t('servicePausedBody');
+    if (/WORKER_PREPARATION_FAILED/.test(code)) return t('workerPreparationFailed');
     if (/PROVIDER_CONTENT_REJECTED/.test(code)) return t('providerContentRejected');
     if (/PROVIDER_REQUEST_REJECTED|PROVIDER_HTTP_400/.test(code)) return t('providerRequestRejected');
     if (/MANUAL_RECONCILIATION_REQUIRED/.test(code)) return t('manualReconciliation');

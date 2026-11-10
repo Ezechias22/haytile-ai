@@ -54,3 +54,30 @@ test database and an offline browser server whose external provider transport is
 forbidden. Tests cover storage and parser failure recovery with exactly one
 upstream call, unknown-outcome explicit resend, empty-result restart, null metadata,
 secret redaction and unchanged awareness lyrics. No real generation was used.
+
+## Standalone worker import regression
+
+Production failure metadata and a local fresh-process reproduction identified a
+circular import: the worker read preferences from the `chat_location` route module;
+that module imported `main`, which tried to import its still-uninitialized router.
+API-first tests had already loaded `main`, masking the production worker's import
+order. The shared preference/identifier functions now live in `location_state`,
+which depends only on the database model. The worker imports that module at boot
+and never imports API routes for location state.
+
+A subprocess test starts a fresh worker, creates a first chat job in an isolated
+SQLite projection, runs the full worker pipeline with a forbidden-external/fake
+provider, and verifies completion while `haytile.main` never enters `sys.modules`.
+A second test reproduces an initialization failure, including a legacy interrupted
+job with three attempts, then verifies a normal retry invokes generation once.
+Browser coverage verifies the preparation explanation and Retry button without
+an unnecessary new-request confirmation.
+
+Failures before provider execution now use `WORKER_PREPARATION_FAILED`. Historical
+jobs that recorded `failure_phase: preparing` remain safely retryable: this attempt
+never reached generation. Local saved-response recovery and preparation failures
+are not blocked by the provider-attempt ceiling. Unknown provider outcomes keep
+the previous reconciliation/explicit-resend rules. Worker logs include a readiness
+message and the failure phase/exception class without logging request contents.
+No affected production job is automatically requeued and no paid generation was
+used to validate this repair.

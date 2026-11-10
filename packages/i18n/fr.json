@@ -372,5 +372,6 @@
   "chatInterrupted": "La réponse précédente n’a pas pu être récupérée après une interruption. Renvoyer crée une nouvelle demande.",
   "chatRecoverable": "Une réponse du fournisseur a été sauvegardée. La récupération l’utilise sans nouvelle génération IA.",
   "chatResendRequest": "Envoyer une nouvelle demande",
-  "chatRecoverResponse": "Récupérer la réponse sauvegardée"
+  "chatRecoverResponse": "Récupérer la réponse sauvegardée",
+  "workerPreparationFailed": "Cette tentative a échoué pendant la préparation, avant de contacter l’IA. Vous pouvez réessayer après correction du service."
 }

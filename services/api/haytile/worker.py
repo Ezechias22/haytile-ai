@@ -13,7 +13,7 @@ from pathlib import Path
 
 from sqlalchemy import and_, or_, select
 
-from . import accounts, providers, records, storage, wallets
+from . import accounts, location_state, providers, records, storage, wallets
 from .availability import generation_enabled, worker_enabled
 from .db import Asset, Job, Ledger, Project, Session, User, now
 from .downloads import chunks
@@ -186,9 +186,7 @@ def run_once():
                 }
             ]
             with Session() as context_db:
-                from .chat_location import preference
-
-                settings = preference(context_db, job.user_id)
+                settings = location_state.preference(context_db, job.user_id)
                 params["_location_consent"] = (
                     "enabled"
                     if settings["enabled"]
@@ -418,7 +416,13 @@ def run_once():
     except Exception as exc:
         if key:
             storage.delete(key)
-        code = str(exc) if isinstance(exc, providers.ProviderError) else "MEDIA_OR_STORAGE_FAILED"
+        code = (
+            str(exc)
+            if isinstance(exc, providers.ProviderError)
+            else "WORKER_PREPARATION_FAILED"
+            if phase == "preparing"
+            else "MEDIA_OR_STORAGE_FAILED"
+        )
         try:
             with Session.begin() as state:
                 row = state.get(Job, job_id)
@@ -440,7 +444,13 @@ def run_once():
             "PROVIDER_MEDIA_DOWNLOAD_FAILED",
         ) or code.startswith("PROVIDER_HTTP_5"):
             code = "WORKER_INTERRUPTED_RECONCILE"
-        log.warning("job_failed id=%s code=%s", job_id, code)
+        log.warning(
+            "job_failed id=%s code=%s phase=%s exception=%s",
+            job_id,
+            code,
+            phase,
+            type(exc).__name__,
+        )
         finalize_failure(job_id, code)
     finally:
         scratch.cleanup()
@@ -451,6 +461,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
     if not worker_enabled():
         return
+    log.info("worker_ready")
     while True:
         try:
             if run_once():

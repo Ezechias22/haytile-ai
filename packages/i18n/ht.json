@@ -372,5 +372,6 @@
   "chatInterrupted": "Ansyen repons lan pa t ka rekipere apre yon entèripsyon. Voye ankò ap kreye yon nouvo demann.",
   "chatRecoverable": "Yon repons founisè a sove. Rekiperasyon an sèvi avè l san yon lòt jenerasyon AI.",
   "chatResendRequest": "Voye yon nouvo demann",
-  "chatRecoverResponse": "Rekipere repons ki sove a"
+  "chatRecoverResponse": "Rekipere repons ki sove a",
+  "workerPreparationFailed": "Tantativ sa a echwe pandan preparasyon demann lan, anvan li kontakte AI a. Ou ka eseye ankò apre sèvis la korije."
 }

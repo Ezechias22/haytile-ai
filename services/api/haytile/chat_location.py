@@ -1,33 +1,17 @@
 """Private remembered location consent and latest device-reported fix."""
 
 from datetime import datetime, timezone
-from uuid import NAMESPACE_URL, uuid5
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
 from .db import Project, Session, User, now
+from .location_state import identifier, preference
 from .main import current, fail, limit
 from .trials import lock_sqlite_write
 
 router = APIRouter()
-
-
-def identifier(user_id):
-    return str(uuid5(NAMESPACE_URL, "haytile:location:" + user_id))
-
-
-def preference(db, user_id):
-    row = db.get(Project, identifier(user_id))
-    if not row or row.user_id != user_id:
-        return {"known": False, "enabled": False, "position": None, "version": 0}
-    return {
-        "known": True,
-        "enabled": row.document.get("enabled") is True,
-        "position": row.document.get("position"),
-        "version": row.version,
-    }
 
 
 class Position(BaseModel):

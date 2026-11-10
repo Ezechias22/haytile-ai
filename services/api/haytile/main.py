@@ -180,6 +180,8 @@ def job_json(j):
             if j.studio == "text" and j.credits == 0 and j.error == "PROVIDER_EMPTY_TEXT"
             else "resume"
             if j.studio == "text" and cached
+            else "retry"
+            if j.params.get("failure_phase") == "preparing"
             else "new_request"
             if j.studio == "text" and j.credits == 0 and j.error == "WORKER_INTERRUPTED_RECONCILE"
             else "blocked"
@@ -290,7 +292,7 @@ def runtime_settings():
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
     return {
-        "api_release": "safe-chat-recovery-v20",
+        "api_release": "worker-import-fix-v21",
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
         "metadata_store": "firestore" if records.enabled() else "sql",
@@ -1109,11 +1111,19 @@ def retry(job_id: str, body: RetryRequest | None = None, user=Depends(current)):
             approved_text = (
                 job.studio == "text" and job.credits == 0 and body is not None and body.new_request
             )
-            if job.studio == "text" and job.credits == 0 and not cached_text and not approved_text:
+            preparation_failed = job.params.get("failure_phase") == "preparing"
+            if (
+                job.studio == "text"
+                and job.credits == 0
+                and not cached_text
+                and not approved_text
+                and not preparation_failed
+            ):
                 fail("NEW_REQUEST_CONFIRMATION_REQUIRED", 409)
             can_resume = (
                 cached_text
                 or approved_text
+                or preparation_failed
                 or (job.studio == "video" and safe_to_resume(job.params))
                 or operation
                 and (
@@ -1133,7 +1143,15 @@ def retry(job_id: str, body: RetryRequest | None = None, user=Depends(current)):
         )
         if trial_error:
             fail(trial_error, 429)
-        if job.attempt >= 3:
+        local_recovery = job.studio == "text" and (
+            isinstance(job.params.get("provider_response"), dict)
+            or isinstance(job.params.get("provider_text_result"), dict)
+        )
+        if (
+            job.attempt >= 3
+            and job.params.get("failure_phase") != "preparing"
+            and not local_recovery
+        ):
             fail("RETRY_LIMIT", 409)
         if owner.balance - owner.reserved < job.credits:
             fail("INSUFFICIENT_CREDITS", 402)

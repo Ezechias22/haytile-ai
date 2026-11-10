@@ -372,5 +372,6 @@
   "chatInterrupted": "The previous reply could not be recovered after an interruption. Sending again creates a new request.",
   "chatRecoverable": "A provider response was saved. Recovery uses that saved response without another AI generation.",
   "chatResendRequest": "Send a new request",
-  "chatRecoverResponse": "Recover saved response"
+  "chatRecoverResponse": "Recover saved response",
+  "workerPreparationFailed": "This attempt failed while preparing the request, before contacting the AI. You can retry after the service is fixed."
 }

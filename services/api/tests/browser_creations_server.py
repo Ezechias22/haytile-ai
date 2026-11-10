@@ -178,3 +178,21 @@ async def offline_stripe_signature(request: Request):
     raw=await request.body()
     return {'valid':billing.signature(raw,request.headers.get('stripe-signature',''))}
 app.router.routes.insert(0,app.router.routes.pop())
+
+
+# Failure injection is restricted to this explicit offline test server.
+from haytile import location_state
+original_location_preference = location_state.preference
+preparation_fault = {"remaining": 0}
+def fixture_location_preference(db, user_id):
+    if preparation_fault["remaining"]:
+        preparation_fault["remaining"] -= 1
+        raise ImportError("Offline worker preparation failure")
+    return original_location_preference(db, user_id)
+location_state.preference = fixture_location_preference
+
+@app.post("/v1/offline/prepare-import-failure")
+def offline_prepare_import_failure():
+    preparation_fault["remaining"] = 1
+    return {"armed": True}
+app.router.routes.insert(0,app.router.routes.pop())
