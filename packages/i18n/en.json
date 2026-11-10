@@ -364,5 +364,13 @@
   "chatLocationLastKnown": "Last known location",
   "chatResearchQueries": "Search queries",
   "chatCloseSources": "Close sources",
-  "chatDismissNotice": "Dismiss notice"
+  "chatDismissNotice": "Dismiss notice",
+  "failureDetails": "Error details",
+  "providerContentRejected": "The provider applied its content rules. HAYTILE does not block awareness songs through a sensitive-word blacklist.",
+  "providerRequestRejected": "The provider rejected this request. Check its details: parameters, format or content may be involved.",
+  "manualReconciliation": "Interrupted work needs verification before another potentially billable request.",
+  "chatInterrupted": "The previous reply could not be recovered after an interruption. Sending again creates a new request.",
+  "chatRecoverable": "A provider response was saved. Recovery uses that saved response without another AI generation.",
+  "chatResendRequest": "Send a new request",
+  "chatRecoverResponse": "Recover saved response"
 }

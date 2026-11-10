@@ -78,7 +78,7 @@ type Job = {
   title: string;
   studio: Studio;
   prompt: string;
-  params: { input_params: Record<string, unknown>; completed_scenes?: number; total_scenes?: number };
+  params: { provider_message?: string; input_params: Record<string, unknown>; completed_scenes?: number; total_scenes?: number };
   status: string;
   progress: number;
   error: string | null;
@@ -343,6 +343,10 @@ export default function App() {
     if (/VOICE_INPUT_UNAVAILABLE/.test(code)) return t('voiceInputUnsupported');
     if (/LOGIN_INVALID/.test(code)) return t('authError');
     if (/AI_SERVICE_PAUSED|BACKGROUND_PROCESSING_PAUSED/.test(code)) return t('servicePausedBody');
+    if (/PROVIDER_CONTENT_REJECTED/.test(code)) return t('providerContentRejected');
+    if (/PROVIDER_REQUEST_REJECTED|PROVIDER_HTTP_400/.test(code)) return t('providerRequestRejected');
+    if (/MANUAL_RECONCILIATION_REQUIRED/.test(code)) return t('manualReconciliation');
+    if (/NEW_REQUEST_CONFIRMATION_REQUIRED/.test(code)) return t('chatInterrupted');
     if (/PROVIDER_QUOTA_EXCEEDED/.test(code)) return t('providerQuota');
     if (/PROVIDER_ACCESS_DENIED|PROVIDER_MODEL_UNAVAILABLE/.test(code)) return t('providerAccess');
     if (/PROVIDER|ADAPTER|MODEL/.test(code)) return t('providerError');
@@ -2052,10 +2056,11 @@ function JobList({
                 ? t('providerQuota')
                 : j.error === 'PROVIDER_ACCESS_DENIED' || j.error === 'PROVIDER_MODEL_UNAVAILABLE'
                   ? t('providerAccess')
-                  : j.error}
+                  : j.error === 'PROVIDER_CONTENT_REJECTED' ? t('providerContentRejected') : j.error === 'PROVIDER_REQUEST_REJECTED' || j.error === 'PROVIDER_HTTP_400' ? t('providerRequestRejected') : j.error}
             </p>
           )}
-          {j.status === 'failed' && (
+          {j.params.provider_message && <details className="job-error"><summary>{t('failureDetails')}</summary><p>{j.params.provider_message}</p></details>}
+          {j.status === 'failed' && j.error !== 'PROVIDER_CONTENT_REJECTED' && (
             <button className="text-button" onClick={() => retry(j)}>
               {t('retry')}
               <ArrowRight size={13} />

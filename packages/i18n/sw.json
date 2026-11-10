@@ -364,5 +364,13 @@
   "chatLocationLastKnown": "Mahali pa mwisho palipojulikana",
   "chatResearchQueries": "Hoja za utafutaji",
   "chatCloseSources": "Funga vyanzo",
-  "chatDismissNotice": "Ficha taarifa"
+  "chatDismissNotice": "Ficha taarifa",
+  "failureDetails": "Maelezo ya hitilafu",
+  "providerContentRejected": "Mtoa huduma ametumia sheria zake za maudhui. HAYTILE haizuii nyimbo za uhamasishaji kwa orodha ya maneno nyeti.",
+  "providerRequestRejected": "Mtoa huduma amekataa ombi. Angalia maelezo: vigezo, muundo au maudhui yanaweza kuhusika.",
+  "manualReconciliation": "Kazi iliyokatizwa inahitaji kuhakikiwa kabla ya ombi jingine linaloweza kutozwa.",
+  "chatInterrupted": "Jibu la awali halikuweza kurejeshwa baada ya kukatika. Kutuma tena huunda ombi jipya.",
+  "chatRecoverable": "Jibu la mtoa huduma limehifadhiwa. Urejeshaji hulitumia bila uzalishaji mwingine wa AI.",
+  "chatResendRequest": "Tuma ombi jipya",
+  "chatRecoverResponse": "Rejesha jibu lililohifadhiwa"
 }

@@ -79,11 +79,17 @@ with tempfile.TemporaryDirectory(prefix="offline-audio-fixture-") as folder:
     media = path.read_bytes()
 
 
+interrupted_prompts = set()
+
+
 def fixture_generate(studio, model, prompt, params):
     if studio == "text":
         assert model == "offline-chat-model"
         time.sleep(1)
         assert "_chat_contents" in params
+        if prompt == "Offline interrupted reply" and prompt not in interrupted_prompts:
+            interrupted_prompts.add(prompt)
+            raise providers.ProviderError("PROVIDER_NETWORK_OR_RESPONSE")
         if prompt == "Find nearby offline hospital":
             if not params.get("location"):
                 params["_location_request_callback"](True)

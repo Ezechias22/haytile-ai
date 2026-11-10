@@ -364,5 +364,13 @@
   "chatLocationLastKnown": "上次已知位置",
   "chatResearchQueries": "搜索查询",
   "chatCloseSources": "关闭来源",
-  "chatDismissNotice": "关闭提示"
+  "chatDismissNotice": "关闭提示",
+  "failureDetails": "错误详情",
+  "providerContentRejected": "服务商应用了其内容规则。HAYTILE不会通过敏感词黑名单屏蔽公益宣传歌曲。",
+  "providerRequestRejected": "服务商拒绝了请求。请查看详情：可能涉及参数、格式或内容。",
+  "manualReconciliation": "中断的任务需要核实，才能再次发送可能收费的请求。",
+  "chatInterrupted": "中断后无法找回先前的回复。再次发送将创建一个新请求。",
+  "chatRecoverable": "已保存服务商的响应。恢复将使用已保存的响应，不会再次生成AI内容。",
+  "chatResendRequest": "发送新请求",
+  "chatRecoverResponse": "恢复已保存的回复"
 }

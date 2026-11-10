@@ -364,5 +364,13 @@
   "chatLocationLastKnown": "آخر موقع معروف",
   "chatResearchQueries": "عبارات البحث",
   "chatCloseSources": "إغلاق المصادر",
-  "chatDismissNotice": "إخفاء الإشعار"
+  "chatDismissNotice": "إخفاء الإشعار",
+  "failureDetails": "تفاصيل الخطأ",
+  "providerContentRejected": "طبّق المزود قواعد المحتوى لديه. لا تحظر HAYTILE أغاني التوعية بقائمة كلمات حساسة.",
+  "providerRequestRejected": "رفض المزود الطلب. راجع التفاصيل؛ قد يتعلق الأمر بالمعلمات أو التنسيق أو المحتوى.",
+  "manualReconciliation": "يحتاج العمل المتوقف إلى التحقق قبل إرسال طلب آخر قد تُفرض عليه رسوم.",
+  "chatInterrupted": "تعذر استرجاع الرد السابق بعد الانقطاع. الإرسال مجدداً ينشئ طلباً جديداً.",
+  "chatRecoverable": "تم حفظ استجابة المزود. تستخدمها عملية الاسترجاع دون توليد جديد بالذكاء الاصطناعي.",
+  "chatResendRequest": "إرسال طلب جديد",
+  "chatRecoverResponse": "استرجاع الرد المحفوظ"
 }

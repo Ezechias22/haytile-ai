@@ -145,10 +145,14 @@ def materialize(db, user_id, contents):
 
 
 def grounding(metadata):
+    if not isinstance(metadata, dict):
+        metadata = {}
     sources = []
     seen = set()
-    for chunk in metadata.get("groundingChunks", [])[:30]:
-        web = chunk.get("web", {})
+    for chunk in (metadata.get("groundingChunks") or [])[:30]:
+        web = chunk.get("web") if isinstance(chunk, dict) else None
+        if not isinstance(web, dict):
+            continue
         uri = web.get("uri", "")
         try:
             url = urlsplit(uri)
@@ -163,25 +167,29 @@ def grounding(metadata):
         if safe and uri not in seen and len(uri) <= 4096:
             seen.add(uri)
             sources.append({"url": uri, "title": str(web.get("title", url.hostname))[:250]})
-    snippet = metadata.get("searchEntryPoint", {}).get("renderedContent", "")
+    snippet = (metadata.get("searchEntryPoint") or {}).get("renderedContent", "")
     return {
         "sources": sources,
         "search_html": snippet[:100000] if isinstance(snippet, str) else "",
         "searched": bool(sources or snippet or metadata.get("webSearchQueries")),
         "queries": [
-            q[:240] for q in metadata.get("webSearchQueries", [])[:8] if isinstance(q, str)
+            q[:240] for q in (metadata.get("webSearchQueries") or [])[:8] if isinstance(q, str)
         ],
     }
 
 
 def cite_parts(parts, metadata):
     """Link provider-grounded claims to the same numbered source list, using UTF-8 offsets."""
+    if not isinstance(metadata, dict):
+        metadata = {}
     sources = grounding(metadata)["sources"]
     numbers = {source["url"]: i + 1 for i, source in enumerate(sources)}
-    chunks = metadata.get("groundingChunks", [])
+    chunks = metadata.get("groundingChunks") or []
     inserts = {}
-    for support in metadata.get("groundingSupports", [])[:100]:
-        segment = support.get("segment", {})
+    for support in (metadata.get("groundingSupports") or [])[:100]:
+        if not isinstance(support, dict):
+            continue
+        segment = support.get("segment") or {}
         part = segment.get("partIndex", 0)
         end = segment.get("endIndex")
         if type(part) is not int or not 0 <= part < len(parts) or type(end) is not int:
@@ -194,9 +202,9 @@ def cite_parts(parts, metadata):
         ):
             continue
         indexes = []
-        for index in support.get("groundingChunkIndices", []):
+        for index in support.get("groundingChunkIndices") or []:
             if type(index) is int and 0 <= index < len(chunks):
-                number = numbers.get(chunks[index].get("web", {}).get("uri"))
+                number = numbers.get((chunks[index].get("web") or {}).get("uri"))
                 if number and number not in indexes:
                     indexes.append(number)
         if indexes:

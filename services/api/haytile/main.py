@@ -146,7 +146,7 @@ def asset_json(a):
 
 
 def job_json(j):
-    return {
+    result = {
         k: getattr(j, k)
         for k in (
             "id",
@@ -163,6 +163,30 @@ def job_json(j):
             "updated_at",
         )
     }
+
+    result["params"] = {
+        key: value
+        for key, value in j.params.items()
+        if key not in ("provider_response", "provider_text_result")
+    }
+    if j.status == "failed":
+        cached = isinstance(j.params.get("provider_response"), dict) or isinstance(
+            j.params.get("provider_text_result"), dict
+        )
+        result["retry_mode"] = (
+            "blocked"
+            if j.error in ("PROVIDER_CONTENT_REJECTED", "PROVIDER_REFUSED_OR_EMPTY")
+            else "new_request"
+            if j.studio == "text" and j.credits == 0 and j.error == "PROVIDER_EMPTY_TEXT"
+            else "resume"
+            if j.studio == "text" and cached
+            else "new_request"
+            if j.studio == "text" and j.credits == 0 and j.error == "WORKER_INTERRUPTED_RECONCILE"
+            else "blocked"
+            if j.error == "WORKER_INTERRUPTED_RECONCILE" and not j.params.get("remote_operation")
+            else "retry"
+        )
+    return result
 
 
 def session_response(user, response, account=None):
@@ -266,7 +290,7 @@ def runtime_settings():
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
     return {
-        "api_release": "remembered-location-v19",
+        "api_release": "safe-chat-recovery-v20",
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
         "metadata_store": "firestore" if records.enabled() else "sql",
@@ -1035,8 +1059,12 @@ def chat_messages(conversation_id: str, user=Depends(current)):
         ]
 
 
+class RetryRequest(BaseModel):
+    new_request: bool = Field(default=False, strict=True)
+
+
 @app.post("/v1/jobs/{job_id}/retry")
-def retry(job_id: str, user=Depends(current)):
+def retry(job_id: str, body: RetryRequest | None = None, user=Depends(current)):
     if wallets.enabled() and wallets.snapshot(user.id).get("billing_hold"):
         fail("BILLING_REVIEW_REQUIRED", 403)
     if not worker_enabled():
@@ -1055,6 +1083,14 @@ def retry(job_id: str, user=Depends(current)):
             fail("JOB_NOT_FAILED", 409)
         from .video_checkpoints import safe_to_resume
 
+        if job.studio == "text" and job.credits == 0 and job.error == "PROVIDER_EMPTY_TEXT":
+            if body is None or not body.new_request:
+                fail("NEW_REQUEST_CONFIRMATION_REQUIRED", 409)
+            job.params = {
+                key: value
+                for key, value in job.params.items()
+                if key not in ("provider_response", "provider_text_result")
+            }
         if job.studio == "video":
             if job.params.get("incident_generation_hold") or (
                 (
@@ -1066,8 +1102,19 @@ def retry(job_id: str, user=Depends(current)):
                 fail("MANUAL_RECONCILIATION_REQUIRED", 409)
         if job.error == "WORKER_INTERRUPTED_RECONCILE":
             operation = job.params.get("remote_operation")
+            cached_text = job.studio == "text" and (
+                isinstance(job.params.get("provider_response"), dict)
+                or isinstance(job.params.get("provider_text_result"), dict)
+            )
+            approved_text = (
+                job.studio == "text" and job.credits == 0 and body is not None and body.new_request
+            )
+            if job.studio == "text" and job.credits == 0 and not cached_text and not approved_text:
+                fail("NEW_REQUEST_CONFIRMATION_REQUIRED", 409)
             can_resume = (
-                (job.studio == "video" and safe_to_resume(job.params))
+                cached_text
+                or approved_text
+                or (job.studio == "video" and safe_to_resume(job.params))
                 or operation
                 and (
                     job.studio in ("music", "voice")

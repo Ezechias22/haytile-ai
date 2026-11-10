@@ -364,5 +364,13 @@
   "chatLocationLastKnown": "Lokasi terakhir diketahui",
   "chatResearchQueries": "Kueri pencarian",
   "chatCloseSources": "Tutup sumber",
-  "chatDismissNotice": "Tutup pemberitahuan"
+  "chatDismissNotice": "Tutup pemberitahuan",
+  "failureDetails": "Detail kesalahan",
+  "providerContentRejected": "Penyedia menerapkan aturan kontennya. HAYTILE tidak memblokir lagu edukasi melalui daftar kata sensitif.",
+  "providerRequestRejected": "Penyedia menolak permintaan. Periksa detailnya: parameter, format, atau konten mungkin menjadi penyebabnya.",
+  "manualReconciliation": "Pekerjaan terputus perlu diverifikasi sebelum permintaan lain yang mungkin dikenai biaya.",
+  "chatInterrupted": "Jawaban sebelumnya tidak dapat dipulihkan setelah terputus. Mengirim lagi membuat permintaan baru.",
+  "chatRecoverable": "Respons penyedia telah disimpan. Pemulihan menggunakannya tanpa generasi AI tambahan.",
+  "chatResendRequest": "Kirim permintaan baru",
+  "chatRecoverResponse": "Pulihkan respons tersimpan"
 }

@@ -18,7 +18,10 @@ MAX_MEDIA_BYTES = 256 * 1024 * 1024
 
 
 class ProviderError(Exception):
-    pass
+    def __init__(self, code, public_message=None, provider_status=None):
+        super().__init__(code)
+        self.public_message = public_message
+        self.provider_status = provider_status
 
 
 def headers():
@@ -34,8 +37,11 @@ def request(method, path, payload=None, timeout=240):
             response = client.request(method, BASE + path, headers=headers(), json=payload)
         if response.status_code >= 400:
             status = None
+            message = None
             try:
-                status = response.json().get("error", {}).get("status")
+                error = response.json().get("error", {})
+                status = error.get("status")
+                message = error.get("message")
             except (ValueError, AttributeError):
                 pass
             known = {
@@ -44,7 +50,23 @@ def request(method, path, payload=None, timeout=240):
                 "NOT_FOUND": "PROVIDER_MODEL_UNAVAILABLE",
                 "UNAUTHENTICATED": "PROVIDER_AUTH_FAILED",
             }
-            raise ProviderError(known.get(status, f"PROVIDER_HTTP_{response.status_code}"))
+            if isinstance(message, str):
+                key = os.environ.get("HAYTILE_GEMINI_API_KEY", "")
+                if key:
+                    message = message.replace(key, "[redacted]")
+                message = re.sub(r"AIza[A-Za-z0-9_-]+", "[redacted]", message)[:1000]
+            else:
+                message = None
+            code = known.get(status, f"PROVIDER_HTTP_{response.status_code}")
+            if response.status_code == 400:
+                code = "PROVIDER_REQUEST_REJECTED"
+                if message and re.search(
+                    r"content.{0,40}(?:violat|policy)|(?:block|reject).{0,30}(?:content|prompt)|responsible.?ai",
+                    message,
+                    re.I,
+                ):
+                    code = "PROVIDER_CONTENT_REJECTED"
+            raise ProviderError(code, message, status)
         return response.json()
     except (httpx.HTTPError, ValueError) as exc:
         raise ProviderError("PROVIDER_NETWORK_OR_RESPONSE") from exc
@@ -209,6 +231,14 @@ def generate(studio, model, prompt, params):
                 "all supplied lyrics exactly once over forcing the estimated time. Do not omit, "
                 "invent or repeat lines to fill time.\n\n" + prompt
             )
+        prompt = (
+            "Interpret the song in its actual artistic and educational context. "
+            "A non-graphic prevention or awareness song may discuss illness, violence, "
+            "abuse, discrimination or other social problems without endorsing harm. "
+            "Do not reject an educational purpose merely because a sensitive topic is named. "
+            "Do not introduce explicit sexual content or harmful advocacy. Preserve the user's "
+            "supplied lyrics; never silently censor, replace or invent lines.\n\n" + prompt
+        )
         direction = params.get("vocal_style", "auto")
         if direction not in VOCALS:
             raise ProviderError("VOCAL_STYLE_INVALID")
@@ -341,21 +371,28 @@ def generate(studio, model, prompt, params):
                     "text": "Decide automatically whether web search is needed: use it for current, uncertain, time-sensitive or local facts, but not for greetings, creative writing or stable facts you can answer confidently. Cite sources for researched claims. Do not include the complete text of private attached documents in search queries; only search general non-sensitive terms relevant to the question. If no web sources are returned, say clearly that current facts were not verified."
                 }
             )
-    response = request("POST", f"/models/{model}:generateContent", payload)
+    response = params.get("_resume_response") if studio == "text" else None
+    if response is None:
+        response = request("POST", f"/models/{model}:generateContent", payload)
+        checkpoint = params.get("_response_callback")
+        if studio == "text" and callable(checkpoint):
+            checkpoint(response)
     candidates = response.get("candidates", [])
-    if not candidates or candidates[0].get("finishReason") in (
-        "SAFETY",
-        "RECITATION",
-        "PROHIBITED_CONTENT",
-    ):
-        raise ProviderError("PROVIDER_REFUSED_OR_EMPTY")
+    block = (response.get("promptFeedback") or {}).get("blockReason")
+    finish = candidates[0].get("finishReason") if candidates else None
+    if block or finish in ("SAFETY", "RECITATION", "PROHIBITED_CONTENT"):
+        raise ProviderError(
+            "PROVIDER_CONTENT_REJECTED", "Provider safety decision: " + str(block or finish)
+        )
+    if not candidates:
+        raise ProviderError("PROVIDER_EMPTY_TEXT")
     if studio == "text" and params.get("chat") is True:
         from .chat_tools import grounding
 
         callback = params.get("_grounding_callback")
         if callable(callback):
             callback(grounding(candidates[0].get("groundingMetadata", {})))
-    output = candidates[0].get("content", {}).get("parts", [])
+    output = (candidates[0].get("content") or {}).get("parts") or []
     if studio == "text" and params.get("chat") is True:
         from .chat_tools import cite_parts
 

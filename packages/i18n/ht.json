@@ -364,5 +364,13 @@
   "chatLocationLastKnown": "Dènye pozisyon ki te konnen",
   "chatResearchQueries": "Rechèch ki fèt yo",
   "chatCloseSources": "Fèmen sous yo",
-  "chatDismissNotice": "Kache mesaj la"
+  "chatDismissNotice": "Kache mesaj la",
+  "failureDetails": "Detay erè a",
+  "providerContentRejected": "Founisè a aplike règ kontni li yo. HAYTILE pa bloke chante sansibilizasyon ak yon lis mo sansib.",
+  "providerRequestRejected": "Founisè a rejte demann lan. Gade detay la: sa ka konsène paramèt, fòma oswa kontni.",
+  "manualReconciliation": "Travay entèwonp la bezwen verifikasyon anvan yon lòt demann ki ka fè founisè a touche.",
+  "chatInterrupted": "Ansyen repons lan pa t ka rekipere apre yon entèripsyon. Voye ankò ap kreye yon nouvo demann.",
+  "chatRecoverable": "Yon repons founisè a sove. Rekiperasyon an sèvi avè l san yon lòt jenerasyon AI.",
+  "chatResendRequest": "Voye yon nouvo demann",
+  "chatRecoverResponse": "Rekipere repons ki sove a"
 }

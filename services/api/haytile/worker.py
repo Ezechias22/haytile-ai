@@ -2,6 +2,7 @@
 Interrupted external work requires reconciliation before resubmission."""
 
 import base64
+import json
 import logging
 import math
 import os
@@ -148,6 +149,21 @@ def run_once():
     params["_operation_callback"] = record_operation
     if job.params.get("resume_operation_id"):
         params["_resume_operation_id"] = job.params["resume_operation_id"]
+    if isinstance(job.params.get("provider_response"), dict):
+        params["_resume_response"] = job.params["provider_response"]
+    text_checkpoint = job.params.get("provider_text_result")
+    metadata = {}
+
+    def record_response(response):
+        if len(json.dumps(response, ensure_ascii=False).encode()) > 512000:
+            return
+        with Session.begin() as state:
+            row = state.get(Job, job_id)
+            if row and row.status == "processing":
+                row.params = {**row.params, "provider_response": response}
+
+    params["_response_callback"] = record_response
+    phase = "preparing"
     key = None
     scratch = tempfile.TemporaryDirectory(prefix="haytile-job-")
     params["_scratch_dir"] = scratch.name
@@ -187,23 +203,20 @@ def run_once():
                     params.pop("location", None)
                 if not params.get("location") and settings["enabled"] and settings["position"]:
                     params["location"] = settings["position"]
-                params["_chat_materialized"] = materialize(context_db, job.user_id, contents)
+                params["_chat_materialized"] = (
+                    materialize(context_db, job.user_id, contents)
+                    if not params.get("_resume_response") and not text_checkpoint
+                    else [{"role": "user", "parts": [{"text": job.prompt}]}]
+                )
 
             def save_grounding(value):
-                if not value.get("searched"):
-                    return
-                with Session.begin() as state:
-                    row = state.get(Job, job_id)
-                    if row and row.status == "processing":
-                        row.params = {**row.params, "chat_grounding": value}
+                if value.get("searched"):
+                    metadata["chat_grounding"] = value
 
             params["_grounding_callback"] = save_grounding
 
             def save_location_request(value):
-                with Session.begin() as state:
-                    row = state.get(Job, job_id)
-                    if row and row.status == "processing":
-                        row.params = {**row.params, "chat_location_requested": value}
+                metadata["chat_location_requested"] = value
 
             params["_location_request_callback"] = save_location_request
         prompt = job.prompt
@@ -222,6 +235,7 @@ def run_once():
 
             params["_music_target_seconds"] = target_seconds(job.prompt, model)
             prompt = "Requested song language: " + language + "\n" + prompt
+        phase = "provider"
         if job.studio == "minidrama" and params.get("mode") == "episode":
             from .drama import render_episode
 
@@ -283,13 +297,24 @@ def run_once():
             )
             mime = "video/mp4"
         else:
-            data, mime = providers.generate(job.studio, model, prompt, params)
+            if job.studio == "text" and isinstance(text_checkpoint, dict):
+                data, mime = text_checkpoint["text"].encode(), "text/plain"
+            else:
+                data, mime = providers.generate(job.studio, model, prompt, params)
+        phase = "saving_response"
         with Session.begin() as db:
             row = db.get(Job, job_id)
             if not row or row.status != "processing":
                 return True
+            if job.studio == "text" and mime == "text/plain" and len(data) <= 256000:
+                row.params = {
+                    **row.params,
+                    **metadata,
+                    "provider_text_result": {"text": data.decode("utf-8")},
+                }
             row.status = "quality_check"
             row.progress = 80
+        phase = "quality_check"
         expected = {
             "text": "text/",
             "minidrama": "video/" if params.get("mode") == "episode" else "text/",
@@ -301,14 +326,18 @@ def run_once():
         }[job.studio]
         if not mime.startswith(expected):
             raise providers.ProviderError("PROVIDER_MEDIA_TYPE_MISMATCH")
+        phase = "quality_check"
         if isinstance(data, Path):
             mime, text = inspect_media_path(data, mime, max_bytes=256 * 1024 * 1024)
             output_size = data.stat().st_size
+            phase = "storage"
             key = storage.put_file(data, mime)
         else:
             mime, text = inspect_media(data, mime, max_bytes=256 * 1024 * 1024)
             output_size = len(data)
+            phase = "storage"
             key = storage.put(data, mime)
+        phase = "publishing"
         with Session.begin() as db:
             owner = db.scalar(select(User).where(User.id == job.user_id).with_for_update())
             row = db.scalar(select(Job).where(Job.id == job_id).with_for_update())
@@ -374,6 +403,11 @@ def run_once():
                 from .video_checkpoints import cleanup_after_completion
 
                 cleanup_after_completion(db, row)
+            row.params = {
+                key: value
+                for key, value in row.params.items()
+                if key not in ("provider_response", "provider_text_result")
+            }
             row.status = "completed"
             row.progress = 100
             row.lease_until = None
@@ -385,6 +419,20 @@ def run_once():
         if key:
             storage.delete(key)
         code = str(exc) if isinstance(exc, providers.ProviderError) else "MEDIA_OR_STORAGE_FAILED"
+        try:
+            with Session.begin() as state:
+                row = state.get(Job, job_id)
+                if row:
+                    row.params = {
+                        **row.params,
+                        "failure_phase": phase,
+                        "failure_cause": code,
+                        "provider_message": getattr(exc, "public_message", None),
+                        "provider_status": getattr(exc, "provider_status", None),
+                        "failure_exception": type(exc).__name__,
+                    }
+        except Exception:
+            log.warning("job_failure_metadata_unavailable id=%s", job_id)
         if code in (
             "PROVIDER_NETWORK_OR_RESPONSE",
             "MEDIA_OR_STORAGE_FAILED",
