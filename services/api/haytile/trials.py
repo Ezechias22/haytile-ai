@@ -27,6 +27,12 @@ def trial_limit_code(db, user_id, studio, params, credits):
     if credits:
         durable = not temporary or os.environ.get("HAYTILE_ACCOUNT_PROVIDER") == "firestore"
         return None if durable else "PERSISTENT_POSTGRES_REQUIRED"
+    if (
+        studio == "text"
+        and params.get("chat") is True
+        and (not temporary or os.environ.get("HAYTILE_ACCOUNT_PROVIDER") == "firestore")
+    ):
+        return None
     if not trial_enabled():
         return "FREE_BETA_AI_DISABLED" if temporary else None
     if studio == "video":

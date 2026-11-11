@@ -292,7 +292,7 @@ def runtime_settings():
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
     return {
-        "api_release": "worker-import-fix-v21",
+        "api_release": "continuous-text-chat-v22",
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
         "metadata_store": "firestore" if records.enabled() else "sql",
@@ -327,6 +327,9 @@ def runtime_settings():
             "max_attachment_total_bytes": 8 * 1024 * 1024,
             "max_pdf_pages": 10,
         },
+        "chat_message_daily_limit": None,
+        "chat_message_hourly_limit": None,
+        "chat_message_burst": {"requests": 6, "seconds": 10},
         "paid_generation_daily_limit": None,
         "paid_generation_burst": {"requests": 6, "seconds": 10},
         "trial_ai": trial_enabled(),
@@ -717,20 +720,14 @@ def generate(body: Generate, user=Depends(current)):
             episode
             or pricing.base_credits(body.studio, configured.model_id, configured.credits) > 0
         )
-    if paid_request:
+    if is_chat:
+        # Conversations are not limited by legacy free-media daily/hourly buckets.
+        limit("chat-message-burst:" + user.id, 6, 10, "APP_BURST_LIMIT")
+    elif paid_request:
         # Paid use is governed by the durable wallet, not a daily/hourly quota.
         limit("paid-generation-burst:" + user.id, 6, 10, "APP_BURST_LIMIT")
     else:
-        limit(
-            "generation-chat-global" if is_chat else "generation-global",
-            int(os.environ.get("HAYTILE_DAILY_CHAT_LIMIT", "50"))
-            if is_chat
-            else int(os.environ.get("HAYTILE_DAILY_JOB_LIMIT", "100")),
-            86400,
-        )
-    if is_chat:
-        limit("chat-daily:" + user.id, int(os.environ.get("HAYTILE_CHAT_PER_DAY", "20")), 86400)
-    if not paid_request:
+        limit("generation-global", int(os.environ.get("HAYTILE_DAILY_JOB_LIMIT", "100")), 86400)
         limit("generation:" + user.id, 30, 3600)
     if selected and selected.catalog_check:
         try:
@@ -824,7 +821,21 @@ def generate(body: Generate, user=Depends(current)):
                 Job.status.in_(["queued", "processing", "quality_check"]),
             )
         )
-        if pending >= 3 and not paid_request:
+        if is_chat:
+            existing_turn = db.scalar(
+                select(Job.id)
+                .where(
+                    Job.user_id == user.id,
+                    Job.studio == "text",
+                    Job.status.in_(["queued", "processing", "quality_check"]),
+                    Job.params["input_params"]["conversation_id"].as_string()
+                    == body.params["conversation_id"],
+                )
+                .limit(1)
+            )
+            if existing_turn:
+                fail("CHAT_MESSAGE_PROCESSING", 409)
+        elif pending >= 3 and not paid_request:
             fail("TOO_MANY_JOBS", 429)
         if body.studio == "image":
             count = db.scalar(

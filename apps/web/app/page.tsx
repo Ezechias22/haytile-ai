@@ -326,6 +326,7 @@ export default function App() {
     if (/DURABLE_JOB_BILLING_REQUIRED/.test(code)) return t('creditBillingPending');
     if (/CHAT_ATTACHMENT|CHAT_TOOLS_INVALID|CHAT_LOCATION_INVALID/.test(code)) return t('chatAttachmentError');
     if (/FILE_INVALID_OR_TOO_LARGE/.test(code)) return t('chatFileLimits');
+    if (/CHAT_MESSAGE_PROCESSING/.test(code)) return t('chatThinking');
     if (/CHAT_STILL_PROCESSING/.test(code)) return t('chatProcessingDelete');
     if (/VOICE_SESSION_BUDGET_REACHED|VOICE_BUDGET_TOO_SMALL/.test(code)) return t('voiceBudgetReached');
     if (/VOICE_REPLY_TOO_LONG/.test(code)) return t('voiceReplyTooLong');
@@ -1012,7 +1013,7 @@ export default function App() {
               </section>
             </>
           )}
-          {page === 'chat' && <HaytileChat key={(user?.id || 'guest') + ':' + chatEpoch} conversation={chatConversation} setConversation={setChatConversation} onThread={thread => setChatThreads(rows => [thread, ...rows.filter(row => row.id !== thread.id)])} request={api} t={t} userId={user?.id} userName={user?.name} locale={locale} voiceOptions={voiceDetails} voiceModels={models.find(m => m.studio === 'voice')?.options || []} onWalletChange={() => refresh().catch(() => setSyncIssue(true))} models={models.find(m => m.studio === 'text')?.options || []} available={!generationPaused && backgroundProcessing && !!models.find(m => m.studio === 'text')?.available} onAuth={() => setAuth('login')} onError={err => setError(describeError(err))} />}
+          {page === 'chat' && <HaytileChat onRequestStart={()=>setError('')} key={(user?.id || 'guest') + ':' + chatEpoch} conversation={chatConversation} setConversation={setChatConversation} onThread={thread => setChatThreads(rows => [thread, ...rows.filter(row => row.id !== thread.id)])} request={api} t={t} userId={user?.id} userName={user?.name} locale={locale} voiceOptions={voiceDetails} voiceModels={models.find(m => m.studio === 'voice')?.options || []} onWalletChange={() => refresh().catch(() => setSyncIssue(true))} models={models.find(m => m.studio === 'text')?.options || []} available={!generationPaused && backgroundProcessing && !!models.find(m => m.studio === 'text')?.available} onAuth={() => setAuth('login')} onError={err => setError(describeError(err))} />}
           {studio && (
             <>
               <div className="page-heading studio-heading">

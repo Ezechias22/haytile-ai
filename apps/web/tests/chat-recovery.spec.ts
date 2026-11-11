@@ -8,7 +8,7 @@ test('interrupted chat distinguishes an explicit new request from result recover
  const base=process.env.HAYTILE_TEST_URL||'http://127.0.0.1:8010';
  await page.addInitScript(()=>{if(window.top===window)localStorage.setItem('haytile-locale','en');});
  const login=await page.request.post(base+'/api/v1/auth/login',{data:{email:'creative-browser@example.test',password:'Offline-browser-password-123'},headers:{Origin:base}});expect(login.status()).toBe(200);
- await page.goto(base);
+ await page.goto(base);await expect(page.locator('.user-line strong')).toHaveText('Creative browser fixture');
  await page.getByRole('button',{name:'New chat',exact:true}).click();
  await page.getByRole('textbox',{name:'Your message',exact:true}).fill('Offline interrupted reply');
  await page.getByRole('button',{name:'Send message',exact:true}).click();
@@ -30,7 +30,7 @@ test('preparation failure is safely retryable without a new-request confirmation
  const base=process.env.HAYTILE_TEST_URL||'http://127.0.0.1:8010';
  await page.addInitScript(()=>{if(window.top===window)localStorage.setItem('haytile-locale','en');});
  const login=await page.request.post(base+'/api/v1/auth/login',{data:{email:'creative-browser@example.test',password:'Offline-browser-password-123'},headers:{Origin:base}});expect(login.status()).toBe(200);
- await page.goto(base);await page.getByRole('button',{name:'New chat',exact:true}).click();
+ await page.goto(base);await expect(page.locator('.user-line strong')).toHaveText('Creative browser fixture');await page.getByRole('button',{name:'New chat',exact:true}).click();
  const armed=await page.request.post(base+'/api/v1/offline/prepare-import-failure',{headers:{Origin:base}});expect(armed.status()).toBe(200);
  await page.getByRole('textbox',{name:'Your message',exact:true}).fill('Offline preparation failure');
  await page.getByRole('button',{name:'Send message',exact:true}).click();

@@ -28,9 +28,10 @@ type Props = {
   onThread: (thread: Thread) => void;
   onAuth: () => void;
   onError: (error: unknown) => void;
+  onRequestStart: () => void;
 };
 
-export default function HaytileChat({ request, t, userId, userName, locale, models, voiceModels, voiceOptions, onWalletChange, available, conversation, setConversation, onThread, onAuth, onError }: Props) {
+export default function HaytileChat({ request, t, userId, userName, locale, models, voiceModels, voiceOptions, onWalletChange, available, conversation, setConversation, onThread, onAuth, onError, onRequestStart }: Props) {
   const [introduce, setIntroduce] = useState(false);
   const [greeting, setGreeting] = useState('');
   useEffect(() => {
@@ -134,7 +135,7 @@ export default function HaytileChat({ request, t, userId, userName, locale, mode
     const draft = { studio: 'text', prompt: content.trim(), title: turns[0]?.title || suggestTitle(content, t('newChat')), model_id: chosen.model_id, confirmed_credits: 0, params: { chat: true, conversation_id: cid, parent_job_id: parent?.id || null, language: locale, ...(attachments.length ? { attachment_ids: attachments.map(a=>a.id) } : {}), ...(actualLocation ? { location: actualLocation, location_consent_version: location.version() } : {}), ...(voiceTurn ? { voice_conversation: true } : {}) } };
     const fingerprint = JSON.stringify(draft);
     if (pending.current?.fingerprint !== fingerprint) pending.current = { fingerprint, id: crypto.randomUUID() };
-    setSending(true);
+    onRequestStart(); setSending(true);
     try {
       const turn = await request<Turn>('/jobs', { method: 'POST', body: JSON.stringify({ ...draft, idempotency_key: pending.current.id }) });
       if (!conversation) { setConversation(cid); localStorage.setItem('haytile-chat-' + userId, cid); }
@@ -155,7 +156,7 @@ export default function HaytileChat({ request, t, userId, userName, locale, mode
     const link = document.createElement('a'); link.href = url; link.download = turn.title.replace(/[/\\]/g, '-') + '.txt'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   const retry = async (turn: Turn) => {
-    setSending(true);
+    onRequestStart(); setSending(true);
     try { await request('/jobs/' + turn.id + '/retry', { method: 'POST', ...(turn.retry_mode === 'new_request' ? {body:JSON.stringify({new_request:true})} : {}) }); setTurns(await load(conversation)); }
     catch (error) { onError(error); }
     finally { setSending(false); }
