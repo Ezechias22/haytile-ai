@@ -135,7 +135,7 @@
   "style": "风格",
   "duration": "目标时长（秒）",
   "scriptOnly": "剧本和策划功能；自动口型同步尚未实现。",
-  "musicNote": "根据歌词和节奏自动估算时长。没有歌词的简短描述默认以两分钟为目标。实际时长由模型决定；最长五分钟是目标，无法保证。Clip模型仅生成30秒。不循环、不拉伸，也不自动付费重试。",
+  "musicNote": "时长根据歌词和音乐指导自动估算，无需手动选择。Google 描述的完整歌曲长几分钟；无法保证五分钟或唱完全部歌词。Clip 生成 30 秒。不进行人工拉伸或自动付费续写。",
   "voiceNote": "请仅使用获得授权的文本和声音。本应用不提供声音克隆。",
   "referenceNote": "参考图像仅发送给所选图像模型。",
   "privacy": "你的工作空间是私人的。生成时，描述会发送给已配置的服务商。",
@@ -373,5 +373,17 @@
   "chatRecoverable": "已保存服务商的响应。恢复将使用已保存的响应，不会再次生成AI内容。",
   "chatResendRequest": "发送新请求",
   "chatRecoverResponse": "恢复已保存的回复",
-  "workerPreparationFailed": "本次尝试在联系AI之前的准备阶段失败。服务修复后可以重试。"
+  "workerPreparationFailed": "本次尝试在联系AI之前的准备阶段失败。服务修复后可以重试。",
+  "musicContent": "歌词或歌曲创意",
+  "musicContentHint": "在此粘贴歌词，或描述你想要的歌曲。",
+  "musicDirection": "音乐指导",
+  "musicAutomaticHint": "可选：留空的项目将由 AI 根据歌词和创意自动选择。这些指令与歌词分开。",
+  "musicStyle": "风格 / 流派",
+  "musicStyleHint": "例如：海地 konpa、非洲流行、福音",
+  "musicInstruments": "乐器 / 编曲",
+  "musicInstrumentsHint": "例如：吉他、钢琴、贝斯、打击乐",
+  "musicMood": "氛围 / 情感",
+  "musicMoodHint": "例如：希望、欢乐、亲密",
+  "musicTempo": "速度 / 节奏",
+  "musicTempoHint": "例如：96 BPM、舒缓、欢快"
 }

@@ -111,6 +111,13 @@ def quote(
     render_config=None,
     video_credits=0,
 ):
+    if studio == "music":
+        from .music import validate_options
+
+        try:
+            validate_options(params)
+        except ValueError as exc:
+            raise HTTPException(400, detail="MUSIC_DIRECTION_INVALID") from exc
     if studio == "music" and "duration" in params:
         duration = params["duration"]
         if type(duration) is not int or not 30 <= duration <= 300:
@@ -153,7 +160,7 @@ def quote(
         "free": total == 0,
         "clip_count": clip_count,
         "voice_token_limit": voice_tokens,
-        "music_target_seconds": target_seconds(prompt, model_id) if studio == "music" else None,
+        "music_target_seconds": target_seconds(prompt, model_id, params) if studio == "music" else None,
         "image_size": "1K" if studio == "image" and paid_images() else None,
         "pricing_version": VERSION if verified() else "operator-configured",
         "reference_unit_usd": str(CREDIT_USD),

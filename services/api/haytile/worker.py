@@ -231,7 +231,7 @@ def run_once():
         if job.studio == "music":
             from .music import target_seconds
 
-            params["_music_target_seconds"] = target_seconds(job.prompt, model)
+            params["_music_target_seconds"] = target_seconds(job.prompt, model, params)
             prompt = "Requested song language: " + language + "\n" + prompt
         phase = "provider"
         if job.studio == "minidrama" and params.get("mode") == "episode":

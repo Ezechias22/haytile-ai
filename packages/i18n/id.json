@@ -135,7 +135,7 @@
   "style": "Gaya",
   "duration": "Durasi target (detik)",
   "scriptOnly": "Naskah dan perencanaan; sinkronisasi bibir otomatis belum diterapkan.",
-  "musicNote": "Durasi diperkirakan otomatis berdasarkan lirik dan tempo. Deskripsi singkat tanpa lirik menargetkan dua menit. Durasi sebenarnya ditentukan model; hingga lima menit adalah target tanpa jaminan. Model Clip hanya menghasilkan 30 detik. Tanpa pengulangan, peregangan, atau percobaan berbayar otomatis.",
+  "musicNote": "Durasi diperkirakan dari lirik dan arahan musik tanpa pilihan manual. Google menjelaskan lagu berdurasi beberapa menit; lima menit dan seluruh lirik tidak dijamin. Clip menghasilkan 30 detik. Tanpa peregangan buatan atau perpanjangan berbayar otomatis.",
   "voiceNote": "Gunakan hanya teks dan suara yang diizinkan. Kloning suara tidak ditawarkan.",
   "referenceNote": "Gambar referensi hanya dikirim ke model gambar yang dipilih.",
   "privacy": "Ruang kerja Anda pribadi. Deskripsi dikirim ke penyedia yang diatur saat Anda membuat konten.",
@@ -373,5 +373,17 @@
   "chatRecoverable": "Respons penyedia telah disimpan. Pemulihan menggunakannya tanpa generasi AI tambahan.",
   "chatResendRequest": "Kirim permintaan baru",
   "chatRecoverResponse": "Pulihkan respons tersimpan",
-  "workerPreparationFailed": "Percobaan ini gagal saat persiapan, sebelum menghubungi AI. Anda dapat mencoba lagi setelah layanan diperbaiki."
+  "workerPreparationFailed": "Percobaan ini gagal saat persiapan, sebelum menghubungi AI. Anda dapat mencoba lagi setelah layanan diperbaiki.",
+  "musicContent": "Lirik atau ide lagu",
+  "musicContentHint": "Tempel lirik di sini, atau jelaskan lagu yang diinginkan.",
+  "musicDirection": "Arahan musik",
+  "musicAutomaticHint": "Opsional: kosongkan bidang apa pun dan AI akan memilih yang sesuai dengan lirik dan ide Anda. Instruksi ini terpisah dari lirik.",
+  "musicStyle": "Gaya / genre",
+  "musicStyleHint": "Misalnya: konpa Haiti, afropop, gospel",
+  "musicInstruments": "Instrumen / aransemen",
+  "musicInstrumentsHint": "Misalnya: gitar, piano, bas, perkusi",
+  "musicMood": "Suasana / emosi",
+  "musicMoodHint": "Misalnya: harapan, ceria, akrab",
+  "musicTempo": "Tempo / irama",
+  "musicTempoHint": "Misalnya: 96 BPM, santai, bersemangat"
 }

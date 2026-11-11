@@ -27,12 +27,31 @@ test('offline provider: auto-title, consent, My Creations, live stages, rename a
   await page.getByRole('tab', { name: 'Studios', exact: true }).click();
   await page.getByRole('button', { name: 'Music Studio', exact: true }).first().click();
   await page
-    .getByLabel('Describe your idea', { exact: true })
+    .getByLabel('Lyrics or song idea', { exact: true })
     .fill('Tit: Lakay Nan Kè Mwen\nAn offline browser fixture, not a paid music request.');
   await expect(page.getByLabel('Project title', { exact: true })).toHaveValue('Lakay Nan Kè Mwen');
+  const direction = { music_style: 'Konpa moderne', music_instruments: 'Piano, guitar, bass', music_mood: 'Hopeful', music_tempo: '96 BPM' };
+  await expect(page.getByLabel('Style / genre', { exact: true })).toHaveValue('');
+  await expect(page.getByLabel('Style / genre', { exact: true })).not.toHaveAttribute('required');
+  await page.getByLabel('Style / genre', { exact: true }).fill(direction.music_style);
+  await page.getByLabel('Instruments / arrangement', { exact: true }).fill(direction.music_instruments);
+  await page.getByLabel('Mood / emotion', { exact: true }).fill(direction.music_mood);
+  const quoted = page.waitForRequest(r => r.url().endsWith('/quotes') && r.method() === 'POST' && r.postDataJSON().params.music_tempo === direction.music_tempo);
+  await page.getByLabel('Tempo / groove', { exact: true }).fill(direction.music_tempo);
+  const quotedParams = (await quoted).postDataJSON().params;
+  expect(quotedParams).toMatchObject(direction);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.getByLabel('Tempo / groove', { exact: true }).scrollIntoViewIfNeeded();
+  await expect(page.getByLabel('Tempo / groove', { exact: true })).toBeVisible();
+  await page.screenshot({ path: 'test-results/music-direction-mobile.png', fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  const submitted = page.waitForRequest(r => r.url().endsWith('/jobs') && r.method() === 'POST');
+
   await page.getByRole('button', { name: /^Generate/ }).click();
   await expect(page.getByRole('dialog')).toContainText('12');
   await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  expect((await submitted).postDataJSON().params).toEqual(quotedParams);
   await expect(page.getByRole('heading', { name: 'My Creations', exact: true })).toBeVisible();
   const live = page.getByRole('region', { name: 'Generation activity', exact: true });
   await expect(live.getByRole('heading', { name: 'Lakay Nan Kè Mwen', exact: true })).toBeVisible();

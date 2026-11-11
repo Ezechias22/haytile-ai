@@ -10,7 +10,7 @@ from urllib.parse import quote, urlsplit
 
 import httpx
 
-from .music import target_seconds
+from .music import direction_prompt, target_seconds
 from .voice_choices import VOCALS, VOICES
 
 BASE = "https://generativelanguage.googleapis.com/v1beta"
@@ -215,8 +215,12 @@ def generate(studio, model, prompt, params):
     if studio == "voice" and voice not in VOICES:
         raise ProviderError("VOICE_INVALID")
     if studio == "music":
+        try:
+            musical_direction = direction_prompt(params)
+        except ValueError as exc:
+            raise ProviderError("MUSIC_DIRECTION_INVALID") from exc
         duration = params.get(
-            "duration", params.get("_music_target_seconds", target_seconds(prompt, model))
+            "duration", params.get("_music_target_seconds", target_seconds(prompt, model, params))
         )
         if duration is not None:
             if type(duration) is not int or not 30 <= duration <= 300:
@@ -225,11 +229,13 @@ def generate(studio, model, prompt, params):
                 raise ProviderError("MUSIC_CLIP_DURATION_INVALID")
             prompt = (
                 f"Target song duration: {duration} seconds. Compose a complete song with "
-                "an introduction, verses, choruses, bridge and a natural finished outro. "
+                "a natural finished outro. Follow the supplied song structure; only invent "
+                "verses, choruses or a bridge when the user provided a creative brief rather than lyrics. "
                 "Plan the musical structure across the requested duration; do not abruptly "
                 "cut off the vocals or ending. This duration is approximate: prioritize singing "
                 "all supplied lyrics exactly once over forcing the estimated time. Do not omit, "
-                "invent or repeat lines to fill time.\n\n" + prompt
+                "invent or repeat lines to fill time. Keep instrumental openings and breaks short "
+                "when many lyrics are supplied, and leave room to finish the final sung line and outro.\n\n" + prompt
             )
         prompt = (
             "Interpret the song in its actual artistic and educational context. "
@@ -244,6 +250,7 @@ def generate(studio, model, prompt, params):
             raise ProviderError("VOCAL_STYLE_INVALID")
         if VOCALS[direction]:
             prompt = VOCALS[direction] + " Preserve the requested language and lyrics.\n\n" + prompt
+        prompt = musical_direction + "SONG CONTENT / CREATIVE BRIEF:\n" + prompt
     interaction_voice = studio == "voice" and model.startswith("gemini-3.8-")
     if studio in ("video", "music") or interaction_voice:
         resume = params.get("_resume_operation_id")
@@ -298,7 +305,12 @@ def generate(studio, model, prompt, params):
                     ]
             result = request("POST", "/interactions", payload)
         result = wait_interaction(result, params)
-        for part in interaction_parts(result):
+        parts = interaction_parts(result)
+        # Google's output_audio convenience accessor selects the LAST audio block.
+        # Match that documented selection rather than returning early on the first block.
+        if studio == "music":
+            parts = reversed(parts)
+        for part in parts:
             if part.get("type") == ("video" if studio == "video" else "audio") and (
                 part.get("data") or part.get("uri")
             ):

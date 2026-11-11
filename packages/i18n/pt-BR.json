@@ -135,7 +135,7 @@
   "style": "Estilo",
   "duration": "Duração desejada (segundos)",
   "scriptOnly": "Roteiro e planejamento; a sincronização labial automática não está implementada.",
-  "musicNote": "A duração é estimada automaticamente pela letra e ritmo. Uma descrição curta sem letra visa dois minutos. A duração real depende do modelo; até cinco minutos é uma meta sem garantia. Modelos Clip geram apenas 30 segundos. Sem repetição, alongamento ou tentativas pagas automáticas.",
+  "musicNote": "A duração é estimada pela letra e direção musical, sem seleção manual. O Google descreve músicas de alguns minutos; cinco minutos e toda a letra não são garantidos. Clip produz 30 segundos. Sem alongamento artificial ou extensão paga automática.",
   "voiceNote": "Use apenas textos e vozes que você tem permissão para usar. Não oferecemos clonagem de voz.",
   "referenceNote": "As referências são enviadas apenas ao modelo de imagem selecionado.",
   "privacy": "Seu espaço é privado. As descrições são enviadas ao provedor configurado quando você gera conteúdo.",
@@ -373,5 +373,17 @@
   "chatRecoverable": "Uma resposta do provedor foi salva. A recuperação a reutiliza sem outra geração de IA.",
   "chatResendRequest": "Enviar nova solicitação",
   "chatRecoverResponse": "Recuperar resposta salva",
-  "workerPreparationFailed": "Esta tentativa falhou na preparação, antes de contatar a IA. Você pode tentar novamente após a correção do serviço."
+  "workerPreparationFailed": "Esta tentativa falhou na preparação, antes de contatar a IA. Você pode tentar novamente após a correção do serviço.",
+  "musicContent": "Letra ou ideia da música",
+  "musicContentHint": "Cole sua letra aqui ou descreva a música desejada.",
+  "musicDirection": "Direção musical",
+  "musicAutomaticHint": "Opcional: deixe qualquer campo vazio e a IA escolherá o que combina com a letra e sua ideia. Estas instruções ficam separadas da letra.",
+  "musicStyle": "Estilo / gênero",
+  "musicStyleHint": "Ex.: konpa haitiano, afropop, gospel",
+  "musicInstruments": "Instrumentos / arranjo",
+  "musicInstrumentsHint": "Ex.: guitarra, piano, baixo, percussão",
+  "musicMood": "Clima / emoção",
+  "musicMoodHint": "Ex.: esperança, alegria, intimidade",
+  "musicTempo": "Andamento / ritmo",
+  "musicTempoHint": "Ex.: 96 BPM, tranquilo, animado"
 }

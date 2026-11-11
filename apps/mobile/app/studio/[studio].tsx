@@ -19,6 +19,8 @@ export default function Studio() {
     [message, setMessage] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
   const [voice, setVoice] = useState('Kore'), [voices, setVoices] = useState<string[]>([]), [voiceDetails, setVoiceDetails] = useState<{ name: string; gender: string }[]>([]), [voiceGender, setVoiceGender] = useState('all'), [vocal, setVocal] = useState('auto');
+  const [musicStyle, setMusicStyle] = useState(''), [musicInstruments, setMusicInstruments] = useState(''), [musicMood, setMusicMood] = useState(''), [musicTempo, setMusicTempo] = useState('');
+  const musicParams = { vocal_style: vocal, music_style: musicStyle, music_instruments: musicInstruments, music_mood: musicMood, music_tempo: musicTempo };
   const suggested = suggestTitle(prompt, t(studio));
   useEffect(() => {
     SecureStore.getItemAsync('haytile-model-' + studio).then(value => setSelectedModel(value || '')).catch(() => {});
@@ -69,7 +71,7 @@ export default function Studio() {
             aspect,
             language,
             ...(studio === 'voice' ? { voice_name: voice } : {}),
-            ...(studio === 'music' ? { vocal_style: vocal } : {}),
+            ...(studio === 'music' ? musicParams : {}),
             ...(studio === 'video' ? { duration: Number(duration) } : {}),
           },
         }),
@@ -85,7 +87,7 @@ export default function Studio() {
     if (!user) { router.push('/auth'); return; }
     setBusy(true);
     try {
-      const result = await api<{ credits: number }>('/quotes', { method: 'POST', body: JSON.stringify({ studio, model_id: choice?.model_id, prompt, params: { language, aspect, ...(studio === 'voice' ? { voice_name: voice } : {}), ...(studio === 'music' ? { vocal_style: vocal } : {}), ...(studio === 'video' ? { duration: Number(duration) } : {}) } }) });
+      const result = await api<{ credits: number }>('/quotes', { method: 'POST', body: JSON.stringify({ studio, model_id: choice?.model_id, prompt, params: { language, aspect, ...(studio === 'voice' ? { voice_name: voice } : {}), ...(studio === 'music' ? musicParams : {}), ...(studio === 'video' ? { duration: Number(duration) } : {}) } }) });
       Alert.alert(t('confirmCost'), (choice?.label || '') + '\n' + (result.credits ? result.credits + ' ' + t('credits') : t('freeGeneration')) + '\n' + t('reservationNotice'), [{ text: t('cancel'), style: 'cancel' }, { text: t('confirm'), onPress: () => submit(result.credits) }]);
     } catch (error) { setMessage(t('quoteUnavailable')); }
     finally { setBusy(false); }
@@ -105,14 +107,20 @@ export default function Studio() {
         {studio === 'minidrama' && <Copy>{t('miniModelChoiceNote')}</Copy>}
         <Input label={t('title')} value={title || suggested} onChangeText={setTitle} maxLength={120} />
         <Input
-          label={t('prompt')}
+          label={t(studio === 'music' ? 'musicContent' : 'prompt')}
           value={prompt}
           onChangeText={setPrompt}
           multiline
           maxLength={12000}
-          placeholder={t('promptHint')}
+          placeholder={t(studio === 'music' ? 'musicContentHint' : 'promptHint')}
         />
         {studio === 'voice' && <><Copy>{t('voiceType')}</Copy><Chips items={{all:t('allVoices'),male:t('maleVoices'),female:t('femaleVoices')}} value={voiceGender} onChange={gender => { setVoiceGender(gender); const first = voiceDetails.find(v => gender === 'all' || v.gender === gender); if (first) setVoice(first.name); }}/><Copy>{t('chooseVoice')}</Copy><Chips items={Object.fromEntries((voices.length ? voices : ['Kore']).filter(name => voiceGender === 'all' || voiceDetails.some(v => v.name === name && v.gender === voiceGender)).map(name => { const gender = voiceDetails.find(v => v.name === name)?.gender; return [name, name + (gender ? ' · ' + t(gender === 'male' ? 'maleVoiceLabel' : gender === 'female' ? 'femaleVoiceLabel' : 'otherVoices') : '')]; }))} value={voice} onChange={setVoice}/></>}
+        {studio === 'music' && <><Copy>{t('musicDirection')}</Copy><Copy>{t('musicAutomaticHint')}</Copy>
+          <Input label={t('musicStyle')} value={musicStyle} onChangeText={setMusicStyle} maxLength={1000} placeholder={t('musicStyleHint')} />
+          <Input label={t('musicInstruments')} value={musicInstruments} onChangeText={setMusicInstruments} maxLength={1000} placeholder={t('musicInstrumentsHint')} />
+          <Input label={t('musicMood')} value={musicMood} onChangeText={setMusicMood} maxLength={300} placeholder={t('musicMoodHint')} />
+          <Input label={t('musicTempo')} value={musicTempo} onChangeText={setMusicTempo} maxLength={100} placeholder={t('musicTempoHint')} />
+        </>}
         {studio === 'music' && <><Copy>{t('vocalStyle')}</Copy><Chips items={{auto:t('autoVocal'),male:t('maleVocal'),female:t('femaleVocal'),duet:t('duetVocal'),instrumental:t('instrumentalVocal')}} value={vocal} onChange={setVocal}/></>}
         <Copy>{t('language')}</Copy>
         <Chips items={languages} value={language} onChange={setLanguage} />

@@ -30,3 +30,35 @@ lyrics remain present, and invalid durations and long Clip requests are rejected
 before provider calls. No paid Google generation was used to test song length.
 A verified provider or extension capability is still needed to guarantee a
 continuous five-minute song with consistent vocals and all requested lyrics.
+
+## Musical direction and output selection (2026-11-11)
+
+Web and mobile sources expose optional `music_style` (1,000 characters),
+`music_instruments` (1,000), `music_mood` (300), and `music_tempo` (100).
+The same values are sent in quotes and jobs, retained in job input parameters,
+and forwarded by the worker. Backend validation rejects invalid types/lengths
+before charging or contacting the provider. Empty fields explicitly delegate
+those choices to the music model, respecting directions already in the user's
+brief. No extra AI call is made to pick instruments or style.
+
+Lyrics/creative brief remain separate from unsung arrangement instructions.
+Style and tempo can affect the heuristic singing pace without counting the
+arrangement text as additional lyrics. Supplied structure takes precedence over
+inventing extra verses/bridges; framing should leave room for the final lyric
+and a natural ending. This is prompt guidance, not verified lyric alignment.
+
+Google's documentation, checked again on 2026-11-11, states that the
+`output_audio` accessor returns the **last** generated audio block. The music
+adapter now follows that convention instead of returning the first audio block
+in an interleaved response. It does not concatenate independent alternatives,
+repeat sections, stretch audio, or create additional paid requests. This fixes
+selection for multi-block responses; it does **not** establish that the user's
+particular 3:02 song contained another block or recover a missing ending.
+
+The application's media validation has no 182-second trimming step. An offline
+215-second MP3 passes full decoding and remains unchanged. This verifies file
+handling only, not Google's ability to generate a longer finished song. The
+current official docs still describe a couple of minutes and do not document
+multi-turn music editing/extension. Guaranteed five-minute continuous singing
+remains unavailable with the verified integration. Existing shorter songs are
+not silently regenerated or charged again.

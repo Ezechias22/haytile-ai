@@ -135,7 +135,7 @@
   "style": "Mtindo",
   "duration": "Muda unaolengwa (sekunde)",
   "scriptOnly": "Hati na mipango; kusawazisha midomo kiotomatiki bado hakujatekelezwa.",
-  "musicNote": "Muda hukadiriwa kiotomatiki kwa maneno na kasi. Maelezo mafupi bila maneno hulenga dakika mbili. Muda halisi huamuliwa na muundo; hadi dakika tano ni lengo lisilo na hakikisho. Miundo ya Clip hutengeneza sekunde 30 tu. Hakuna kurudia, kurefusha au kujaribu tena kwa malipo kiotomatiki.",
+  "musicNote": "Muda hukadiriwa kutoka kwa maneno na maelekezo ya muziki bila kuchagua mwenyewe. Google inaeleza nyimbo za dakika chache; dakika tano na maneno yote hayajahakikishwa. Clip hutoa sekunde 30. Hakuna kunyoosha sauti au kuongeza muda kwa malipo kiotomatiki.",
   "voiceNote": "Tumia tu maandishi na sauti ulizoidhinishwa kutumia. Kuiga sauti za watu hakutolewi.",
   "referenceNote": "Picha za rejea hutumwa kwa modeli ya picha iliyochaguliwa tu.",
   "privacy": "Eneo lako la kazi ni la faragha. Maelezo hutumwa kwa mtoa huduma aliyesanidiwa unapozalisha maudhui.",
@@ -373,5 +373,17 @@
   "chatRecoverable": "Jibu la mtoa huduma limehifadhiwa. Urejeshaji hulitumia bila uzalishaji mwingine wa AI.",
   "chatResendRequest": "Tuma ombi jipya",
   "chatRecoverResponse": "Rejesha jibu lililohifadhiwa",
-  "workerPreparationFailed": "Jaribio hili limeshindwa wakati wa maandalizi, kabla ya kuwasiliana na AI. Unaweza kujaribu tena baada ya huduma kurekebishwa."
+  "workerPreparationFailed": "Jaribio hili limeshindwa wakati wa maandalizi, kabla ya kuwasiliana na AI. Unaweza kujaribu tena baada ya huduma kurekebishwa.",
+  "musicContent": "Maneno au wazo la wimbo",
+  "musicContentHint": "Bandika maneno hapa, au eleza wimbo unaotaka.",
+  "musicDirection": "Maelekezo ya muziki",
+  "musicAutomaticHint": "Si lazima: acha sehemu yoyote wazi na AI itachagua kinachofaa maneno na wazo lako. Maelekezo haya ni tofauti na maneno ya wimbo.",
+  "musicStyle": "Mtindo / aina",
+  "musicStyleHint": "Mfano: konpa ya Haiti, afropop, gospel",
+  "musicInstruments": "Ala / mpangilio",
+  "musicInstrumentsHint": "Mfano: gitaa, piano, besi, ngoma",
+  "musicMood": "Hali / hisia",
+  "musicMoodHint": "Mfano: matumaini, furaha, ukaribu",
+  "musicTempo": "Kasi / mdundo",
+  "musicTempoHint": "Mfano: 96 BPM, tulivu, changamfu"
 }

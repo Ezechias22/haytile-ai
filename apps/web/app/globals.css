@@ -2485,3 +2485,12 @@ html, body { height: 100%; overflow: hidden; }
 
 .chat-markdown p { white-space:pre-line; }
 .chat-location-status button:first-child { min-width:0; }
+
+.music-direction {
+  border: 1px solid var(--border, #3b3348);
+  border-radius: 14px;
+  padding: 16px;
+  min-width: 0;
+}
+.music-direction legend { padding: 0 8px; font-weight: 600; }
+.music-direction .fine-print { margin-top: 0; }

@@ -135,7 +135,7 @@
   "style": "Style",
   "duration": "Target duration (seconds)",
   "scriptOnly": "Edit scripts, characters and scenes below. Automatic lip-sync and continuity scoring are not implemented.",
-  "musicNote": "Duration is estimated automatically from the supplied lyrics and tempo. A short creative brief uses a two-minute target. The model determines the actual length; up to five minutes is a target, not guaranteed. Clip models produce only 30 seconds. No looping, stretching or automatic paid retry.",
+  "musicNote": "Duration is estimated from your lyrics and musical direction, not selected manually. Google describes full songs of a few minutes; five minutes and complete lyric delivery are not guaranteed. Clip produces 30 seconds. No artificial stretching or automatic paid extension.",
   "voiceNote": "Use only text and voices you have permission to use. No voice cloning is offered.",
   "referenceNote": "Reference images are sent to the selected image model only.",
   "privacy": "Your workspace is private. AI prompts are sent to the configured provider when you generate.",
@@ -373,5 +373,17 @@
   "chatRecoverable": "A provider response was saved. Recovery uses that saved response without another AI generation.",
   "chatResendRequest": "Send a new request",
   "chatRecoverResponse": "Recover saved response",
-  "workerPreparationFailed": "This attempt failed while preparing the request, before contacting the AI. You can retry after the service is fixed."
+  "workerPreparationFailed": "This attempt failed while preparing the request, before contacting the AI. You can retry after the service is fixed.",
+  "musicContent": "Lyrics or song idea",
+  "musicContentHint": "Paste your lyrics here, or describe the song you want.",
+  "musicDirection": "Musical direction",
+  "musicAutomaticHint": "Optional: leave any field blank and AI will choose what suits your lyrics and idea. These instructions are separate from the lyrics.",
+  "musicStyle": "Style / genre",
+  "musicStyleHint": "e.g. Haitian konpa, afropop, gospel",
+  "musicInstruments": "Instruments / arrangement",
+  "musicInstrumentsHint": "e.g. guitar, piano, bass, live percussion",
+  "musicMood": "Mood / emotion",
+  "musicMoodHint": "e.g. hopeful, joyful, intimate",
+  "musicTempo": "Tempo / groove",
+  "musicTempoHint": "e.g. 96 BPM, relaxed, upbeat"
 }

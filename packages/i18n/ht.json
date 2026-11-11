@@ -135,7 +135,7 @@
   "style": "Estil",
   "duration": "Dire sib (segonn)",
   "scriptOnly": "Modifye senaryo, pèsonaj ak sèn anba a. Lip-sync otomatik ak nòt kontinwite poko aplike.",
-  "musicNote": "Dire a estime otomatikman dapre kantite pawòl ak ritm lan. Pou yon ti deskripsyon san lyrics, objektif la se 2 minit. Modèl la detèmine dire reyèl la; jiska 5 minit se yon objektif, li pa garanti. Modèl Clip yo fè 30 segonn sèlman. Pa gen repetisyon, ralantisman oswa esè peye otomatik.",
+  "musicNote": "Dire a estime dapre pawòl ak direksyon mizikal la, san seleksyon tan. Google dekri chante kèk minit; 5 minit ak tout pawòl yo pa garanti. Clip fè 30 segonn. Pa gen ralantisman atifisyèl oswa pwolongasyon peye otomatik.",
   "voiceNote": "Itilize sèlman tèks ak vwa ou gen pèmisyon itilize. Pa gen klonaj vwa.",
   "referenceNote": "Imaj referans ale sèlman nan modèl imaj ou chwazi a.",
   "privacy": "Espas ou prive. Lè ou jenere, prompt yo ale nan founisè ki konfigire a.",
@@ -373,5 +373,17 @@
   "chatRecoverable": "Yon repons founisè a sove. Rekiperasyon an sèvi avè l san yon lòt jenerasyon AI.",
   "chatResendRequest": "Voye yon nouvo demann",
   "chatRecoverResponse": "Rekipere repons ki sove a",
-  "workerPreparationFailed": "Tantativ sa a echwe pandan preparasyon demann lan, anvan li kontakte AI a. Ou ka eseye ankò apre sèvis la korije."
+  "workerPreparationFailed": "Tantativ sa a echwe pandan preparasyon demann lan, anvan li kontakte AI a. Ou ka eseye ankò apre sèvis la korije.",
+  "musicContent": "Pawòl oswa lide chante a",
+  "musicContentHint": "Kole pawòl chante a isit la, oswa dekri chante ou vle a.",
+  "musicDirection": "Direksyon mizikal",
+  "musicAutomaticHint": "Opsyonèl: kite nenpòt chan vid, AI a ap chwazi sa ki mache ak pawòl ak lide ou. Enstriksyon sa yo apa de pawòl chante a.",
+  "musicStyle": "Stil / jan mizik",
+  "musicStyleHint": "Egzanp: konpa ayisyen, afropop, gospel",
+  "musicInstruments": "Enstriman / aranjman",
+  "musicInstrumentsHint": "Egzanp: gita, pyano, bas, pèkisyon",
+  "musicMood": "Anbyans / emosyon",
+  "musicMoodHint": "Egzanp: espwa, lajwa, dousè",
+  "musicTempo": "Ritm / vitès",
+  "musicTempoHint": "Egzanp: 96 BPM, dousman, anime"
 }

@@ -135,7 +135,7 @@
   "style": "Style",
   "duration": "Durée cible (secondes)",
   "scriptOnly": "Scénario et préparation ; la synchronisation labiale automatique n’est pas implémentée.",
-  "musicNote": "La durée est estimée automatiquement selon les paroles et le rythme. Une courte description sans paroles vise deux minutes. Le modèle détermine la durée réelle ; jusqu’à cinq minutes est un objectif sans garantie. Les modèles Clip ne produisent que 30 secondes. Aucune boucle, aucun étirement ni nouvel essai payant automatique.",
+  "musicNote": "La durée est estimée selon les paroles et la direction musicale, sans sélection manuelle. Google décrit des chansons de quelques minutes ; cinq minutes et toutes les paroles ne sont pas garanties. Clip produit 30 secondes. Aucun étirement artificiel ni prolongement payant automatique.",
   "voiceNote": "Utilisez uniquement les textes et voix que vous êtes autorisé à utiliser. Aucun clonage vocal n’est proposé.",
   "referenceNote": "Les références sont envoyées uniquement au modèle d’image sélectionné.",
   "privacy": "Votre espace est privé. Les descriptions sont envoyées au fournisseur configuré lors d’une génération.",
@@ -373,5 +373,17 @@
   "chatRecoverable": "Une réponse du fournisseur a été sauvegardée. La récupération l’utilise sans nouvelle génération IA.",
   "chatResendRequest": "Envoyer une nouvelle demande",
   "chatRecoverResponse": "Récupérer la réponse sauvegardée",
-  "workerPreparationFailed": "Cette tentative a échoué pendant la préparation, avant de contacter l’IA. Vous pouvez réessayer après correction du service."
+  "workerPreparationFailed": "Cette tentative a échoué pendant la préparation, avant de contacter l’IA. Vous pouvez réessayer après correction du service.",
+  "musicContent": "Paroles ou idée de chanson",
+  "musicContentHint": "Collez vos paroles ici, ou décrivez la chanson souhaitée.",
+  "musicDirection": "Direction musicale",
+  "musicAutomaticHint": "Facultatif : laissez un champ vide et l’IA choisira ce qui convient aux paroles et à votre idée. Ces consignes sont séparées des paroles.",
+  "musicStyle": "Style / genre",
+  "musicStyleHint": "Ex. : konpa haïtien, afropop, gospel",
+  "musicInstruments": "Instruments / arrangement",
+  "musicInstrumentsHint": "Ex. : guitare, piano, basse, percussions",
+  "musicMood": "Ambiance / émotion",
+  "musicMoodHint": "Ex. : espoir, joie, intimité",
+  "musicTempo": "Tempo / rythme",
+  "musicTempoHint": "Ex. : 96 BPM, calme, entraînant"
 }
