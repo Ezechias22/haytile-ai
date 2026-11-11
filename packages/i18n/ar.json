@@ -396,5 +396,9 @@
   "musicSuggestPercussion": "إيقاع",
   "musicSuggestHopeful": "مفعم بالأمل",
   "musicSuggestRomantic": "رومانسي",
-  "musicSuggestEnergetic": "حيوي"
+  "musicSuggestEnergetic": "حيوي",
+  "chatCopyBlock": "نسخ المقطع",
+  "chatCopyManualTitle": "نسخ هذا النص",
+  "chatCopyManualHelp": "النسخ التلقائي غير متاح في هذا المتصفح. النص محدد أدناه: استخدم خيار النسخ في جهازك أو Ctrl+C / Cmd+C.",
+  "chatCopyContent": "النص المراد نسخه"
 }

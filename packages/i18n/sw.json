@@ -396,5 +396,9 @@
   "musicSuggestPercussion": "Ngoma",
   "musicSuggestHopeful": "Matumaini",
   "musicSuggestRomantic": "Kimapenzi",
-  "musicSuggestEnergetic": "Yenye nguvu"
+  "musicSuggestEnergetic": "Yenye nguvu",
+  "chatCopyBlock": "Nakili sehemu",
+  "chatCopyManualTitle": "Nakili maandishi haya",
+  "chatCopyManualHelp": "Kunakili kiotomatiki hakupatikani kwenye kivinjari hiki. Maandishi yamechaguliwa hapa chini: tumia Nakili kwenye kifaa au Ctrl+C / Cmd+C.",
+  "chatCopyContent": "Maandishi ya kunakili"
 }

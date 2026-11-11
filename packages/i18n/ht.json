@@ -396,5 +396,9 @@
   "musicSuggestPercussion": "Pèkisyon",
   "musicSuggestHopeful": "Espwa",
   "musicSuggestRomantic": "Womantik",
-  "musicSuggestEnergetic": "Enèjik"
+  "musicSuggestEnergetic": "Enèjik",
+  "chatCopyBlock": "Kopye blòk la",
+  "chatCopyManualTitle": "Kopye tèks sa a",
+  "chatCopyManualHelp": "Kopi otomatik pa disponib nan navigatè sa a. Tèks la seleksyone anba a: itilize opsyon Kopye sou aparèy ou oswa Ctrl+C / Cmd+C.",
+  "chatCopyContent": "Tèks pou kopye"
 }

@@ -396,5 +396,9 @@
   "musicSuggestPercussion": "Percussão",
   "musicSuggestHopeful": "Esperançoso",
   "musicSuggestRomantic": "Romântico",
-  "musicSuggestEnergetic": "Enérgico"
+  "musicSuggestEnergetic": "Enérgico",
+  "chatCopyBlock": "Copiar bloco",
+  "chatCopyManualTitle": "Copiar este texto",
+  "chatCopyManualHelp": "A cópia automática não está disponível neste navegador. O texto está selecionado abaixo: use Copiar no dispositivo ou Ctrl+C / Cmd+C.",
+  "chatCopyContent": "Texto para copiar"
 }

@@ -396,5 +396,9 @@
   "musicSuggestPercussion": "打击乐",
   "musicSuggestHopeful": "充满希望",
   "musicSuggestRomantic": "浪漫",
-  "musicSuggestEnergetic": "活力"
+  "musicSuggestEnergetic": "活力",
+  "chatCopyBlock": "复制此块",
+  "chatCopyManualTitle": "复制此文本",
+  "chatCopyManualHelp": "此浏览器无法自动复制。下方文本已选中，请使用设备的“复制”功能或 Ctrl+C / Cmd+C。",
+  "chatCopyContent": "要复制的文本"
 }

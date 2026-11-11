@@ -90,6 +90,12 @@ def fixture_generate(studio, model, prompt, params):
         if prompt == "Offline interrupted reply" and prompt not in interrupted_prompts:
             interrupted_prompts.add(prompt)
             raise providers.ProviderError("PROVIDER_NETWORK_OR_RESPONSE")
+        if prompt == "Offline copy controls":
+            return ("A response with individually reusable content.\n\n"
+                    "```copy-before\nPrompt: Yon jèn fi ak yon gason, anba limyè lalin.\nPa chanje pawòl yo.\n```\n\n"
+                    "Styles only:\n\n```copy-after\nKonpa modèn, pyano, duo gason ak fi, 96 BPM.\n```\n\n"
+                    "Example code:\n\n```javascript\nconst title = '<script>not executable</script>';\nconsole.log(title);\n```\n\n"
+                    "A final explanation outside the copy blocks.").encode(), "text/plain"
         if prompt == "Find nearby offline hospital":
             if not params.get("location"):
                 params["_location_request_callback"](True)

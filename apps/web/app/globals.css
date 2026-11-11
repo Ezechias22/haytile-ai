@@ -2501,3 +2501,20 @@ html, body { height: 100%; overflow: hidden; }
 .music-style-suggestions button[aria-pressed="true"] { background: #3b2855; border-color: #b491f7; color: #eee0ff; }
 .music-style-suggestions button:focus-visible { outline: 2px solid #b491f7; outline-offset: 3px; }
 .music-style-suggestions button:disabled { opacity: .4; cursor: default; }
+
+.chat-copy-button { display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:8px 10px; min-height:36px; border:1px solid #443851; border-radius:8px; background:#211b2b; color:#e5dcf0; font-size:12px; cursor:pointer; }
+.chat-copy-button:focus-visible { outline:2px solid #b491f7; outline-offset:3px; }
+.chat-copy-button:disabled { opacity:.5; cursor:wait; }
+.chat-copy-block { min-width:0; max-width:100%; margin:16px 0; border:1px solid #3b3348; border-radius:12px; overflow:hidden; background:#090910; }
+.chat-copy-block-bar { display:flex; justify-content:flex-end; align-items:center; gap:10px; padding:7px 10px; background:#201a2a; white-space:normal; }
+.chat-copy-block-bar > span { margin-inline-end:auto; color:#c4b5d5; font-size:12px; overflow-wrap:anywhere; }
+.chat-copy-block pre { margin:0; border-radius:0; padding:16px; max-height:520px; overflow:auto; }
+.chat-copy-dialog { width:min(600px, calc(100% - 32px)); max-height:85dvh; border:1px solid #59456b; border-radius:16px; background:#191522; color:#f3edf8; padding:18px; }
+.chat-copy-dialog::backdrop { background:#0009; }
+.chat-copy-dialog header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.chat-copy-dialog header button { background:transparent; border:0; color:inherit; padding:8px; cursor:pointer; }
+.chat-copy-dialog textarea { display:block; width:100%; min-height:200px; max-height:50dvh; font-size:16px; user-select:text; }
+.chat-answer-actions { flex-wrap:wrap; }
+.chat-answer-actions .chat-copy-button { background:#211b2b; border:1px solid #443851; color:#e5dcf0; }
+.chat-copy-block.prose-block pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+.chat-copy-block.prose-block code { white-space:inherit; }

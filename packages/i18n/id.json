@@ -396,5 +396,9 @@
   "musicSuggestPercussion": "Perkusi",
   "musicSuggestHopeful": "Penuh harapan",
   "musicSuggestRomantic": "Romantis",
-  "musicSuggestEnergetic": "Energik"
+  "musicSuggestEnergetic": "Energik",
+  "chatCopyBlock": "Salin blok",
+  "chatCopyManualTitle": "Salin teks ini",
+  "chatCopyManualHelp": "Penyalinan otomatis tidak tersedia di browser ini. Teks di bawah sudah dipilih: gunakan Salin pada perangkat atau Ctrl+C / Cmd+C.",
+  "chatCopyContent": "Teks untuk disalin"
 }
