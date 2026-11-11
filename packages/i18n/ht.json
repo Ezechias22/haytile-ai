@@ -385,5 +385,16 @@
   "musicMood": "Anbyans / emosyon",
   "musicMoodHint": "Egzanp: espwa, lajwa, dousè",
   "musicTempo": "Ritm / vitès",
-  "musicTempoHint": "Egzanp: 96 BPM, dousman, anime"
+  "musicTempoHint": "Egzanp: 96 BPM, dousman, anime",
+  "musicStylePrompt": "Prompt stil",
+  "musicStylePromptHint": "Egzanp: konpa modèn, gita dous, pyano, duo gason ak fi, espwa, 96 BPM",
+  "musicStylePromptHelp": "Ekri tout direksyon mizikal ou isit la, oswa klike sou sijesyon yo pou ajoute yo. Klike ankò pou retire yon sijesyon. Ou ka modifye tout tèks la. Kite l vid pou AI a chwazi.",
+  "musicStyleSuggestions": "Sijesyon stil",
+  "musicSuggestPiano": "Pyano",
+  "musicSuggestGuitar": "Gita",
+  "musicSuggestBass": "Bas",
+  "musicSuggestPercussion": "Pèkisyon",
+  "musicSuggestHopeful": "Espwa",
+  "musicSuggestRomantic": "Womantik",
+  "musicSuggestEnergetic": "Enèjik"
 }

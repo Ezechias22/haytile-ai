@@ -385,5 +385,16 @@
   "musicMood": "Mood / emotion",
   "musicMoodHint": "e.g. hopeful, joyful, intimate",
   "musicTempo": "Tempo / groove",
-  "musicTempoHint": "e.g. 96 BPM, relaxed, upbeat"
+  "musicTempoHint": "e.g. 96 BPM, relaxed, upbeat",
+  "musicStylePrompt": "Style prompt",
+  "musicStylePromptHint": "e.g. Modern konpa, warm guitar, piano, male and female duet, hopeful mood, 96 BPM",
+  "musicStylePromptHelp": "Write all your musical directions here, or tap suggestions to add them. Tap again to remove a suggestion. You can edit everything. Leave blank for AI to choose.",
+  "musicStyleSuggestions": "Style suggestions",
+  "musicSuggestPiano": "Piano",
+  "musicSuggestGuitar": "Guitar",
+  "musicSuggestBass": "Bass",
+  "musicSuggestPercussion": "Percussion",
+  "musicSuggestHopeful": "Hopeful",
+  "musicSuggestRomantic": "Romantic",
+  "musicSuggestEnergetic": "Energetic"
 }

@@ -385,5 +385,16 @@
   "musicMood": "Ambiance / émotion",
   "musicMoodHint": "Ex. : espoir, joie, intimité",
   "musicTempo": "Tempo / rythme",
-  "musicTempoHint": "Ex. : 96 BPM, calme, entraînant"
+  "musicTempoHint": "Ex. : 96 BPM, calme, entraînant",
+  "musicStylePrompt": "Prompt de style",
+  "musicStylePromptHint": "Ex. : konpa moderne, guitare chaleureuse, piano, duo homme et femme, espoir, 96 BPM",
+  "musicStylePromptHelp": "Écrivez toutes vos consignes musicales ici ou cliquez sur les suggestions pour les ajouter. Cliquez à nouveau pour les retirer. Tout reste modifiable. Laissez vide pour un choix automatique.",
+  "musicStyleSuggestions": "Suggestions de style",
+  "musicSuggestPiano": "Piano",
+  "musicSuggestGuitar": "Guitare",
+  "musicSuggestBass": "Basse",
+  "musicSuggestPercussion": "Percussions",
+  "musicSuggestHopeful": "Espoir",
+  "musicSuggestRomantic": "Romantique",
+  "musicSuggestEnergetic": "Énergique"
 }

@@ -62,3 +62,15 @@ current official docs still describe a couple of minutes and do not document
 multi-turn music editing/extension. Guaranteed five-minute continuous singing
 remains unavailable with the verified integration. Existing shorter songs are
 not silently regenerated or charged again.
+
+## Single style prompt (v24)
+
+The studio now presents one optional style prompt, rather than four separate
+style/instrument/mood/tempo fields or a vocal-direction selector. Editable text
+is the sole source of truth. Shared offline suggestion buttons add/remove genre,
+instrument, mood, BPM and vocal terms directly in that text; manual edits are
+sent unchanged as `music_style` in both quotes and jobs. Selecting a suggestion
+never starts a generation. The existing 1,000-character backend limit applies;
+suggestions that would overflow the field are disabled without truncating text.
+Empty text preserves automatic arrangement selection. Legacy jobs containing
+the older fields and `vocal_style` still work; their backend support remains.

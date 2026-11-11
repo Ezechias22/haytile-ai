@@ -385,5 +385,16 @@
   "musicMood": "Suasana / emosi",
   "musicMoodHint": "Misalnya: harapan, ceria, akrab",
   "musicTempo": "Tempo / irama",
-  "musicTempoHint": "Misalnya: 96 BPM, santai, bersemangat"
+  "musicTempoHint": "Misalnya: 96 BPM, santai, bersemangat",
+  "musicStylePrompt": "Prompt gaya",
+  "musicStylePromptHint": "Misalnya: konpa modern, gitar hangat, piano, duet pria dan wanita, penuh harapan, 96 BPM",
+  "musicStylePromptHelp": "Tulis semua arahan musik di sini atau ketuk saran untuk menambahkannya. Ketuk lagi untuk menghapus. Semua teks dapat diedit. Kosongkan agar AI memilih.",
+  "musicStyleSuggestions": "Saran gaya",
+  "musicSuggestPiano": "Piano",
+  "musicSuggestGuitar": "Gitar",
+  "musicSuggestBass": "Bas",
+  "musicSuggestPercussion": "Perkusi",
+  "musicSuggestHopeful": "Penuh harapan",
+  "musicSuggestRomantic": "Romantis",
+  "musicSuggestEnergetic": "Energik"
 }

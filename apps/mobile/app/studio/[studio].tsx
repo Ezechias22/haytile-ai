@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Text, Alert, Linking } from 'react-native';
+import { Text, Alert, Linking, View, Pressable } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { router, useLocalSearchParams } from 'expo-router';
 import { api, useApp, languages, type Model } from '../../src/client';
 import { suggestTitle } from '../../../../packages/creation-titles';
+import { musicStyleSuggestions, hasStyleSuggestion, toggleStyleSuggestion, MUSIC_STYLE_MAX_LENGTH } from '../../../../packages/music-style';
 import { Screen, Heading, Copy, Card, Input, Button, Chips, s } from '../../src/ui';
 export default function Studio() {
   const params = useLocalSearchParams<{ studio: string; prompt?: string; title?: string }>();
@@ -18,9 +19,9 @@ export default function Studio() {
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
-  const [voice, setVoice] = useState('Kore'), [voices, setVoices] = useState<string[]>([]), [voiceDetails, setVoiceDetails] = useState<{ name: string; gender: string }[]>([]), [voiceGender, setVoiceGender] = useState('all'), [vocal, setVocal] = useState('auto');
-  const [musicStyle, setMusicStyle] = useState(''), [musicInstruments, setMusicInstruments] = useState(''), [musicMood, setMusicMood] = useState(''), [musicTempo, setMusicTempo] = useState('');
-  const musicParams = { vocal_style: vocal, music_style: musicStyle, music_instruments: musicInstruments, music_mood: musicMood, music_tempo: musicTempo };
+  const [voice, setVoice] = useState('Kore'), [voices, setVoices] = useState<string[]>([]), [voiceDetails, setVoiceDetails] = useState<{ name: string; gender: string }[]>([]), [voiceGender, setVoiceGender] = useState('all');
+  const [musicStyle, setMusicStyle] = useState('');
+  const musicParams = { music_style: musicStyle };
   const suggested = suggestTitle(prompt, t(studio));
   useEffect(() => {
     SecureStore.getItemAsync('haytile-model-' + studio).then(value => setSelectedModel(value || '')).catch(() => {});
@@ -115,13 +116,13 @@ export default function Studio() {
           placeholder={t(studio === 'music' ? 'musicContentHint' : 'promptHint')}
         />
         {studio === 'voice' && <><Copy>{t('voiceType')}</Copy><Chips items={{all:t('allVoices'),male:t('maleVoices'),female:t('femaleVoices')}} value={voiceGender} onChange={gender => { setVoiceGender(gender); const first = voiceDetails.find(v => gender === 'all' || v.gender === gender); if (first) setVoice(first.name); }}/><Copy>{t('chooseVoice')}</Copy><Chips items={Object.fromEntries((voices.length ? voices : ['Kore']).filter(name => voiceGender === 'all' || voiceDetails.some(v => v.name === name && v.gender === voiceGender)).map(name => { const gender = voiceDetails.find(v => v.name === name)?.gender; return [name, name + (gender ? ' · ' + t(gender === 'male' ? 'maleVoiceLabel' : gender === 'female' ? 'femaleVoiceLabel' : 'otherVoices') : '')]; }))} value={voice} onChange={setVoice}/></>}
-        {studio === 'music' && <><Copy>{t('musicDirection')}</Copy><Copy>{t('musicAutomaticHint')}</Copy>
-          <Input label={t('musicStyle')} value={musicStyle} onChangeText={setMusicStyle} maxLength={1000} placeholder={t('musicStyleHint')} />
-          <Input label={t('musicInstruments')} value={musicInstruments} onChangeText={setMusicInstruments} maxLength={1000} placeholder={t('musicInstrumentsHint')} />
-          <Input label={t('musicMood')} value={musicMood} onChangeText={setMusicMood} maxLength={300} placeholder={t('musicMoodHint')} />
-          <Input label={t('musicTempo')} value={musicTempo} onChangeText={setMusicTempo} maxLength={100} placeholder={t('musicTempoHint')} />
+        {studio === 'music' && <>
+          <Input label={t('musicStylePrompt')} value={musicStyle} onChangeText={setMusicStyle} maxLength={MUSIC_STYLE_MAX_LENGTH} placeholder={t('musicStylePromptHint')} multiline style={{ minHeight: 90 }} />
+          <Copy>{t('musicStylePromptHelp')}</Copy>
+          <View style={s.chips} accessibilityLabel={t('musicStyleSuggestions')}>
+            {musicStyleSuggestions.map(item => { const value = item.key ? t(item.key) : item.text!; const selected = hasStyleSuggestion(musicStyle, value); const disabled = !selected && toggleStyleSuggestion(musicStyle, value) === musicStyle; return <Pressable key={item.key || item.text} accessibilityRole="button" accessibilityState={{ selected, disabled }} disabled={disabled} onPress={() => setMusicStyle(previous => toggleStyleSuggestion(previous, value))} style={[s.chip, selected && { borderColor: '#b491f7', backgroundColor: '#362546' }, disabled && { opacity: 0.4 }]}><Text style={{ color: selected ? '#b491f7' : '#a593b7', fontSize: 12 }}>{value}</Text></Pressable>; })}
+          </View>
         </>}
-        {studio === 'music' && <><Copy>{t('vocalStyle')}</Copy><Chips items={{auto:t('autoVocal'),male:t('maleVocal'),female:t('femaleVocal'),duet:t('duetVocal'),instrumental:t('instrumentalVocal')}} value={vocal} onChange={setVocal}/></>}
         <Copy>{t('language')}</Copy>
         <Chips items={languages} value={language} onChange={setLanguage} />
         {['image', 'video'].includes(studio) && (

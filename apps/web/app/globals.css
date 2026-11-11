@@ -2494,3 +2494,10 @@ html, body { height: 100%; overflow: hidden; }
 }
 .music-direction legend { padding: 0 8px; font-weight: 600; }
 .music-direction .fine-print { margin-top: 0; }
+.music-direction textarea { width: 100%; min-height: 88px; resize: vertical; }
+.music-style-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.music-style-suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
+.music-style-suggestions button { border: 1px solid #483b58; border-radius: 20px; background: #231c2e; color: #d7cce6; padding: 7px 12px; font-size: 12px; cursor: pointer; }
+.music-style-suggestions button[aria-pressed="true"] { background: #3b2855; border-color: #b491f7; color: #eee0ff; }
+.music-style-suggestions button:focus-visible { outline: 2px solid #b491f7; outline-offset: 3px; }
+.music-style-suggestions button:disabled { opacity: .4; cursor: default; }

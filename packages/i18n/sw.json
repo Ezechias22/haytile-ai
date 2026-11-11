@@ -385,5 +385,16 @@
   "musicMood": "Hali / hisia",
   "musicMoodHint": "Mfano: matumaini, furaha, ukaribu",
   "musicTempo": "Kasi / mdundo",
-  "musicTempoHint": "Mfano: 96 BPM, tulivu, changamfu"
+  "musicTempoHint": "Mfano: 96 BPM, tulivu, changamfu",
+  "musicStylePrompt": "Maelezo ya mtindo",
+  "musicStylePromptHint": "Mfano: konpa ya kisasa, gitaa laini, piano, sauti ya mwanamume na mwanamke, matumaini, 96 BPM",
+  "musicStylePromptHelp": "Andika maelekezo yote ya muziki hapa au gusa mapendekezo kuyaongeza. Gusa tena kuyaondoa. Unaweza kuhariri maandishi yote. Acha wazi ili AI ichague.",
+  "musicStyleSuggestions": "Mapendekezo ya mtindo",
+  "musicSuggestPiano": "Piano",
+  "musicSuggestGuitar": "Gitaa",
+  "musicSuggestBass": "Besi",
+  "musicSuggestPercussion": "Ngoma",
+  "musicSuggestHopeful": "Matumaini",
+  "musicSuggestRomantic": "Kimapenzi",
+  "musicSuggestEnergetic": "Yenye nguvu"
 }

@@ -385,5 +385,16 @@
   "musicMood": "氛围 / 情感",
   "musicMoodHint": "例如：希望、欢乐、亲密",
   "musicTempo": "速度 / 节奏",
-  "musicTempoHint": "例如：96 BPM、舒缓、欢快"
+  "musicTempoHint": "例如：96 BPM、舒缓、欢快",
+  "musicStylePrompt": "风格提示词",
+  "musicStylePromptHint": "例如：现代 konpa、温暖吉他、钢琴、男女对唱、充满希望、96 BPM",
+  "musicStylePromptHelp": "在此写下所有音乐要求，或点击建议添加，再次点击即可移除。所有文字均可编辑。留空则由 AI 自动选择。",
+  "musicStyleSuggestions": "风格建议",
+  "musicSuggestPiano": "钢琴",
+  "musicSuggestGuitar": "吉他",
+  "musicSuggestBass": "贝斯",
+  "musicSuggestPercussion": "打击乐",
+  "musicSuggestHopeful": "充满希望",
+  "musicSuggestRomantic": "浪漫",
+  "musicSuggestEnergetic": "活力"
 }

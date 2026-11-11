@@ -53,6 +53,7 @@ import AdminPeople from './admin-people';
 import CreationProgress from './creation-progress';
 import HaytileChat from './chat';
 import { suggestTitle } from '../../../packages/creation-titles';
+import { musicStyleSuggestions, hasStyleSuggestion, toggleStyleSuggestion, MUSIC_STYLE_MAX_LENGTH } from '../../../packages/music-style';
 type Studio = 'image' | 'music' | 'video' | 'minidrama' | 'voice' | 'text';
 type Page = Studio | 'chat' | 'home' | 'library' | 'pricing' | 'settings' | 'help' | 'admin';
 type User = {
@@ -286,11 +287,7 @@ export default function App() {
     [voiceOptions, setVoiceOptions] = useState<string[]>([]),
     [voiceDetails, setVoiceDetails] = useState<{ name: string; gender: string }[]>([]),
     [voiceGender, setVoiceGender] = useState('all'),
-    [vocalStyle, setVocalStyle] = useState('auto'),
     [musicStyle, setMusicStyle] = useState(''),
-    [musicInstruments, setMusicInstruments] = useState(''),
-    [musicMood, setMusicMood] = useState(''),
-    [musicTempo, setMusicTempo] = useState(''),
     [dramaVideoModel, setDramaVideoModel] = useState(''),
     [generationQuote, setGenerationQuote] = useState<{ key: string; credits: number; clip_count: number; free: boolean; music_target_seconds?: number } | null>(null),
     [quotePending, setQuotePending] = useState(false),
@@ -521,7 +518,7 @@ export default function App() {
     aspect: studio === 'video' || (studio === 'minidrama' && miniMode === 'episode') ? aspect === '9:16' ? '9:16' : '16:9' : aspect,
     language: outputLanguage,
     ...(studio === 'voice' ? { voice_name: voiceName } : {}),
-    ...(studio === 'music' ? { vocal_style: vocalStyle, music_style: musicStyle, music_instruments: musicInstruments, music_mood: musicMood, music_tempo: musicTempo } : {}),
+    ...(studio === 'music' ? { music_style: musicStyle } : {}),
     ...(studio === 'video' || (studio === 'minidrama' && miniMode === 'episode') ? { duration } : {}),
     ...(studio === 'minidrama' ? { mode: miniMode, ...(dramaVideoModel ? { video_model_id: dramaVideoModel } : {}) } : {}),
     ...(reference ? { reference_asset_id: reference } : {}),
@@ -1100,14 +1097,14 @@ export default function App() {
                     </label>
                     {studio === 'minidrama' && miniMode === 'episode' && <label>{t('sceneVideoModel')}<select aria-label={t('sceneVideoModel')} value={dramaVideoModel || models.find(m => m.studio === 'video')?.model_id || ''} onChange={e => { setDramaVideoModel(e.target.value); pendingKey.current = null; }}>{(models.find(m => m.studio === 'video')?.options || []).map(option => <option key={option.model_id} value={option.model_id} disabled={!!option.unavailable_reason}>{option.label}{option.unavailable_reason ? ' — ' + t('pricingPending') : ''}</option>)}</select></label>}
                     {studio === 'voice' && <><div className="voice-filter" role="group" aria-label={t('voiceType')}>{[['all', 'allVoices'], ['male', 'maleVoices'], ['female', 'femaleVoices']].map(([gender, label]) => <button key={gender} type="button" aria-pressed={voiceGender === gender} onClick={() => { setVoiceGender(gender); const first = voiceDetails.find(v => gender === 'all' || v.gender === gender); if (first) setVoiceName(first.name); pendingKey.current = null; }}>{t(label)}</button>)}</div><label>{t('chooseVoice')}<select aria-label={t('chooseVoice')} value={voiceName} onChange={e => { setVoiceName(e.target.value); pendingKey.current = null; }}>{(voiceOptions.length ? voiceOptions : ['Kore']).filter(voice => voiceGender === 'all' || voiceDetails.some(v => v.name === voice && v.gender === voiceGender)).map(voice => { const gender = voiceDetails.find(v => v.name === voice)?.gender; return <option key={voice} value={voice}>{voice}{gender ? ' · ' + t(gender === 'male' ? 'maleVoiceLabel' : gender === 'female' ? 'femaleVoiceLabel' : 'otherVoices') : ''}</option>; })}</select></label></>}
-                    {studio === 'music' && <fieldset className="music-direction"><legend>{t('musicDirection')}</legend><p className="fine-print">{t('musicAutomaticHint')}</p><div className="field-row">
-                      <label>{t('musicStyle')}<input aria-label={t('musicStyle')} value={musicStyle} maxLength={1000} placeholder={t('musicStyleHint')} onChange={e => { setMusicStyle(e.target.value); pendingKey.current = null; }} /></label>
-                      <label>{t('musicInstruments')}<input aria-label={t('musicInstruments')} value={musicInstruments} maxLength={1000} placeholder={t('musicInstrumentsHint')} onChange={e => { setMusicInstruments(e.target.value); pendingKey.current = null; }} /></label>
-                    </div><div className="field-row">
-                      <label>{t('musicMood')}<input aria-label={t('musicMood')} value={musicMood} maxLength={300} placeholder={t('musicMoodHint')} onChange={e => { setMusicMood(e.target.value); pendingKey.current = null; }} /></label>
-                      <label>{t('musicTempo')}<input aria-label={t('musicTempo')} value={musicTempo} maxLength={100} placeholder={t('musicTempoHint')} onChange={e => { setMusicTempo(e.target.value); pendingKey.current = null; }} /></label>
-                    </div></fieldset>}
-                    {studio === 'music' && <label>{t('vocalStyle')}<select aria-label={t('vocalStyle')} value={vocalStyle} onChange={e => { setVocalStyle(e.target.value); pendingKey.current = null; }}>{[['auto','autoVocal'],['male','maleVocal'],['female','femaleVocal'],['duet','duetVocal'],['instrumental','instrumentalVocal']].map(([key,label]) => <option key={key} value={key}>{t(label)}</option>)}</select></label>}
+                    {studio === 'music' && <fieldset className="music-direction"><legend>{t('musicStylePrompt')}</legend>
+                      <label className="music-style-label" htmlFor="music-style-prompt">{t('musicStylePrompt')}</label>
+                      <textarea id="music-style-prompt" aria-describedby="music-style-help" aria-label={t('musicStylePrompt')} value={musicStyle} rows={3} maxLength={MUSIC_STYLE_MAX_LENGTH} placeholder={t('musicStylePromptHint')} onChange={e => { setMusicStyle(e.target.value); pendingKey.current = null; }} />
+                      <p className="fine-print" id="music-style-help">{t('musicStylePromptHelp')}</p>
+                      <div className="music-style-suggestions" role="group" aria-label={t('musicStyleSuggestions')}>
+                        {musicStyleSuggestions.map(item => { const value = item.key ? t(item.key) : item.text!; const selected = hasStyleSuggestion(musicStyle, value); return <button type="button" key={item.key || item.text} aria-pressed={selected} disabled={!selected && toggleStyleSuggestion(musicStyle, value) === musicStyle} onClick={() => { setMusicStyle(previous => toggleStyleSuggestion(previous, value)); pendingKey.current = null; }}>{value}</button>; })}
+                      </div>
+                    </fieldset>}
                     <div className="field-row">
                       <label>
                         {t('language')}

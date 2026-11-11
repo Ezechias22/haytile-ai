@@ -385,5 +385,16 @@
   "musicMood": "الأجواء / المشاعر",
   "musicMoodHint": "مثال: أمل، فرح، حميمية",
   "musicTempo": "السرعة / الإيقاع",
-  "musicTempoHint": "مثال: 96 BPM، هادئ، حيوي"
+  "musicTempoHint": "مثال: 96 BPM، هادئ، حيوي",
+  "musicStylePrompt": "وصف الأسلوب",
+  "musicStylePromptHint": "مثال: كونبا حديث، غيتار دافئ، بيانو، ثنائي رجل وامرأة، أمل، 96 BPM",
+  "musicStylePromptHelp": "اكتب جميع التوجيهات الموسيقية هنا أو اضغط على الاقتراحات لإضافتها. اضغط مجددًا لإزالتها. يمكنك تعديل النص كله. اتركه فارغًا ليختار الذكاء الاصطناعي.",
+  "musicStyleSuggestions": "اقتراحات الأسلوب",
+  "musicSuggestPiano": "بيانو",
+  "musicSuggestGuitar": "غيتار",
+  "musicSuggestBass": "باس",
+  "musicSuggestPercussion": "إيقاع",
+  "musicSuggestHopeful": "مفعم بالأمل",
+  "musicSuggestRomantic": "رومانسي",
+  "musicSuggestEnergetic": "حيوي"
 }
