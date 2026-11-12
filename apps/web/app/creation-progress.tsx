@@ -20,7 +20,8 @@ type Job = {
   credits: number;
   created_at: string;
   error: string | null;
-  params?: { completed_scenes?: number; total_scenes?: number };
+  retry_mode?: 'retry' | 'resume' | 'new_request' | 'blocked';
+  params?: { completed_scenes?: number; total_scenes?: number; provider_message?: string };
 };
 type Props = {
   jobs: Job[];
@@ -200,12 +201,17 @@ export default function CreationProgress({
                     {t(
                       job.error === 'PROVIDER_QUOTA_EXCEEDED'
                         ? 'providerQuota'
-                        : 'generationFailed',
+                        : job.error === 'PROVIDER_CONTENT_REJECTED'
+                          ? 'providerContentRejected'
+                          : job.error === 'PROVIDER_REQUEST_REJECTED' || job.error === 'PROVIDER_HTTP_400'
+                            ? 'providerRequestRejected'
+                            : 'generationFailed',
                     )}
                   </span>
-                  <button className="button small" onClick={() => retry(job)}>
+                  <details className="creation-failure-details"><summary>{t('failureDetails')}</summary><code>{job.error}</code>{job.params?.provider_message && <p>{job.params.provider_message}</p>}</details>
+                  {job.retry_mode !== 'blocked' && !['PROVIDER_CONTENT_REJECTED', 'PROVIDER_REFUSED_OR_EMPTY'].includes(job.error || '') && <button className="button small" onClick={() => retry(job)}>
                     {t('retry')}
-                  </button>
+                  </button>}
                 </div>
               )}
             </div>

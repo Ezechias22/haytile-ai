@@ -115,6 +115,8 @@ def fixture_generate(studio, model, prompt, params):
         Image.new("RGB",(64,64),"purple").save(buf,"PNG")
         return buf.getvalue(), "image/png"
     assert studio == "music" and model == "offline-browser-model"
+    if "Offline rejected music" in prompt:
+        raise providers.ProviderError("PROVIDER_CONTENT_REJECTED", "Input blocked: The prompt could not be processed. Please try rephrasing the prompt or using different input.")
     time.sleep(7)
     return media, "audio/mpeg"
 

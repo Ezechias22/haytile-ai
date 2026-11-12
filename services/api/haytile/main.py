@@ -292,7 +292,7 @@ def runtime_settings():
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
     return {
-        "api_release": "chat-copy-controls-v25",
+        "api_release": "provider-rejection-details-v26",
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
         "metadata_store": "firestore" if records.enabled() else "sql",
@@ -1094,6 +1094,9 @@ def retry(job_id: str, body: RetryRequest | None = None, user=Depends(current)):
             fail("AI_SERVICE_PAUSED", 503)
         if job.status != "failed":
             fail("JOB_NOT_FAILED", 409)
+        if job.error in ("PROVIDER_CONTENT_REJECTED", "PROVIDER_REFUSED_OR_EMPTY"):
+            # A provider rejection is terminal for this unchanged request.
+            fail(job.error, 409)
         from .video_checkpoints import safe_to_resume
 
         if job.studio == "text" and job.credits == 0 and job.error == "PROVIDER_EMPTY_TEXT":

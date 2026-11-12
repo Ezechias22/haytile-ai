@@ -79,6 +79,7 @@ type Job = {
   title: string;
   studio: Studio;
   prompt: string;
+  retry_mode?: 'retry' | 'resume' | 'new_request' | 'blocked';
   params: { provider_message?: string; input_params: Record<string, unknown>; completed_scenes?: number; total_scenes?: number };
   status: string;
   progress: number;
@@ -2070,7 +2071,7 @@ function JobList({
             </p>
           )}
           {j.params.provider_message && <details className="job-error"><summary>{t('failureDetails')}</summary><p>{j.params.provider_message}</p></details>}
-          {j.status === 'failed' && j.error !== 'PROVIDER_CONTENT_REJECTED' && (
+          {j.status === 'failed' && j.retry_mode !== 'blocked' && !['PROVIDER_CONTENT_REJECTED', 'PROVIDER_REFUSED_OR_EMPTY'].includes(j.error || '') && (
             <button className="text-button" onClick={() => retry(j)}>
               {t('retry')}
               <ArrowRight size={13} />

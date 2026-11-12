@@ -2518,3 +2518,8 @@ html, body { height: 100%; overflow: hidden; }
 .chat-answer-actions .chat-copy-button { background:#211b2b; border:1px solid #443851; color:#e5dcf0; }
 .chat-copy-block.prose-block pre { white-space:pre-wrap; overflow-wrap:anywhere; }
 .chat-copy-block.prose-block code { white-space:inherit; }
+.creation-failure { flex-wrap:wrap; }
+.creation-failure-details { flex-basis:100%; min-width:0; overflow-wrap:anywhere; }
+.creation-failure-details summary { cursor:pointer; padding:6px 0; }
+.creation-failure-details code { font-size:11px; }
+.creation-failure-details p { margin:8px 0 0; white-space:pre-wrap; }
