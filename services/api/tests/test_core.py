@@ -334,7 +334,7 @@ def test_reference_must_belong_to_owner(client, monkeypatch):
     assert client.post("/v1/jobs", json=body, headers=b).status_code == 400
 
 
-def test_free_image_capacity_limit(client, monkeypatch):
+def test_free_images_do_not_inherit_removed_daily_capacity_limit(client, monkeypatch):
     configure(monkeypatch, "image", 0)
     monkeypatch.setenv("HAYTILE_FREE_IMAGES_PER_DAY", "1")
     _, h = register(client)
@@ -346,5 +346,5 @@ def test_free_image_capacity_limit(client, monkeypatch):
         client.post(
             "/v1/jobs", json=job_request("image", 0, key="different-key"), headers=h
         ).status_code
-        == 429
+        == 202
     )

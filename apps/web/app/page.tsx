@@ -368,7 +368,8 @@ export default function App() {
     if (/PROVIDER|ADAPTER|MODEL/.test(code)) return t('providerError');
     if (/APP_BURST_LIMIT/.test(code)) return t('appBurstLimit');
     if (/APP_CAPACITY_LIMIT/.test(code)) return t('appCapacityLimit');
-    if (/LIMIT|TOO_MANY/.test(code)) return t('limitError');
+    if (/RATE_LIMIT_UNAVAILABLE/.test(code)) return t('error') + ' (' + code + ')';
+    if (/LIMIT|TOO_MANY/.test(code)) return t('limitError') + ' (' + code + ')';
     if (/INSUFFICIENT/.test(code)) return t('creditsError');
     return t('error') + ' (' + code + ')';
   };

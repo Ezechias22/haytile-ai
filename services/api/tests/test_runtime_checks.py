@@ -26,7 +26,7 @@ def test_production_checks_reject_insecure_storage_and_implicit_signing_key():
     assert not checks["storage_tls"] and not checks["explicit_signing_key"]
 
 
-def test_durable_database_does_not_remove_operator_trial_spend_limits(client, monkeypatch):
+def test_durable_database_does_not_inherit_temporary_trial_limits(client, monkeypatch):
     monkeypatch.setenv("HAYTILE_TRIAL_AI", "1")
     monkeypatch.setenv("HAYTILE_TRIAL_MAX_VIDEO_SECONDS", "8")
     monkeypatch.setenv("HAYTILE_GEMINI_API_KEY", "fixture")
@@ -41,7 +41,8 @@ def test_durable_database_does_not_remove_operator_trial_spend_limits(client, mo
             )
         )
     _, headers = register(client)
-    assert client.get("/v1/runtime").json()["trial_max_video_seconds"] == 8
+    assert client.get("/v1/runtime").json()["trial_max_video_seconds"] == 180
+    assert client.get("/v1/runtime").json()["trial_ai"] is False
     result = client.post(
         "/v1/jobs",
         headers=headers,
@@ -54,5 +55,4 @@ def test_durable_database_does_not_remove_operator_trial_spend_limits(client, mo
             "confirmed_credits": 0,
         },
     )
-    assert result.status_code == 429
-    assert result.json()["detail"] == "TRIAL_VIDEO_DURATION_LIMIT"
+    assert result.status_code == 202, result.text

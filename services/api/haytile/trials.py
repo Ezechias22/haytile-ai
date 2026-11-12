@@ -24,15 +24,12 @@ def lock_sqlite_write(db):
 
 def trial_limit_code(db, user_id, studio, params, credits):
     temporary = db.get_bind().dialect.name == "sqlite"
-    if credits:
-        durable = not temporary or os.environ.get("HAYTILE_ACCOUNT_PROVIDER") == "firestore"
-        return None if durable else "PERSISTENT_POSTGRES_REQUIRED"
-    if (
-        studio == "text"
-        and params.get("chat") is True
-        and (not temporary or os.environ.get("HAYTILE_ACCOUNT_PROVIDER") == "firestore")
-    ):
+    durable = not temporary or os.environ.get("HAYTILE_ACCOUNT_PROVIDER") == "firestore"
+    if durable:
+        # Production accounts must never inherit ephemeral demo usage ceilings.
         return None
+    if credits:
+        return "PERSISTENT_POSTGRES_REQUIRED"
     if not trial_enabled():
         return "FREE_BETA_AI_DISABLED" if temporary else None
     if studio == "video":

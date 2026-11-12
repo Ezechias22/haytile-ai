@@ -305,8 +305,9 @@ def runtime_settings():
         from . import fal_catalog
         fal_ready = fal_catalog.key_ready() and any(profile.get("enabled") and profile.get("price_verified") for profile in fal_catalog.profiles())
         configured = configured or fal_ready
+    temporary_trial = trial_enabled() and engine.dialect.name == "sqlite" and not accounts.enabled()
     return {
-        "api_release": "fal-provider-v27",
+        "api_release": "production-capacity-v28",
         "fal_configured": bool(os.environ.get("FAL_KEY") or os.environ.get("Fal_key")),
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
@@ -346,13 +347,16 @@ def runtime_settings():
         "chat_message_hourly_limit": None,
         "chat_message_burst": {"requests": 6, "seconds": 10},
         "paid_generation_daily_limit": None,
+        "generation_daily_limit": None,
+        "generation_hourly_limit": None,
+        "image_daily_limit": None,
         "paid_generation_burst": {"requests": 6, "seconds": 10},
-        "trial_ai": trial_enabled(),
+        "trial_ai": temporary_trial,
         "trial_max_episode_seconds": int(os.environ.get("HAYTILE_TRIAL_MAX_EPISODE_SECONDS", "180"))
-        if trial_enabled()
+        if temporary_trial
         else 180,
         "trial_max_video_seconds": int(os.environ.get("HAYTILE_TRIAL_MAX_VIDEO_SECONDS", "180"))
-        if trial_enabled()
+        if temporary_trial
         else 180,
     }
 
@@ -755,8 +759,7 @@ def generate(body: Generate, user=Depends(current)):
         # Paid use is governed by the durable wallet, not a daily/hourly quota.
         limit("paid-generation-burst:" + user.id, 6, 10, "APP_BURST_LIMIT")
     else:
-        limit("generation-global", int(os.environ.get("HAYTILE_DAILY_JOB_LIMIT", "100")), 86400)
-        limit("generation:" + user.id, 30, 3600)
+        limit("generation-burst:" + user.id, 6, 10, "APP_BURST_LIMIT")
     if selected and selected.catalog_check:
         try:
             catalog = providers.discover()
@@ -853,14 +856,6 @@ def generate(body: Generate, user=Depends(current)):
             fail("PRICE_CHANGED", 409)
         if owner.balance - owner.reserved < credits:
             fail("INSUFFICIENT_CREDITS", 402)
-        pending = db.scalar(
-            select(func.count())
-            .select_from(Job)
-            .where(
-                Job.user_id == user.id,
-                Job.status.in_(["queued", "processing", "quality_check"]),
-            )
-        )
         if is_chat:
             existing_turn = db.scalar(
                 select(Job.id)
@@ -875,20 +870,6 @@ def generate(body: Generate, user=Depends(current)):
             )
             if existing_turn:
                 fail("CHAT_MESSAGE_PROCESSING", 409)
-        elif pending >= 3 and not paid_request:
-            fail("TOO_MANY_JOBS", 429)
-        if body.studio == "image":
-            count = db.scalar(
-                select(func.count())
-                .select_from(Job)
-                .where(
-                    Job.user_id == user.id,
-                    Job.studio == "image",
-                    Job.created_at >= now() - timedelta(days=1),
-                )
-            )
-            if count >= int(os.environ.get("HAYTILE_FREE_IMAGES_PER_DAY", "8")):
-                fail("FREE_IMAGE_LIMIT", 429)
         if body.params.get("reference_asset_id"):
             ref = db.get(Asset, body.params["reference_asset_id"])
             if not ref or ref.user_id != user.id or not ref.mime.startswith("image/"):

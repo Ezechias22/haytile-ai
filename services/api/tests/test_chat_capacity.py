@@ -104,4 +104,6 @@ def test_firestore_chat_does_not_inherit_temporary_trial_ceiling(monkeypatch):
     monkeypatch.setenv("HAYTILE_TRIAL_PER_STUDIO_PER_DAY", "0")
     with LocalSession(engine) as db:
         assert trial_limit_code(db, "owner", "text", {"chat": True}, 0) is None
-        assert trial_limit_code(db, "owner", "text", {}, 0) == "TRIAL_STUDIO_LIMIT"
+        assert trial_limit_code(db, "owner", "text", {}, 0) is None
+        for studio in ("image", "music", "voice", "video", "minidrama"):
+            assert trial_limit_code(db, "owner", studio, {"duration": 180, "mode": "episode"}, 0) is None

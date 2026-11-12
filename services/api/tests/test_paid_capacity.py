@@ -1,3 +1,5 @@
+import pytest
+
 from haytile import providers
 from haytile.trials import trial_limit_code
 
@@ -61,4 +63,42 @@ def test_paid_firestore_backed_sqlite_does_not_apply_temporary_trial_limit(monke
     monkeypatch.setenv("HAYTILE_TRIAL_PER_STUDIO_PER_DAY", "0")
     with Session(engine) as db:
         assert trial_limit_code(db, "owned-fixture", "music", {}, 32) is None
-        assert trial_limit_code(db, "owned-fixture", "text", {}, 0) == "TRIAL_STUDIO_LIMIT"
+        assert trial_limit_code(db, "owned-fixture", "text", {}, 0) is None
+
+
+@pytest.mark.parametrize("studio,credits", [("text", 0), ("image", 2)])
+def test_production_admission_ignores_legacy_daily_hourly_image_and_queue_caps(
+    client, monkeypatch, studio, credits
+):
+    from datetime import timedelta
+
+    from haytile import main
+    from haytile.db import RateLimit, Session, now
+
+    configure(monkeypatch, studio, credits)
+    monkeypatch.setenv("HAYTILE_PAID_IMAGES", "1")
+    monkeypatch.setenv("HAYTILE_TRIAL_AI", "1")
+    for key in ("HAYTILE_DAILY_JOB_LIMIT", "HAYTILE_FREE_IMAGES_PER_DAY", "HAYTILE_TRIAL_PER_STUDIO_PER_DAY"):
+        monkeypatch.setenv(key, "1")
+    user, auth = register(client)
+    fund(user["id"], 100)
+    clock = [now()]
+    monkeypatch.setattr(main, "now", lambda: clock[0])
+    with Session.begin() as db:
+        for key in ("generation-global", "generation:" + user["id"]):
+            db.add(RateLimit(key=key, count=1000, reset_at=now() + timedelta(days=1)))
+    monkeypatch.setattr(providers, "generate", lambda *args: pytest.fail("No paid generation in admission checks"))
+    for index in range(12):
+        clock[0] += timedelta(seconds=15)
+        response = client.post(
+            "/v1/jobs", headers=auth,
+            json=job_request(studio, credits, key="uncapped-production-" + str(index)),
+        )
+        assert response.status_code == 202, response.text
+    assert len(client.get("/v1/jobs", headers=auth).json()) == 12
+    wallet = client.get("/v1/wallet", headers=auth).json()
+    assert wallet["balance"] == 100 and wallet["reserved"] == 12 * credits
+    runtime = client.get("/v1/runtime").json()
+    assert runtime["generation_daily_limit"] is None
+    assert runtime["generation_hourly_limit"] is None
+    assert runtime["image_daily_limit"] is None
