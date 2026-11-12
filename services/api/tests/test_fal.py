@@ -427,3 +427,13 @@ def test_durable_config_uses_same_snapshot_for_merge_and_compare_and_swap(monkey
         is True
     )
     fal_catalog.invalidate()
+
+
+def test_expanded_catalog_respects_official_ten_model_limit(monkeypatch):
+    observed = []
+    monkeypatch.setattr(fal_client, "request", lambda *args, **kwargs: observed.append(kwargs) or {})
+    fal_client.catalog(identifier="fal-ai/ace-step", expand=True)
+    fal_client.catalog(query="music")
+    assert observed[0]["params"]["limit"] == 10
+    assert observed[0]["params"]["expand"] == "openapi-3.0"
+    assert observed[1]["params"]["limit"] == 25

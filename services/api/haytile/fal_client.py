@@ -59,7 +59,8 @@ def request(method, path, payload=None, *, platform=False, public=False, params=
         if response.status_code >= 400:
             try:
                 details = response.json()
-                message = details.get("detail", details.get("message", ""))
+                error = details.get("error") if isinstance(details.get("error"), dict) else {}
+                message = details.get("detail", details.get("message", error.get("message", "")))
                 if not isinstance(message, str):
                     message = json.dumps(message, ensure_ascii=False)
             except (ValueError, AttributeError):
@@ -94,7 +95,7 @@ def request(method, path, payload=None, *, platform=False, public=False, params=
 
 
 def catalog(query="", category="", cursor="", identifier="", expand=False):
-    params = {"limit": 25}
+    params = {"limit": 10 if expand else 25}
     for key, value in (
         ("q", query),
         ("category", category),
