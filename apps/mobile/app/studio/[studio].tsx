@@ -21,6 +21,9 @@ export default function Studio() {
   const [selectedModel, setSelectedModel] = useState('');
   const [voice, setVoice] = useState('Kore'), [voices, setVoices] = useState<string[]>([]), [voiceDetails, setVoiceDetails] = useState<{ name: string; gender: string }[]>([]), [voiceGender, setVoiceGender] = useState('all');
   const [musicStyle, setMusicStyle] = useState('');
+  const [falInputs,setFalInputs]=useState<Record<string,Record<string,string|number|boolean>>>({});
+  const [reference,setReference]=useState(''),[references,setReferences]=useState<{id:string;title:string;mime:string}[]>([]);
+  useEffect(()=>{api<{id:string;title:string;mime:string}[]>('/assets').then(rows=>setReferences(rows.filter(row=>row.mime.startsWith('image/')))).catch(()=>{});},[]);
   const musicParams = { music_style: musicStyle };
   const suggested = suggestTitle(prompt, t(studio));
   useEffect(() => {
@@ -33,9 +36,12 @@ export default function Studio() {
       .catch(() => {});
   }, []);
   const studioModel = models.find((m) => m.studio === studio);
-  const options = studioModel?.options || (studioModel?.model_id ? [{ ...studioModel, model_id: studioModel.model_id, label: studioModel.model_id, pricing_url: 'https://ai.google.dev/gemini-api/docs/pricing' }] : []);
-  const choice = options.find(option => option.model_id === selectedModel) || options.find(option => option.model_id === studioModel?.model_id) || options[0];
+  const options: NonNullable<Model['options']> = studioModel?.options || (studioModel?.model_id ? [{ ...studioModel, model_id: studioModel.model_id, label: studioModel.model_id, pricing_url: 'https://ai.google.dev/gemini-api/docs/pricing' }] : []);
+  const choice = options.find(option => option.model_id === selectedModel && option.available) || options.find(option => option.model_id === studioModel?.model_id && option.available) || options.find(option=>option.available) || options[0];
   const model = studioModel ? { ...studioModel, ...choice } : undefined;
+  const supportedLanguages=choice?.audio_languages||[];
+  const languageMissing=supportedLanguages.length>0&&!supportedLanguages.includes(language);
+  const extraParams={...(choice?.provider==='fal'?{fal_inputs:falInputs[choice.model_id]||{}}:{}),...(reference&&choice?.requires_reference?{reference_asset_id:reference}:{})};
   const credits =
     (model?.credits || 0) * (studio === 'video' ? Math.ceil(Number(duration) / 10) : 1);
   async function save() {
@@ -71,7 +77,8 @@ export default function Studio() {
           params: {
             aspect,
             language,
-            ...(studio === 'voice' ? { voice_name: voice } : {}),
+            ...(studio === 'voice' && choice?.provider !== 'fal' ? { voice_name: voice } : {}),
+            ...extraParams,
             ...(studio === 'music' ? musicParams : {}),
             ...(studio === 'video' ? { duration: Number(duration) } : {}),
           },
@@ -88,7 +95,8 @@ export default function Studio() {
     if (!user) { router.push('/auth'); return; }
     setBusy(true);
     try {
-      const result = await api<{ credits: number }>('/quotes', { method: 'POST', body: JSON.stringify({ studio, model_id: choice?.model_id, prompt, params: { language, aspect, ...(studio === 'voice' ? { voice_name: voice } : {}), ...(studio === 'music' ? musicParams : {}), ...(studio === 'video' ? { duration: Number(duration) } : {}) } }) });
+      const result = await api<{ credits: number }>('/quotes', { method: 'POST', body: JSON.stringify({ studio, model_id: choice?.model_id, prompt, params: { language, aspect, ...(studio === 'voice' && choice?.provider !== 'fal' ? { voice_name: voice } : {}),
+            ...extraParams, ...(studio === 'music' ? musicParams : {}), ...(studio === 'video' ? { duration: Number(duration) } : {}) } }) });
       Alert.alert(t('confirmCost'), (choice?.label || '') + '\n' + (result.credits ? result.credits + ' ' + t('credits') : t('freeGeneration')) + '\n' + t('reservationNotice'), [{ text: t('cancel'), style: 'cancel' }, { text: t('confirm'), onPress: () => submit(result.credits) }]);
     } catch (error) { setMessage(t('quoteUnavailable')); }
     finally { setBusy(false); }
@@ -115,7 +123,7 @@ export default function Studio() {
           maxLength={12000}
           placeholder={t(studio === 'music' ? 'musicContentHint' : 'promptHint')}
         />
-        {studio === 'voice' && <><Copy>{t('voiceType')}</Copy><Chips items={{all:t('allVoices'),male:t('maleVoices'),female:t('femaleVoices')}} value={voiceGender} onChange={gender => { setVoiceGender(gender); const first = voiceDetails.find(v => gender === 'all' || v.gender === gender); if (first) setVoice(first.name); }}/><Copy>{t('chooseVoice')}</Copy><Chips items={Object.fromEntries((voices.length ? voices : ['Kore']).filter(name => voiceGender === 'all' || voiceDetails.some(v => v.name === name && v.gender === voiceGender)).map(name => { const gender = voiceDetails.find(v => v.name === name)?.gender; return [name, name + (gender ? ' · ' + t(gender === 'male' ? 'maleVoiceLabel' : gender === 'female' ? 'femaleVoiceLabel' : 'otherVoices') : '')]; }))} value={voice} onChange={setVoice}/></>}
+        {studio === 'voice' && choice?.provider!=='fal' && <><Copy>{t('voiceType')}</Copy><Chips items={{all:t('allVoices'),male:t('maleVoices'),female:t('femaleVoices')}} value={voiceGender} onChange={gender => { setVoiceGender(gender); const first = voiceDetails.find(v => gender === 'all' || v.gender === gender); if (first) setVoice(first.name); }}/><Copy>{t('chooseVoice')}</Copy><Chips items={Object.fromEntries((voices.length ? voices : ['Kore']).filter(name => voiceGender === 'all' || voiceDetails.some(v => v.name === name && v.gender === voiceGender)).map(name => { const gender = voiceDetails.find(v => v.name === name)?.gender; return [name, name + (gender ? ' · ' + t(gender === 'male' ? 'maleVoiceLabel' : gender === 'female' ? 'femaleVoiceLabel' : 'otherVoices') : '')]; }))} value={voice} onChange={setVoice}/></>}
         {studio === 'music' && <>
           <Input label={t('musicStylePrompt')} value={musicStyle} onChangeText={setMusicStyle} maxLength={MUSIC_STYLE_MAX_LENGTH} placeholder={t('musicStylePromptHint')} multiline style={{ minHeight: 90 }} />
           <Copy>{t('musicStylePromptHelp')}</Copy>
@@ -123,8 +131,11 @@ export default function Studio() {
             {musicStyleSuggestions.map(item => { const value = item.key ? t(item.key) : item.text!; const selected = hasStyleSuggestion(musicStyle, value); const disabled = !selected && toggleStyleSuggestion(musicStyle, value) === musicStyle; return <Pressable key={item.key || item.text} accessibilityRole="button" accessibilityState={{ selected, disabled }} disabled={disabled} onPress={() => setMusicStyle(previous => toggleStyleSuggestion(previous, value))} style={[s.chip, selected && { borderColor: '#b491f7', backgroundColor: '#362546' }, disabled && { opacity: 0.4 }]}><Text style={{ color: selected ? '#b491f7' : '#a593b7', fontSize: 12 }}>{value}</Text></Pressable>; })}
           </View>
         </>}
+        {choice?.provider==='fal' && <><Copy>{t('falModelNote')}{choice.max_seconds?' · '+t('falModelLimit')+' '+choice.max_seconds+'s':''}</Copy>{Object.entries(choice.fields||{}).map(([name,field])=><View key={name}><Copy>{name==='voice'?t('chooseVoice'):t('falVoiceSpeed')}</Copy>{field.enum?<Chips items={Object.fromEntries(field.enum.map(value=>[value,value]))} value={String(falInputs[choice.model_id]?.[name]??field.default??'')} onChange={value=>setFalInputs(old=>({...old,[choice.model_id]:{...old[choice.model_id],[name]:value}}))}/>:<Input label={t('falVoiceSpeed')} keyboardType="decimal-pad" value={String(falInputs[choice.model_id]?.[name]??field.default??1)} onChangeText={value=>setFalInputs(old=>({...old,[choice.model_id]:{...old[choice.model_id],[name]:Number(value.replace(',','.'))}}))}/>}</View>)}</>}
+        {choice?.requires_reference && <><Copy>{t('falReferenceRequired')}</Copy><Chips items={Object.fromEntries(references.map(row=>[row.id,row.title]))} value={reference} onChange={setReference}/></>}
+        {languageMissing&&<Copy>{t('falChooseAudioLanguage')}</Copy>}
         <Copy>{t('language')}</Copy>
-        <Chips items={languages} value={language} onChange={setLanguage} />
+        <Chips items={Object.fromEntries(Object.entries(languages).filter(([code])=>!supportedLanguages.length||supportedLanguages.includes(code)))} value={language} onChange={setLanguage} />
         {['image', 'video'].includes(studio) && (
           <Chips
             items={
@@ -150,12 +161,12 @@ export default function Studio() {
         {message && <Text style={s.copy}>{message}</Text>}
         <Button title={t('saveDraft')} onPress={save} disabled={busy || !prompt.trim()} />
         <Button
-          title={t('generate') + ' · ' + (['image','text'].includes(studio) ? t('freeGeneration') : t('quoteRequired'))}
+          title={t('generate') + ' · ' + (studio==='text' ? t('freeGeneration') : t('quoteRequired'))}
           onPress={generate}
           disabled={
             busy ||
             !prompt.trim() ||
-            !model?.available ||
+            !model?.available || languageMissing || (choice?.requires_reference&&!reference) ||
             (studio === 'video' &&
               (!Number.isInteger(Number(duration)) ||
                 Number(duration) < 8 ||

@@ -209,7 +209,7 @@ export default function CreationProgress({
                     )}
                   </span>
                   <details className="creation-failure-details"><summary>{t('failureDetails')}</summary><code>{job.error}</code>{job.params?.provider_message && <p>{job.params.provider_message}</p>}</details>
-                  {job.retry_mode !== 'blocked' && !['PROVIDER_CONTENT_REJECTED', 'PROVIDER_REFUSED_OR_EMPTY'].includes(job.error || '') && <button className="button small" onClick={() => retry(job)}>
+                  {job.retry_mode !== 'blocked' && job.error !== 'PROVIDER_CONTENT_REJECTED' && !(job.error === 'PROVIDER_REFUSED_OR_EMPTY' && job.studio !== 'voice') && <button className="button small" onClick={() => retry(job)}>
                     {t('retry')}
                   </button>}
                 </div>

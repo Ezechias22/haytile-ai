@@ -11,17 +11,12 @@ from urllib.parse import quote, urlsplit
 import httpx
 
 from .music import direction_prompt, target_seconds
+from .provider_errors import ProviderError
 from .voice_choices import VOCALS, VOICES
 
 BASE = "https://generativelanguage.googleapis.com/v1beta"
 MAX_MEDIA_BYTES = 256 * 1024 * 1024
 
-
-class ProviderError(Exception):
-    def __init__(self, code, public_message=None, provider_status=None):
-        super().__init__(code)
-        self.public_message = public_message
-        self.provider_status = provider_status
 
 
 def headers():
@@ -209,6 +204,10 @@ def wait_interaction(result, params):
 
 
 def generate(studio, model, prompt, params):
+    if isinstance(model, str) and model.startswith("fal-"):
+        from .fal_provider import generate as fal_generate
+
+        return fal_generate(studio, model, prompt, params)
     if not re.fullmatch(r"[A-Za-z0-9._-]{1,120}", model):
         raise ProviderError("MODEL_INVALID")
     voice = params.get("voice_name", "Kore")

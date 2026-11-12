@@ -1,6 +1,7 @@
 """Private scene checkpoints: paid submissions are never blindly repeated."""
 
 import hashlib
+import shutil
 from pathlib import Path
 
 from . import providers, storage
@@ -46,7 +47,9 @@ def clip(job_id, user_id, index, model, prompt, params):
             raise providers.ProviderError("MANUAL_RECONCILIATION_REQUIRED")
         if not saved.get("key") and not saved.get("operation_id"):
             configured = db.get(Model, "video")
-            if not configured or not configured.enabled:
+            fal_profile = params.get("_fal_profile")
+            fal_approved = model.startswith("fal-") and fal_profile and fal_profile.get("id") == model and fal_profile.get("enabled") and fal_profile.get("allow_paused_studio")
+            if (not configured or not configured.enabled) and not fal_approved:
                 raise providers.ProviderError("MODEL_NOT_APPROVED")
             saved = {"submission_started": True, "model_id": model}
             scenes[slot] = saved
@@ -76,8 +79,19 @@ def clip(job_id, user_id, index, model, prompt, params):
     data, mime = providers.generate("video", model, prompt, call)
     if not mime.startswith("video/"):
         raise providers.ProviderError("VIDEO_STREAM_INVALID")
-    path.write_bytes(data)
-    key = storage.put(data, mime)
+    if isinstance(data, Path):
+        if data != path:
+            shutil.copyfile(data, path)
+    else:
+        path.write_bytes(data)
+    size = path.stat().st_size
+    if not 0 < size <= providers.MAX_MEDIA_BYTES:
+        raise providers.ProviderError("VIDEO_STREAM_INVALID")
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for block in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(block)
+    key = storage.put_file(path, mime)
     with Session.begin() as db:
         row = db.get(Job, job_id)
         if not row or row.user_id != user_id or row.status != "processing":
@@ -88,8 +102,8 @@ def clip(job_id, user_id, index, model, prompt, params):
         scenes[slot] = {
             **scenes.get(slot, {}),
             "key": key,
-            "size": len(data),
-            "sha256": hashlib.sha256(data).hexdigest(),
+            "size": size,
+            "sha256": digest.hexdigest(),
             "mime": mime,
         }
         row.params = {**row.params, "video_checkpoints": scenes}

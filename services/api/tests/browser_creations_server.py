@@ -127,7 +127,9 @@ def forbidden_transport(*args, **kwargs):
     )
 
 
-providers.generate = fixture_generate
+from tests.fal_browser_fixture import install as install_fal
+
+install_fal(app, fixture_generate, media)
 providers.request = forbidden_transport
 providers.discover = forbidden_transport
 

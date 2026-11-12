@@ -35,7 +35,7 @@ from .db import (
 )
 from .downloads import byte_range, chunks
 from .media import MAX_BYTES, inspect_media
-from .model_choices import PRICING, configured_choices, select_choice
+from .model_choices import configured_choices, select_choice
 from .runtime_checks import configuration_checks, require_durable_runtime
 from .security import (
     hash_token,
@@ -145,6 +145,15 @@ def asset_json(a):
     }
 
 
+def fal_drama_reconciliation(job):
+    return (
+        job.studio == "minidrama"
+        and job.params.get("input_params", {}).get("mode") == "episode"
+        and job.params.get("fal_submission_started")
+        and job.params.get("failure_phase") != "preparing"
+    )
+
+
 def job_json(j):
     result = {
         k: getattr(j, k)
@@ -167,15 +176,17 @@ def job_json(j):
     result["params"] = {
         key: value
         for key, value in j.params.items()
-        if key not in ("provider_response", "provider_text_result")
+        if key not in ("provider_response", "provider_text_result", "fal_profile")
     }
+    if isinstance(result["params"].get("render_config"), dict):
+        result["params"]["render_config"] = {key: value for key, value in result["params"]["render_config"].items() if key != "fal_profiles"}
     if j.status == "failed":
         cached = isinstance(j.params.get("provider_response"), dict) or isinstance(
             j.params.get("provider_text_result"), dict
         )
         result["retry_mode"] = (
             "blocked"
-            if j.error in ("PROVIDER_CONTENT_REJECTED", "PROVIDER_REFUSED_OR_EMPTY")
+            if fal_drama_reconciliation(j) or j.error == "PROVIDER_CONTENT_REJECTED" or j.error == "PROVIDER_REFUSED_OR_EMPTY" and j.studio != "voice"
             else "new_request"
             if j.studio == "text" and j.credits == 0 and j.error == "PROVIDER_EMPTY_TEXT"
             else "resume"
@@ -291,8 +302,12 @@ def runtime_settings():
         configured = bool(os.environ.get("HAYTILE_GEMINI_API_KEY")) and bool(
             db.scalar(select(Model.studio).where(Model.enabled.is_(True)).limit(1))
         )
+        from . import fal_catalog
+        fal_ready = fal_catalog.key_ready() and any(profile.get("enabled") and profile.get("price_verified") for profile in fal_catalog.profiles())
+        configured = configured or fal_ready
     return {
-        "api_release": "provider-rejection-details-v26",
+        "api_release": "fal-provider-v27",
+        "fal_configured": bool(os.environ.get("FAL_KEY") or os.environ.get("Fal_key")),
         "source_revision": os.environ.get("RENDER_GIT_COMMIT", ""),
         "credit_store": "firestore" if wallets.enabled() else "sql",
         "metadata_store": "firestore" if records.enabled() else "sql",
@@ -537,22 +552,17 @@ def models():
     present = (
         generation_enabled()
         and worker_enabled()
-        and bool(os.environ.get("HAYTILE_GEMINI_API_KEY"))
         and not (FREE_BETA and engine.dialect.name != "postgresql" and not trial_enabled())
     )
     return [
         {
             "studio": s,
-            "available": bool(
-                present
-                and rows.get(s)
-                and any(c.model_id == rows[s].model_id and c.enabled for c in choices[s])
-            ),
+            "available": bool(present and any(c.enabled and (bool(os.environ.get("FAL_KEY") or os.environ.get("Fal_key")) if c.provider == "fal" else bool(os.environ.get("HAYTILE_GEMINI_API_KEY"))) for c in choices[s])) ,
             "episode_available": bool(
                 present
                 and rows.get(s)
                 and rows[s].enabled
-                and all(rows.get(kind) and rows[kind].enabled for kind in ("image", "video"))
+                and all(any(choice.enabled for choice in choices[kind]) for kind in ("image", "video"))
             )
             if s == "minidrama"
             else False,
@@ -564,16 +574,22 @@ def models():
                     "model_id": choice.model_id,
                     "label": choice.label,
                     "credits": choice.credits,
-                    "available": bool(present and choice.enabled),
+                    "available": bool(present and choice.enabled and (bool(os.environ.get("FAL_KEY") or os.environ.get("Fal_key")) if choice.provider == "fal" else bool(os.environ.get("HAYTILE_GEMINI_API_KEY")))),
+                    "provider": choice.provider,
+                    "fields": choice.fal_profile.get("fields", {}) if choice.fal_profile else {},
+                    "max_seconds": choice.fal_profile.get("max_seconds") if choice.fal_profile else None,
+                    "native_audio": choice.fal_profile.get("native_audio") if choice.fal_profile else True,
+                    "audio_languages": choice.fal_profile.get("audio_languages", []) if choice.fal_profile else [],
+                    "requires_reference": choice.fal_profile.get("reference_required", False) if choice.fal_profile else False,
+                    "supports_initial_image": choice.fal_profile.get("supports_initial_image", False) if choice.fal_profile else True,
+                    "capabilities": {"attachments": False, "web_search": False, "native_voice": False} if choice.provider == "fal" else {"attachments": True, "web_search": True, "native_voice": True},
                     "episode_available": bool(
                         present
                         and choice.enabled
                         and s == "minidrama"
-                        and all(
-                            rows.get(kind) and rows[kind].enabled for kind in ("image", "video")
-                        )
+                        and all(any(other.enabled for other in choices[kind]) for kind in ("image", "video"))
                     ),
-                    "pricing_url": PRICING,
+                    "pricing_url": choice.pricing_url,
                     "unavailable_reason": choice.unavailable_reason,
                     "terms_url": choice.terms_url,
                 }
@@ -645,7 +661,7 @@ def quote_generation(body: QuoteRequest, user=Depends(current)):
                 if body.params.get("video_model_id")
                 else db.get(Model, "video")
             )
-            image = db.get(Model, "image")
+            image = select_choice(db, "image", body.params["image_model_id"]) if body.params.get("image_model_id") else db.get(Model, "image")
             if not video or not video.enabled or not image or not image.enabled:
                 fail("PROVIDER_SETUP_REQUIRED", 409)
             config = {
@@ -653,15 +669,27 @@ def quote_generation(body: QuoteRequest, user=Depends(current)):
                 "image": image.model_id,
                 "video": video.model_id,
             }
+            config["fal_profiles"] = {choice.model_id: choice.fal_profile for choice in (model, image, video) if getattr(choice, "fal_profile", None)}
+            from .fal_inputs import validate_drama
+            validate_drama(config, body.params)
+
             video_credits = video.credits
+        quote_params = body.params
+        if getattr(model, "fal_profile", None):
+            from .fal_inputs import prepare_quote
+            try:
+                quote_params = prepare_quote(model.fal_profile, body.params, user.id, db)
+            except providers.ProviderError as exc:
+                fail(str(exc), 400)
         return pricing.quote(
             body.studio,
             model.model_id,
             body.prompt,
-            body.params,
+            quote_params,
             model.credits,
             render_config=config,
             video_credits=video_credits,
+            fal_profile=getattr(model, "fal_profile", None),
         )
 
 
@@ -705,7 +733,7 @@ def generate(body: Generate, user=Depends(current)):
         fail("BILLING_REVIEW_REQUIRED", 403)
     if body.params.get("live_voice") is not None:
         fail("LIVE_PROTOCOL")
-    if body.studio == "voice" and body.params.get("voice_name", "Kore") not in VOICES:
+    if body.studio == "voice" and not (body.model_id or "").startswith("fal-") and body.params.get("voice_name", "Kore") not in VOICES:
         fail("VOICE_INVALID")
     if body.studio == "music" and body.params.get("vocal_style", "auto") not in VOCALS:
         fail("VOCAL_STYLE_INVALID")
@@ -775,7 +803,7 @@ def generate(body: Generate, user=Depends(current)):
             fail("PROVIDER_SETUP_REQUIRED", 503)
         render_config = None
         if episode:
-            image_model = db.get(Model, "image")
+            image_model = select_choice(db, "image", body.params["image_model_id"]) if body.params.get("image_model_id") else db.get(Model, "image")
             video_model = (
                 select_choice(db, "video", body.params["video_model_id"])
                 if body.params.get("video_model_id")
@@ -793,14 +821,26 @@ def generate(body: Generate, user=Depends(current)):
                 "image": image_model.model_id,
                 "video": video_model.model_id,
             }
+            render_config["fal_profiles"] = {choice.model_id: choice.fal_profile for choice in (model, image_model, video_model) if getattr(choice, "fal_profile", None)}
+            from .fal_inputs import validate_drama
+            validate_drama(render_config, body.params)
+
+        quote_params = body.params
+        if getattr(model, "fal_profile", None):
+            from .fal_inputs import prepare_quote
+            try:
+                quote_params = prepare_quote(model.fal_profile, body.params, user.id, db)
+            except providers.ProviderError as exc:
+                fail(str(exc), 400)
         quoted = pricing.quote(
             body.studio,
             model.model_id,
             body.prompt,
-            body.params,
+            quote_params,
             model.credits,
             render_config=render_config,
             video_credits=video_model.credits if episode else 0,
+            fal_profile=getattr(model, "fal_profile", None),
         )
         credits = quoted["credits"]
         trial_error = trial_limit_code(db, user.id, body.studio, body.params, credits)
@@ -876,6 +916,7 @@ def generate(body: Generate, user=Depends(current)):
                 "model_id": model.model_id,
                 "requested_model_id": body.model_id,
                 "provider": model.provider,
+                **({"fal_profile": model.fal_profile} if getattr(model, "fal_profile", None) else {}),
                 "render_config": render_config,
                 "pricing_quote": quoted,
                 **({"chat_contents": chat_contents} if chat_contents is not None else {}),
@@ -1094,9 +1135,15 @@ def retry(job_id: str, body: RetryRequest | None = None, user=Depends(current)):
             fail("AI_SERVICE_PAUSED", 503)
         if job.status != "failed":
             fail("JOB_NOT_FAILED", 409)
-        if job.error in ("PROVIDER_CONTENT_REJECTED", "PROVIDER_REFUSED_OR_EMPTY"):
+        if job.error == "PROVIDER_CONTENT_REJECTED" or job.error == "PROVIDER_REFUSED_OR_EMPTY" and job.studio != "voice":
             # A provider rejection is terminal for this unchanged request.
             fail(job.error, 409)
+        if fal_drama_reconciliation(job):
+            fail("MANUAL_RECONCILIATION_REQUIRED", 409)
+        if job.params.get("fal_submission_started") and not job.params.get("remote_operation") and not job.params.get("provider_response"):
+            if job.params.get("provider_status") not in ("400", "401", "402", "403", "404", "422", "429"):
+                fail("MANUAL_RECONCILIATION_REQUIRED", 409)
+            job.params = {key: value for key, value in job.params.items() if key != "fal_submission_started"}
         from .video_checkpoints import safe_to_resume
 
         if job.studio == "text" and job.credits == 0 and job.error == "PROVIDER_EMPTY_TEXT":
@@ -1783,6 +1830,10 @@ app.include_router(live_voice_router)
 from .billing import router as billing_router  # noqa: E402
 
 app.include_router(billing_router)
+
+from .fal_admin import router as fal_admin_router  # noqa: E402
+
+app.include_router(fal_admin_router)
 
 from .web_gateway import install as install_web_gateway  # noqa: E402
 

@@ -13,7 +13,8 @@ from .test_core import configure, fund, job_request
 from .test_video import clip
 
 
-def test_failed_assembly_reuses_paid_scenes_without_provider_calls(client, monkeypatch, tmp_path):
+@pytest.mark.parametrize("streamed", [False, True])
+def test_failed_assembly_reuses_paid_scenes_without_provider_calls(client, monkeypatch, tmp_path, streamed):
     configure(monkeypatch, "video", 5)
     user, auth = register(client)
     fund(user["id"], 100)
@@ -27,7 +28,7 @@ def test_failed_assembly_reuses_paid_scenes_without_provider_calls(client, monke
     def generate(studio, model, prompt, params):
         calls.append(params["_scene_index"])
         params["_operation_callback"]("paid-scene-" + str(params["_scene_index"]))
-        return media, "video/mp4"
+        return (tmp_path / "native.mp4") if streamed else media, "video/mp4"
 
     original = video.assemble
     monkeypatch.setattr(providers, "generate", generate)

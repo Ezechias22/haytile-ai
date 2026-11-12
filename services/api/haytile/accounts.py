@@ -43,6 +43,7 @@ def root():
 
 def name(collection, key):
     if collection not in (
+        "provider_config",
         "accounts",
         "wallets",
         "wallet_events",

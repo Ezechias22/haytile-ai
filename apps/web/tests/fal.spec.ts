@@ -1,0 +1,53 @@
+import {test,expect,chromium} from '@playwright/test';
+import serverChromium from '@sparticuz/chromium';
+
+test('fal studios: exact music styles, male voice, private results, text chat and video cost confirmation',async()=>{
+ test.skip(process.env.HAYTILE_OFFLINE_CREATIONS!=='1','Offline fal protocol fixture only.');
+ const browser=await chromium.launch({executablePath:await serverChromium.executablePath(),args:serverChromium.args.filter(x=>x!=='--disable-web-security'),headless:true});
+ const page=await browser.newPage({viewport:{width:1440,height:1100}});const base=process.env.HAYTILE_TEST_URL||'http://127.0.0.1:8010';
+ await page.addInitScript(()=>localStorage.setItem('haytile-locale','en'));
+ const login=await page.request.post(base+'/api/v1/auth/login',{data:{email:'fal-browser@example.test',password:'Offline-browser-password-123'},headers:{Origin:base}});expect(login.status()).toBe(200);
+ await page.goto(base);await expect(page.locator('.user-line strong')).toHaveText('Fal browser fixture');
+ await page.getByRole('tab',{name:'Studios',exact:true}).click();await page.getByRole('button',{name:'Music Studio',exact:true}).first().click();
+ const musicModel=page.getByRole('combobox',{name:'AI model',exact:true});const musicId=await musicModel.locator('option').filter({hasText:'ACE-Step'}).getAttribute('value');await musicModel.selectOption(musicId!);
+ const lyrics='[Verse]\nNou kenbe tout pawòl sa yo.\nYon bèl chante pou demen.';
+ await page.getByLabel('Lyrics or song idea',{exact:true}).fill(lyrics);await page.getByRole('textbox',{name:'Style prompt',exact:true}).fill('Konpa, piano, duet');
+ await page.getByRole('button',{name:/^Generate/}).click();await page.getByRole('dialog').getByRole('button',{name:'Confirm',exact:true}).click();
+ await expect(page.getByRole('region',{name:'Generation activity',exact:true})).toContainText('Your file is ready',{timeout:25000});
+ const stats=await (await page.request.get(base+'/v1/offline/fal-stats')).json();expect(stats.submissions.at(-1).payload.lyrics).toBe(lyrics);expect(stats.submissions.at(-1).payload.tags).toBe('Konpa, piano, duet');
+ await page.getByRole('button',{name:'Voice Studio',exact:true}).first().click();
+ const choose=page.getByRole('combobox',{name:'AI model',exact:true});const voiceId=await choose.locator('option').filter({hasText:'Kokoro'}).getAttribute('value');await choose.selectOption(voiceId!);
+ await expect(page.getByRole('button',{name:/^Generate/})).toBeDisabled();
+ await page.locator('.studio-workspace form').getByRole('combobox',{name:'Language',exact:true}).selectOption('en');await page.getByLabel('Choose a voice',{exact:true}).selectOption('am_adam');await page.getByLabel('Describe your idea',{exact:true}).fill('Hello, this is a natural synthetic male voice.');
+ await page.getByRole('button',{name:/^Generate/}).click();await page.getByRole('dialog').getByRole('button',{name:'Confirm',exact:true}).click();await expect(page.getByRole('region',{name:'Generation activity',exact:true})).toContainText('Your file is ready',{timeout:25000});
+ const voiced=await (await page.request.get(base+'/v1/offline/fal-stats')).json();expect(voiced.submissions.at(-1).payload.voice).toBe('am_adam');
+ await page.getByRole('button',{name:'HAYTILE Chat',exact:true}).first().click();await page.getByRole('button',{name:'New chat',exact:true}).click();
+ const model=page.getByRole('combobox',{name:'AI model',exact:true});const textId=await model.locator('option').filter({hasText:'GPT-OSS'}).getAttribute('value');await model.selectOption(textId!);
+ await expect(page.locator('.chat-fal-note')).toContainText('text only');
+ await page.getByRole('textbox',{name:'Your message',exact:true}).fill('Hello from the fal chat test');await page.getByRole('button',{name:'Send message',exact:true}).click();await expect(page.getByRole('log')).toContainText('Offline fal text reply',{timeout:25000});
+ await page.getByRole('tab',{name:'Studios',exact:true}).click();await page.getByRole('button',{name:'Video Studio',exact:true}).first().click();
+ const video=page.getByRole('combobox',{name:'AI model',exact:true});const videoId=await video.locator('option').filter({hasText:'Wan 2.2'}).getAttribute('value');await video.selectOption(videoId!);
+ await expect(page.locator('.fal-model-note')).toContainText('without native dialogue');await page.getByLabel('Describe your idea',{exact:true}).fill('A blue sky over the sea.');
+ await page.getByRole('spinbutton',{name:'Target duration (seconds)',exact:true}).fill('16');
+ const before=await (await page.request.get(base+'/v1/offline/fal-stats')).json();await page.getByRole('button',{name:/^Generate/}).click();await expect(page.getByRole('dialog')).toBeVisible();
+ expect((await (await page.request.get(base+'/v1/offline/fal-stats')).json()).submissions.length).toBe(before.submissions.length);
+ await page.getByRole('dialog').getByRole('button',{name:'Confirm',exact:true}).click();await expect(page.getByRole('region',{name:'Generation activity',exact:true})).toContainText('Your file is ready',{timeout:30000});
+ const after=await (await page.request.get(base+'/v1/offline/fal-stats')).json();expect(after.submissions.length-before.submissions.length).toBe(2);
+ await page.getByRole('button',{name:'MiniDrama Studio',exact:true}).first().click();
+ const drama=page.getByRole('combobox',{name:'AI model',exact:true});const dramaId=await drama.locator('option').filter({hasText:'GPT-OSS'}).getAttribute('value');await drama.selectOption(dramaId!);
+ await page.getByRole('combobox',{name:'Output',exact:true}).selectOption('episode');
+ const dramaVideo=page.getByLabel('Scene video model',{exact:true});const nativeId=await dramaVideo.locator('option').filter({hasText:'Kling 3 Standard — Native audio'}).getAttribute('value');await dramaVideo.selectOption(nativeId!);
+ const dramaImage=page.getByLabel('Character image model',{exact:true});const imageId=await dramaImage.locator('option').filter({hasText:'FLUX Schnell'}).getAttribute('value');await dramaImage.selectOption(imageId!);
+ await page.locator('.studio-workspace form').getByRole('combobox',{name:'Language',exact:true}).selectOption('en');await page.getByLabel('Describe your idea',{exact:true}).fill('A short story about helping a friend in a garden.');await page.getByRole('spinbutton',{name:'Target duration (seconds)',exact:true}).fill('16');
+ await page.getByRole('button',{name:/^Generate/}).click();await page.getByRole('dialog').getByRole('button',{name:'Confirm',exact:true}).click();await expect(page.getByRole('region',{name:'Generation activity',exact:true})).toContainText('Your file is ready',{timeout:45000});
+ await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await browser.close();
+});
+
+test('fal private administration: key readiness, model pricing and catalog search',async()=>{
+ test.skip(process.env.HAYTILE_OFFLINE_CREATIONS!=='1','Offline fal protocol fixture only.');
+ const browser=await chromium.launch({executablePath:await serverChromium.executablePath(),args:serverChromium.args.filter(x=>x!=='--disable-web-security'),headless:true});const page=await browser.newPage({viewport:{width:1440,height:1100}});const base=process.env.HAYTILE_TEST_URL||'http://127.0.0.1:8010';
+ await page.addInitScript(()=>localStorage.setItem('haytile-locale','en'));const login=await page.request.post(base+'/api/v1/auth/login',{data:{email:'billing-admin@example.test',password:'Offline-browser-password-123'},headers:{Origin:base}});expect(login.status()).toBe(200);await page.goto(base);await expect(page.locator('.user-line strong')).toHaveText('Billing fixture administrator');
+ await page.getByRole('tab',{name:'Studios',exact:true}).click();await page.getByRole('button',{name:'Administration',exact:true}).click();const fal=page.locator('.fal-admin');await expect(fal).toContainText('Fal API key detected');
+ const ace=fal.locator('.fal-profile').filter({has:page.getByRole('heading',{name:'ACE-Step',exact:true})});await ace.getByRole('button',{name:'Verify rate',exact:true}).click();await expect(ace).toContainText('US$0.0002 / seconds');await expect(ace.getByRole('button',{name:'Enable',exact:true})).toBeVisible();await ace.locator('input[name=ack]').check();await ace.getByRole('button',{name:'Enable',exact:true}).click();await expect(ace.getByRole('button',{name:'Disable',exact:true})).toBeVisible();
+ await fal.getByRole('searchbox').fill('ACE');await expect(fal.locator('.fal-catalog')).toContainText('ACE-Step');await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:'test-results/fal-admin-mobile.png',fullPage:true});await browser.close();
+});

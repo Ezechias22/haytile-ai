@@ -26,6 +26,8 @@ class Choice:
     provider: str = "google"
     terms_url: str = TERMS
     unavailable_reason: str | None = None
+    pricing_url: str = PRICING
+    fal_profile: dict | None = None
 
 
 def configured_choices(db, studio):
@@ -84,6 +86,24 @@ def configured_choices(db, studio):
             except HTTPException:
                 choice.enabled = False
                 choice.unavailable_reason = "PRICING_NOT_VERIFIED"
+        from . import fal_catalog
+
+        for profile in fal_catalog.profiles():
+            if profile["studio"] != studio:
+                continue
+            reason = fal_catalog.availability(profile)
+            active = reason is None and os.environ.get("HAYTILE_OPERATOR_BILLING_ACK") == "1"
+            if row and not row.enabled and not profile.get("allow_paused_studio"):
+                active = False
+                reason = "STUDIO_DISABLED"
+            credits = 0
+            if profile.get("price_verified"):
+                try:
+                    credits = pricing.base_credits(studio, profile["id"])
+                except HTTPException:
+                    reason, active = "PRICING_NOT_VERIFIED", False
+            result[profile["id"]] = Choice(studio, profile["id"], profile["label"] + " · fal.ai", credits, active,
+                False, "fal", profile["terms_url"], reason, profile["price_source"], profile)
         return list(result.values())
     except (ValueError, TypeError, AttributeError, KeyError):
         raise RuntimeError("MODEL_CHOICES_CONFIGURATION_INVALID") from None

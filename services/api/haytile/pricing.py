@@ -79,6 +79,20 @@ def image_quote(model_id, prompt="", params=None):
 
 
 def base_credits(studio, model_id, operator_credits=0):
+    if model_id.startswith("fal-"):
+        from . import fal_catalog, fal_inputs
+        from .provider_errors import ProviderError
+
+        profile = fal_catalog.get(model_id)
+        if not profile or not profile.get("price_verified"):
+            raise HTTPException(409, detail="PRICING_NOT_VERIFIED")
+        try:
+            sample = {"language": "en", "_fal_reference_pixels": 1}
+            if profile.get("reference_required"):
+                sample["reference_asset_id"] = "display-only"
+            return fal_inputs.quote(profile, "Display estimate", sample)["credits"]
+        except ProviderError as exc:
+            raise HTTPException(409, detail=str(exc)) from exc
     if studio == "text" or (studio == "image" and not paid_images()):
         return 0
     if studio == "image" and verified():
@@ -110,7 +124,26 @@ def quote(
     operator_credits=0,
     render_config=None,
     video_credits=0,
+    fal_profile=None,
 ):
+    if model_id.startswith("fal-"):
+        from . import fal_catalog, fal_inputs
+        from .provider_errors import ProviderError
+
+        profile = fal_profile or fal_catalog.get(model_id)
+        if not profile or profile["studio"] != studio:
+            raise HTTPException(400, detail="MODEL_INVALID")
+        try:
+            result = fal_inputs.quote(profile, prompt, params)
+            if studio == "minidrama" and params.get("mode") == "episode":
+                if not render_config:
+                    raise HTTPException(409, detail="PROVIDER_SETUP_REQUIRED")
+                clips = math.ceil(params.get("duration", 16) / CLIP_SECONDS)
+                per_clip = base_credits("video", render_config["video"], video_credits)
+                result.update(credits=result["credits"] + clips * per_clip + credits_for(DRAMA_PLAN_AND_REFERENCES_RESERVE), free=False, clip_count=clips)
+            return result
+        except (ProviderError, ValueError) as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
     if studio == "music":
         from .music import validate_options
 

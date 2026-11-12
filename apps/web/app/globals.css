@@ -2523,3 +2523,13 @@ html, body { height: 100%; overflow: hidden; }
 .creation-failure-details summary { cursor:pointer; padding:6px 0; }
 .creation-failure-details code { font-size:11px; }
 .creation-failure-details p { margin:8px 0 0; white-space:pre-wrap; }
+.fal-profile-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); gap:16px; margin:20px 0; }
+.fal-profile { border:1px solid #3b3348; border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:12px; min-width:0; }
+.fal-profile h3,.fal-profile p { margin:0; }
+.fal-profile .fine-print { overflow-wrap:anywhere; }
+.fal-profile-links { display:flex; gap:14px; flex-wrap:wrap; font-size:12px; }
+.fal-catalog article { border-bottom:1px solid #3b3348; padding:12px 0; overflow-wrap:anywhere; }
+.fal-catalog small { display:block; color:#a99bbb; margin-top:5px; }
+.fal-catalog p { font-size:12px; line-height:1.6; }
+.fal-model-note { border-inline-start:2px solid #a98ae7; padding-inline-start:12px; }
+.chat-fal-note { margin:0; padding:5px 16px; flex-shrink:0; font-size:11px; }

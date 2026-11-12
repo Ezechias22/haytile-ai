@@ -7,13 +7,14 @@ visual consistency guarantee is inferred from successful file decoding.
 import base64
 import json
 import math
+import shutil
 from pathlib import Path
 
 from pydantic import BaseModel, Field, ValidationError
 
 from . import accounts, providers, storage
 from .db import Asset, Job, Project, Session, uid
-from .media import inspect_media
+from .media import inspect_media, inspect_media_path
 from .video import assemble
 
 
@@ -39,8 +40,14 @@ class Plan(BaseModel):
 
 
 def save_intermediate(job_id, user_id, title, data, mime):
-    mime, text = inspect_media(data, mime, max_bytes=256 * 1024 * 1024)
-    key = storage.put(data, mime)
+    if isinstance(data, Path):
+        mime, text = inspect_media_path(data, mime, max_bytes=256 * 1024 * 1024)
+        size = data.stat().st_size
+        key = storage.put_file(data, mime)
+    else:
+        mime, text = inspect_media(data, mime, max_bytes=256 * 1024 * 1024)
+        size = len(data)
+        key = storage.put(data, mime)
     try:
         with Session.begin() as db:
             job = db.get(Job, job_id)
@@ -52,7 +59,7 @@ def save_intermediate(job_id, user_id, title, data, mime):
                 title=title[:120],
                 mime=mime,
                 key=key,
-                size=len(data),
+                size=size,
                 text=text,
             )
             db.add(asset)
@@ -78,6 +85,9 @@ Use one or two characters and exactly {count} scenes, for a final total of {dura
 Each scene lasts at most 8 seconds. Keep dialogue short enough to fit naturally.
 Use only character names declared in characters. Preserve any dialogue the user supplied; never translate it without permission.
 """
+    requires_reference = model_config.get("fal_profiles", {}).get(model_config["video"], {}).get("reference_required", False)
+    if requires_reference:
+        prompt += "Every scene must contain at least one of the declared characters; the chosen image-to-video model requires a character reference."
     plan_params = {**params, "_max_output_tokens": 8192}
     raw, mime = providers.generate("text", model_config["text"], prompt, plan_params)
     text = raw.decode().strip()
@@ -92,6 +102,7 @@ Use only character names declared in characters. Preserve any dialogue the user 
         len(names) != len(plan.characters)
         or len(plan.scenes) != count
         or any(set(s.characters) - names for s in plan.scenes)
+        or requires_reference and any(not scene.characters for scene in plan.scenes)
     ):
         raise providers.ProviderError("DRAMA_PLAN_INVALID")
     characters = [
@@ -158,7 +169,7 @@ Use only character names declared in characters. Preserve any dialogue the user 
     for index, character in enumerate(characters):
         image_prompt = f"Character reference image, single person, neutral background, no captions. {character['name']}: {character['appearance']}. Clothes and accessories must be exactly: {character['wardrobe']}."
         image, mime = providers.generate(
-            "image", model_config["image"], image_prompt, {"aspect": "1:1"}
+            "image", model_config["image"], image_prompt, {**{key: value for key, value in params.items() if key not in ("_resume_response", "_resume_operation_id")}, "aspect": "1:1", "_fal_profiles": model_config.get("fal_profiles", {})}
         )
         if not mime.startswith("image/"):
             raise providers.ProviderError("DRAMA_REFERENCE_INVALID")
@@ -199,7 +210,10 @@ Maintain clothing, faces, objects and setting. No captions or titles. This is sc
             job.id, job.user_id, "[Scene] " + scene["title"], clip, mime
         )
         path = Path(params["_scratch_dir"]) / f"drama-{index}.mp4"
-        path.write_bytes(clip)
+        if isinstance(clip, Path):
+            shutil.copyfile(clip, path)
+        else:
+            path.write_bytes(clip)
         del clip
         clips.append(path)
         checkpoint(35 + int(40 * (index + 1) / count))

@@ -54,6 +54,8 @@ def target_seconds(prompt, model, params=None):
     if len(lines) < 4 and words < 80:
         return 120
     direction = prompt + "\n" + "\n".join((params or {}).get(field, "") for field in OPTION_LIMITS)
+    # Negative style directions such as "no rap" must not force a fast singing estimate.
+    direction = re.sub(r"\b(?:no|not|without|sans|sin|sem)\s+(?:rap|hip-hop|hip hop)\b", "", direction, flags=re.I)
     tempo = 160 if re.search(r"\b(rap|hip-hop|hip hop)\b", direction, re.I) else 105
     if tempo != 160 and re.search(r"\b(slow|ballad|lent|dousman|lento)\b", direction, re.I):
         tempo = 75

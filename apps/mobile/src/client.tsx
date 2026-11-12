@@ -60,7 +60,7 @@ export type Model = {
   available: boolean;
   credits: number;
   model_id: string | null;
-  options?: { model_id: string; label: string; credits: number; available: boolean; pricing_url: string }[];
+  options?: { model_id: string; label: string; credits: number; available: boolean; pricing_url: string; provider?:string; fields?:Record<string,{type:string;enum?:string[];default?:string|number|boolean;minimum?:number;maximum?:number}>; audio_languages?:string[]; requires_reference?:boolean; native_audio?:boolean; max_seconds?:number }[];
 };
 // Only the public backend address belongs in EXPO_PUBLIC; never put API keys here.
 export const base = (process.env.EXPO_PUBLIC_API_URL || '').replace(/\/$/, '');

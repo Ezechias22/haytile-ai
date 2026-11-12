@@ -50,6 +50,8 @@ import {
 import { dictionaries, languages } from './i18n';
 import Storyboard from './storyboard';
 import AdminPeople from './admin-people';
+import AdminFal from './admin-fal';
+import FalFields, { type FalField } from './fal-fields';
 import CreationProgress from './creation-progress';
 import HaytileChat from './chat';
 import { suggestTitle } from '../../../packages/creation-titles';
@@ -94,8 +96,9 @@ type Model = {
   model_id: string | null;
   credits: number;
   reason: string | null;
-  options?: { model_id: string; label: string; credits: number; available: boolean; episode_available?: boolean; pricing_url: string; unavailable_reason?: string | null }[];
+  options?: { model_id: string; label: string; credits: number; available: boolean; episode_available?: boolean; pricing_url: string; unavailable_reason?: string | null; provider?: string; fields?: Record<string,FalField>; max_seconds?:number; native_audio?:boolean; audio_languages?:string[]; requires_reference?:boolean; supports_initial_image?:boolean }[];
 };
+type ModelOption = NonNullable<Model['options']>[number];
 const studios: Studio[] = ['image', 'music', 'video', 'minidrama', 'voice', 'text'];
 const visibleStudios: Studio[] = studios.filter(s => s !== 'text');
 const icons = {
@@ -290,7 +293,9 @@ export default function App() {
     [voiceGender, setVoiceGender] = useState('all'),
     [musicStyle, setMusicStyle] = useState(''),
     [dramaVideoModel, setDramaVideoModel] = useState(''),
-    [generationQuote, setGenerationQuote] = useState<{ key: string; credits: number; clip_count: number; free: boolean; music_target_seconds?: number } | null>(null),
+    [dramaImageModel, setDramaImageModel] = useState(''),
+    [falInputs, setFalInputs] = useState<Record<string,Record<string,string|number|boolean>>>({}),
+    [generationQuote, setGenerationQuote] = useState<{ key: string; credits: number; clip_count: number; free: boolean; music_target_seconds?: number; music_duration_limited?: boolean } | null>(null),
     [quotePending, setQuotePending] = useState(false),
     [quoteError, setQuoteError] = useState(false),
     [wallet, setWallet] = useState<{
@@ -347,6 +352,13 @@ export default function App() {
     if (/LOGIN_INVALID/.test(code)) return t('authError');
     if (/AI_SERVICE_PAUSED|BACKGROUND_PROCESSING_PAUSED/.test(code)) return t('servicePausedBody');
     if (/WORKER_PREPARATION_FAILED/.test(code)) return t('workerPreparationFailed');
+    if (/FAL_KEY_MISSING/.test(code)) return t('falKeyMissing');
+    if (/PROVIDER_BALANCE_REQUIRED/.test(code)) return t('falBalanceRequired');
+    if (/FAL_MODEL_LANGUAGE_UNSUPPORTED/.test(code)) return t('falChooseAudioLanguage');
+    if (/MODEL_ATTACHMENTS_UNSUPPORTED/.test(code)) return t('falTextOnly');
+    if (/FAL_PROMPT_TOO_LONG/.test(code)) return t('falPromptTooLong');
+    if (/FAL_DRAMA_AUDIO_UNSUPPORTED/.test(code)) return t('falSilentVideo');
+    if (/REFERENCE_REQUIRED/.test(code)) return t('falReferenceRequired');
     if (/PROVIDER_CONTENT_REJECTED/.test(code)) return t('providerContentRejected');
     if (/PROVIDER_REQUEST_REJECTED|PROVIDER_HTTP_400/.test(code)) return t('providerRequestRejected');
     if (/MANUAL_RECONCILIATION_REQUIRED/.test(code)) return t('manualReconciliation');
@@ -507,22 +519,29 @@ export default function App() {
   };
   const studio = visibleStudios.includes(page as Studio) ? (page as Studio) : null,
     studioModel = models.find((m) => m.studio === studio),
-    modelOptions = studioModel?.options || (studioModel?.model_id ? [{ ...studioModel, model_id: studioModel.model_id, label: studioModel.model_id, pricing_url: 'https://ai.google.dev/gemini-api/docs/pricing' }] : []),
-    activeChoice = modelOptions.find((option) => option.model_id === selectedModels[studio || '']) || modelOptions.find((option) => option.model_id === studioModel?.model_id) || modelOptions[0],
+    modelOptions: ModelOption[] = studioModel?.options || (studioModel?.model_id ? [{ ...studioModel, model_id: studioModel.model_id, label: studioModel.model_id, pricing_url: 'https://ai.google.dev/gemini-api/docs/pricing' }] : []),
+    activeChoice = modelOptions.find((option) => option.model_id === selectedModels[studio || ''] && option.available) || modelOptions.find((option) => option.model_id === studioModel?.model_id && option.available) || modelOptions.find(option=>option.available) || modelOptions[0],
     activeModel = studioModel ? { ...studioModel, ...activeChoice } : undefined;
+  const dramaVideoOptions = (models.find(m=>m.studio==='video')?.options || []).filter(option=>option.native_audio !== false);
+  const dramaImageOptions = (models.find(m=>m.studio==='image')?.options || []).filter(option=>option.supports_initial_image !== false);
+  const dramaVideoChoice = dramaVideoOptions.find(option=>option.model_id===dramaVideoModel&&option.available) || dramaVideoOptions.find(option=>option.available) || dramaVideoOptions[0];
+  const dramaImageChoice = dramaImageOptions.find(option=>option.model_id===dramaImageModel&&option.available) || dramaImageOptions.find(option=>option.available) || dramaImageOptions[0];
+  const falAudioLanguages = studio==='minidrama'&&miniMode==='episode' ? dramaVideoChoice?.audio_languages || [] : activeChoice?.audio_languages || [];
+  const falLanguageMissing = falAudioLanguages.length>0&&!falAudioLanguages.includes(outputLanguage);
   const automaticTitle = suggestTitle(prompt, studio ? t(studio) : t('new'));
   const effectiveTitle = title.trim() || automaticTitle;
   const canGenerate =
-    !!activeModel?.available &&
+    !!activeModel?.available && !falLanguageMissing &&
     (studio !== 'minidrama' || miniMode !== 'episode' || !!activeModel?.episode_available);
   const quoteParams = {
     aspect: studio === 'video' || (studio === 'minidrama' && miniMode === 'episode') ? aspect === '9:16' ? '9:16' : '16:9' : aspect,
     language: outputLanguage,
-    ...(studio === 'voice' ? { voice_name: voiceName } : {}),
+    ...(studio === 'voice' && activeChoice?.provider !== 'fal' ? { voice_name: voiceName } : {}),
+    ...(activeChoice?.provider==='fal' ? { fal_inputs: falInputs[activeChoice.model_id] || {} } : {}),
     ...(studio === 'music' ? { music_style: musicStyle } : {}),
     ...(studio === 'video' || (studio === 'minidrama' && miniMode === 'episode') ? { duration } : {}),
-    ...(studio === 'minidrama' ? { mode: miniMode, ...(dramaVideoModel ? { video_model_id: dramaVideoModel } : {}) } : {}),
-    ...(reference ? { reference_asset_id: reference } : {}),
+    ...(studio === 'minidrama' ? { mode: miniMode, ...(dramaVideoChoice ? { video_model_id: dramaVideoChoice.model_id } : {}), ...(dramaImageChoice ? { image_model_id: dramaImageChoice.model_id } : {}) } : {}),
+    ...(reference && (studio==='image'||studio==='video') && (activeChoice?.provider!=='fal'||activeChoice.requires_reference) ? { reference_asset_id: reference } : {}),
   };
   const quoteRequest = { studio, model_id: activeChoice?.model_id, prompt, params: quoteParams };
   const quoteKey = JSON.stringify(quoteRequest);
@@ -1015,7 +1034,7 @@ export default function App() {
               </section>
             </>
           )}
-          {page === 'chat' && <HaytileChat onRequestStart={()=>setError('')} key={(user?.id || 'guest') + ':' + chatEpoch} conversation={chatConversation} setConversation={setChatConversation} onThread={thread => setChatThreads(rows => [thread, ...rows.filter(row => row.id !== thread.id)])} request={api} t={t} userId={user?.id} userName={user?.name} locale={locale} voiceOptions={voiceDetails} voiceModels={models.find(m => m.studio === 'voice')?.options || []} onWalletChange={() => refresh().catch(() => setSyncIssue(true))} models={models.find(m => m.studio === 'text')?.options || []} available={!generationPaused && backgroundProcessing && !!models.find(m => m.studio === 'text')?.available} onAuth={() => setAuth('login')} onError={err => setError(describeError(err))} />}
+          {page === 'chat' && <HaytileChat onRequestStart={()=>setError('')} key={(user?.id || 'guest') + ':' + chatEpoch} conversation={chatConversation} setConversation={setChatConversation} onThread={thread => setChatThreads(rows => [thread, ...rows.filter(row => row.id !== thread.id)])} request={api} t={t} userId={user?.id} userName={user?.name} locale={locale} voiceOptions={voiceDetails} voiceModels={(models.find(m => m.studio === 'voice')?.options || []).filter(option=>option.provider!=='fal')} onWalletChange={() => refresh().catch(() => setSyncIssue(true))} models={models.find(m => m.studio === 'text')?.options || []} available={!generationPaused && backgroundProcessing && !!models.find(m => m.studio === 'text')?.available} onAuth={() => setAuth('login')} onError={err => setError(describeError(err))} />}
           {studio && (
             <>
               <div className="page-heading studio-heading">
@@ -1096,8 +1115,9 @@ export default function App() {
                         required
                       />
                     </label>
-                    {studio === 'minidrama' && miniMode === 'episode' && <label>{t('sceneVideoModel')}<select aria-label={t('sceneVideoModel')} value={dramaVideoModel || models.find(m => m.studio === 'video')?.model_id || ''} onChange={e => { setDramaVideoModel(e.target.value); pendingKey.current = null; }}>{(models.find(m => m.studio === 'video')?.options || []).map(option => <option key={option.model_id} value={option.model_id} disabled={!!option.unavailable_reason}>{option.label}{option.unavailable_reason ? ' — ' + t('pricingPending') : ''}</option>)}</select></label>}
-                    {studio === 'voice' && <><div className="voice-filter" role="group" aria-label={t('voiceType')}>{[['all', 'allVoices'], ['male', 'maleVoices'], ['female', 'femaleVoices']].map(([gender, label]) => <button key={gender} type="button" aria-pressed={voiceGender === gender} onClick={() => { setVoiceGender(gender); const first = voiceDetails.find(v => gender === 'all' || v.gender === gender); if (first) setVoiceName(first.name); pendingKey.current = null; }}>{t(label)}</button>)}</div><label>{t('chooseVoice')}<select aria-label={t('chooseVoice')} value={voiceName} onChange={e => { setVoiceName(e.target.value); pendingKey.current = null; }}>{(voiceOptions.length ? voiceOptions : ['Kore']).filter(voice => voiceGender === 'all' || voiceDetails.some(v => v.name === voice && v.gender === voiceGender)).map(voice => { const gender = voiceDetails.find(v => v.name === voice)?.gender; return <option key={voice} value={voice}>{voice}{gender ? ' · ' + t(gender === 'male' ? 'maleVoiceLabel' : gender === 'female' ? 'femaleVoiceLabel' : 'otherVoices') : ''}</option>; })}</select></label></>}
+                    {studio === 'minidrama' && miniMode === 'episode' && <div className="field-row"><label>{t('sceneVideoModel')}<select aria-label={t('sceneVideoModel')} value={dramaVideoChoice?.model_id || ''} onChange={e=>{setDramaVideoModel(e.target.value);pendingKey.current=null;}}>{dramaVideoOptions.map(option=><option key={option.model_id} value={option.model_id} disabled={!option.available}>{option.label}</option>)}</select></label><label>{t('falDramaImageModel')}<select aria-label={t('falDramaImageModel')} value={dramaImageChoice?.model_id || ''} onChange={e=>{setDramaImageModel(e.target.value);pendingKey.current=null;}}>{dramaImageOptions.map(option=><option key={option.model_id} value={option.model_id} disabled={!option.available}>{option.label}</option>)}</select></label></div>}
+                    {activeChoice?.provider==='fal' && <><p className="fine-print fal-model-note">{t('falModelNote')}{activeChoice.max_seconds ? ' · '+t('falModelLimit')+' '+activeChoice.max_seconds+' s' : ''}{activeChoice.native_audio===false&&studio==='video'?' · '+t('falSilentVideo'):''}{falAudioLanguages.length>0?' · '+t('falAudioLanguages')+' '+falAudioLanguages.map(code=>languages[code]||code).join(', '):''}</p><FalFields fields={activeChoice.fields||{}} value={falInputs[activeChoice.model_id]||{}} onChange={next=>{setFalInputs(old=>({...old,[activeChoice.model_id]:next}));pendingKey.current=null;}} t={t}/></>}
+                    {studio === 'voice' && activeChoice?.provider !== 'fal' && <><div className="voice-filter" role="group" aria-label={t('voiceType')}>{[['all', 'allVoices'], ['male', 'maleVoices'], ['female', 'femaleVoices']].map(([gender, label]) => <button key={gender} type="button" aria-pressed={voiceGender === gender} onClick={() => { setVoiceGender(gender); const first = voiceDetails.find(v => gender === 'all' || v.gender === gender); if (first) setVoiceName(first.name); pendingKey.current = null; }}>{t(label)}</button>)}</div><label>{t('chooseVoice')}<select aria-label={t('chooseVoice')} value={voiceName} onChange={e => { setVoiceName(e.target.value); pendingKey.current = null; }}>{(voiceOptions.length ? voiceOptions : ['Kore']).filter(voice => voiceGender === 'all' || voiceDetails.some(v => v.name === voice && v.gender === voiceGender)).map(voice => { const gender = voiceDetails.find(v => v.name === voice)?.gender; return <option key={voice} value={voice}>{voice}{gender ? ' · ' + t(gender === 'male' ? 'maleVoiceLabel' : gender === 'female' ? 'femaleVoiceLabel' : 'otherVoices') : ''}</option>; })}</select></label></>}
                     {studio === 'music' && <fieldset className="music-direction"><legend>{t('musicStylePrompt')}</legend>
                       <label className="music-style-label" htmlFor="music-style-prompt">{t('musicStylePrompt')}</label>
                       <textarea id="music-style-prompt" aria-describedby="music-style-help" aria-label={t('musicStylePrompt')} value={musicStyle} rows={3} maxLength={MUSIC_STYLE_MAX_LENGTH} placeholder={t('musicStylePromptHint')} onChange={e => { setMusicStyle(e.target.value); pendingKey.current = null; }} />
@@ -1110,10 +1130,11 @@ export default function App() {
                       <label>
                         {t('language')}
                         <select
-                          value={outputLanguage}
+                          value={falLanguageMissing ? '' : outputLanguage}
                           onChange={(e) => setOutputLanguage(e.target.value)}
                         >
-                          {Object.entries(languages).map(([key, value]) => (
+                          {falLanguageMissing && <option value="" disabled>{t('falChooseAudioLanguage')}</option>}
+                          {Object.entries(languages).filter(([code])=>!falAudioLanguages.length||falAudioLanguages.includes(code)).map(([key, value]) => (
                             <option key={key} value={key}>
                               {value}
                             </option>
@@ -1158,10 +1179,10 @@ export default function App() {
                         </select>
                       </label>
                     )}
-                    {studio === 'image' && (
+                    {((studio === 'image' && (activeChoice?.provider!=='fal'||activeChoice.requires_reference)) || (studio==='video'&&activeChoice?.requires_reference)) && (
                       <label>
-                        {t('reference')}
-                        <select value={reference} onChange={(e) => setReference(e.target.value)}>
+                        {t(activeChoice?.requires_reference ? 'falReferenceRequired' : 'reference')}
+                        <select aria-label={t(activeChoice?.requires_reference ? 'falReferenceRequired' : 'reference')} required={activeChoice?.requires_reference} value={reference} onChange={(e) => setReference(e.target.value)}>
                           <option value="">{t('none')}</option>
                           {assets
                             .filter((a) => a.mime.startsWith('image/'))
@@ -1190,7 +1211,7 @@ export default function App() {
                     {!canGenerate && (
                       <div className="alert info">
                         <AlertCircle size={18} />
-                        <span>{t(generationPaused ? 'servicePausedBody' : 'unavailable')}</span>
+                        <span>{t(falLanguageMissing ? 'falChooseAudioLanguage' : generationPaused ? 'servicePausedBody' : 'unavailable')}</span>
                       </div>
                     )}
                     {studio === 'minidrama' && (
@@ -1200,6 +1221,7 @@ export default function App() {
                     )}
                     {studio === 'music' && generationQuote?.key === quoteKey && generationQuote.music_target_seconds && <p className="fine-print" role="status">{t('musicTargetDuration')}: {Math.floor(generationQuote.music_target_seconds / 60)} min {generationQuote.music_target_seconds % 60} s</p>}
                     {studio === 'music' && <p className="fine-print">{t('musicNote')}</p>}
+                    {studio==='music'&&generationQuote?.key===quoteKey&&generationQuote.music_duration_limited&&<p className="fine-print" role="status">{t('falMusicDurationLimit')}</p>}
                     {studio === 'voice' && <p className="fine-print">{t('voiceNote')}</p>}
                     {studio === 'video' && quoteReady && generationQuote?.key === quoteKey && <p className="fine-print" role="status">{generationQuote.clip_count} {t('plannedScenes')} · {t('totalPrice')}: {generationQuote.credits} {t('credits')}</p>}
                     <div className="composer-actions">
@@ -1654,6 +1676,7 @@ export default function App() {
                     </button>
                   </form>
                 </section>
+                <AdminFal t={t} api={api} onSaved={refresh}/>
                 <AdminPeople t={t} api={api} durable={adminData?.durable_finances === true} creditStore={adminData?.credit_store} onSaved={async () => { setAdminData(await api('/admin/overview')); await refresh(); }} />
                 <section className="panel">
                   <h3 className="mt">{t('audit')}</h3>
@@ -2071,7 +2094,7 @@ function JobList({
             </p>
           )}
           {j.params.provider_message && <details className="job-error"><summary>{t('failureDetails')}</summary><p>{j.params.provider_message}</p></details>}
-          {j.status === 'failed' && j.retry_mode !== 'blocked' && !['PROVIDER_CONTENT_REJECTED', 'PROVIDER_REFUSED_OR_EMPTY'].includes(j.error || '') && (
+          {j.status === 'failed' && j.retry_mode !== 'blocked' && j.error !== 'PROVIDER_CONTENT_REJECTED' && !(j.error === 'PROVIDER_REFUSED_OR_EMPTY' && j.studio !== 'voice') && (
             <button className="text-button" onClick={() => retry(j)}>
               {t('retry')}
               <ArrowRight size={13} />

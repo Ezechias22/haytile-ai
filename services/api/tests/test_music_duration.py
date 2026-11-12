@@ -209,3 +209,11 @@ def test_media_validation_preserves_song_longer_than_three_minutes(tmp_path):
         check=True,
     )
     assert float(probe.stdout) > 214
+
+
+def test_no_rap_style_does_not_shorten_a_slow_ballad():
+    from haytile.music import target_seconds
+
+    lyrics = "\n".join(["Nou ka rive ansanm"] * 100)
+    assert target_seconds(lyrics, "lyria-3.5", {"music_style": "Emotional ballad, 76 BPM, no rap, no rushed singing"}) == 300
+    assert target_seconds(lyrics, "lyria-3.5", {"music_style": "Rap, 110 BPM"}) == 180

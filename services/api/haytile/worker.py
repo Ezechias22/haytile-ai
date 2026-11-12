@@ -120,7 +120,7 @@ def run_once():
             params["_chat_contents"] = job.params["chat_contents"]
         model = job.params.get("model_id", "")
 
-    def record_operation(identifier):
+    def record_operation(identifier, actual_model=None, actual_studio=None):
         with Session.begin() as state:
             row = state.get(Job, job_id)
             if row and row.status == "processing":
@@ -137,8 +137,8 @@ def run_once():
                     **row.params,
                     "remote_operation": {
                         "id": identifier,
-                        "studio": job.studio,
-                        "model_id": model,
+                        "studio": actual_studio or job.studio,
+                        "model_id": actual_model or model,
                     },
                 }
 
@@ -147,6 +147,26 @@ def run_once():
     if job.params.get("pricing_quote", {}).get("image_size"):
         params["_image_size"] = job.params["pricing_quote"]["image_size"]
     params["_operation_callback"] = record_operation
+    params["_operation_context_callback"] = record_operation
+    params["_fal_profiles"] = (job.params.get("render_config") or {}).get("fal_profiles", {})
+    if job.params.get("fal_profile"):
+        params["_fal_profile"] = job.params["fal_profile"]
+    if job.params.get("fal_profile") or params["_fal_profiles"]:
+
+        def record_fal_submission():
+            with Session.begin() as state:
+                current = state.get(Job, job_id)
+                if not current or current.status != "processing":
+                    raise providers.ProviderError("JOB_NOT_PROCESSING")
+                if current.params.get("fal_submission_started") and not current.params.get("remote_operation"):
+                    raise providers.ProviderError("MANUAL_RECONCILIATION_REQUIRED")
+                current.params = {
+                    **{key: value for key, value in current.params.items()
+                       if key not in ("remote_operation", "provider_response")},
+                    "fal_submission_started": True,
+                }
+
+        params["_submission_callback"] = record_fal_submission
     if job.params.get("resume_operation_id"):
         params["_resume_operation_id"] = job.params["resume_operation_id"]
     if isinstance(job.params.get("provider_response"), dict):
@@ -174,8 +194,18 @@ def run_once():
                 ref = db.get(Asset, ref_id)
             if not ref or ref.user_id != job.user_id:
                 raise providers.ProviderError("REFERENCE_INVALID")
-            params["_reference_data"] = base64.b64encode(storage.get(ref.key)).decode()
+            if not job.params.get("fal_profile"):
+                params["_reference_data"] = base64.b64encode(storage.get(ref.key)).decode()
             params["_reference_mime"] = ref.mime
+            if job.params.get("fal_profile"):
+
+                from .security import sign_asset
+
+                expires = int(time.time()) + 900
+                origin = os.environ.get("HAYTILE_PUBLIC_ORIGIN", "").rstrip("/")
+                if not origin.startswith("https://") and os.environ.get("HAYTILE_ENV") == "production":
+                    raise providers.ProviderError("PUBLIC_ORIGIN_INVALID")
+                params["_fal_reference_url"] = origin + f"/api/v1/files/{ref.id}?expires={expires}&signature={sign_asset(ref.id, expires)}"
         if params.get("chat") is True:
             from .chat_tools import markers, materialize
 
@@ -232,7 +262,8 @@ def run_once():
             from .music import target_seconds
 
             params["_music_target_seconds"] = target_seconds(job.prompt, model, params)
-            prompt = "Requested song language: " + language + "\n" + prompt
+            if not model.startswith("fal-"):
+                prompt = "Requested song language: " + language + "\n" + prompt
         phase = "provider"
         if job.studio == "minidrama" and params.get("mode") == "episode":
             from .drama import render_episode
